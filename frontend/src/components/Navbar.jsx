@@ -1,49 +1,56 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Car, Shield, User, Navigation, LogOut, Sparkles } from 'lucide-react';
+import { Car, Shield, User, Navigation, LogOut } from 'lucide-react';
 
 const Navbar = ({ activeTab, setActiveTab }) => {
-  const { user, logout, quickSwitchRole } = useAuth();
+  const { user, logout } = useAuth();
 
   return (
-    <header className="sticky top-0 z-50 glass-panel border-b border-slate-800 bg-slate-950/80 backdrop-blur-md">
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setActiveTab('explore')}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 via-brand-500 to-accent-cyan flex items-center justify-center shadow-lg shadow-brand-500/20">
-              <Car className="w-6 h-6 text-slate-950 stroke-[2.5]" />
+          <div
+            className="flex items-center space-x-2.5 cursor-pointer"
+            onClick={() => {
+              if (user?.role === 'ROLE_CUSTOMER') setActiveTab('explore');
+              else if (user?.role === 'ROLE_DRIVER') setActiveTab('driver-cockpit');
+              else if (user?.role === 'ROLE_ADMIN') setActiveTab('admin-stats');
+            }}
+          >
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-500 to-amber-400 flex items-center justify-center shadow-md shadow-brand-500/20 text-slate-950 font-black text-base">
+              ⚡
             </div>
             <div>
-              <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
-                Drive<span className="text-brand-500">Pulse</span>
+              <span className="text-xl font-extrabold tracking-tight text-gray-950">
+                Drive<span className="text-brand-600">Pulse</span>
               </span>
-              <span className="hidden sm:inline-block ml-2 text-[10px] uppercase tracking-widest font-semibold px-2 py-0.5 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/20">
-                Enterprise
+              <span className="hidden sm:inline-block ml-2 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 border border-brand-200">
+                {user?.role === 'ROLE_CUSTOMER' ? 'Rider' : user?.role === 'ROLE_DRIVER' ? 'Pilot' : 'Operations'}
               </span>
             </div>
           </div>
 
-          {/* Navigation Links based on role */}
-          <nav className="hidden md:flex items-center space-x-1">
+          {/* Navigation Links strictly based on active user role */}
+          <nav className="flex items-center space-x-1 sm:space-x-2">
             {user?.role === 'ROLE_CUSTOMER' && (
               <>
                 <button
                   onClick={() => setActiveTab('explore')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                     activeTab === 'explore'
-                      ? 'bg-brand-500/10 text-brand-400 border border-brand-500/30'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                      ? 'bg-brand-50 text-brand-700 border border-brand-200 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-950 hover:bg-gray-100'
                   }`}
                 >
-                  Book Rides & Cargo
+                  Book Rides
                 </button>
                 <button
                   onClick={() => setActiveTab('my-trips')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                     activeTab === 'my-trips'
-                      ? 'bg-brand-500/10 text-brand-400 border border-brand-500/30'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                      ? 'bg-brand-50 text-brand-700 border border-brand-200 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-950 hover:bg-gray-100'
                   }`}
                 >
                   My Rides
@@ -55,23 +62,23 @@ const Navbar = ({ activeTab, setActiveTab }) => {
               <>
                 <button
                   onClick={() => setActiveTab('driver-cockpit')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                     activeTab === 'driver-cockpit'
-                      ? 'bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/30'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                      ? 'bg-cyan-50 text-cyan-700 border border-cyan-200 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-950 hover:bg-gray-100'
                   }`}
                 >
                   Driver Cockpit
                 </button>
                 <button
                   onClick={() => setActiveTab('driver-trips')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                     activeTab === 'driver-trips'
-                      ? 'bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/30'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                      ? 'bg-cyan-50 text-cyan-700 border border-cyan-200 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-950 hover:bg-gray-100'
                   }`}
                 >
-                  Trip History & Earnings
+                  Trip Earnings
                 </button>
               </>
             )}
@@ -80,106 +87,59 @@ const Navbar = ({ activeTab, setActiveTab }) => {
               <>
                 <button
                   onClick={() => setActiveTab('admin-stats')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                     activeTab === 'admin-stats'
-                      ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                      ? 'bg-purple-50 text-purple-700 border border-purple-200 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-950 hover:bg-gray-100'
                   }`}
                 >
                   Command Center
                 </button>
                 <button
                   onClick={() => setActiveTab('admin-fleet')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                     activeTab === 'admin-fleet'
-                      ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                      ? 'bg-purple-50 text-purple-700 border border-purple-200 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-950 hover:bg-gray-100'
                   }`}
                 >
-                  Fleet Management
+                  Fleet
                 </button>
                 <button
                   onClick={() => setActiveTab('admin-trips')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                     activeTab === 'admin-trips'
-                      ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                      ? 'bg-purple-50 text-purple-700 border border-purple-200 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-950 hover:bg-gray-100'
                   }`}
                 >
-                  All Trips Monitor
+                  All Trips
                 </button>
               </>
             )}
           </nav>
 
-          {/* Quick Demo Role Switcher + User Profile */}
-          <div className="flex items-center space-x-2">
-            {/* Commercial Portal Switcher */}
-            <div className="flex items-center bg-slate-900/90 p-0.5 sm:p-1 rounded-xl border border-slate-800 text-[11px] sm:text-xs">
-              <span className="hidden md:inline-flex px-2 text-slate-500 font-semibold items-center">
-                Portal:
-              </span>
-              <button
-                onClick={() => {
-                  quickSwitchRole('ROLE_CUSTOMER');
-                  setActiveTab('explore');
-                }}
-                className={`px-2.5 py-1 rounded-lg transition-all ${
-                  user?.role === 'ROLE_CUSTOMER'
-                    ? 'bg-brand-500 text-slate-950 font-black shadow'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Rider
-              </button>
-              <button
-                onClick={() => {
-                  quickSwitchRole('ROLE_DRIVER');
-                  setActiveTab('driver-cockpit');
-                }}
-                className={`px-2.5 py-1 rounded-lg transition-all ${
-                  user?.role === 'ROLE_DRIVER'
-                    ? 'bg-accent-cyan text-slate-950 font-black shadow'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Driver
-              </button>
-              <button
-                onClick={() => {
-                  quickSwitchRole('ROLE_ADMIN');
-                  setActiveTab('admin-stats');
-                }}
-                className={`px-2.5 py-1 rounded-lg transition-all ${
-                  user?.role === 'ROLE_ADMIN'
-                    ? 'bg-purple-500 text-slate-950 font-black shadow'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Operations
-              </button>
-            </div>
-
-            {/* User Profile Pill */}
+          {/* User Profile Pill & Sign Out (No role switcher) */}
+          <div className="flex items-center space-x-2.5">
             {user && (
-              <div className="flex items-center space-x-2 pl-2 border-l border-slate-800">
+              <div className="flex items-center space-x-2 pl-2 sm:pl-3 border-l border-gray-200">
                 <img
                   src={user.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100"}
                   alt={user.fullName}
-                  className="w-8 h-8 rounded-full border border-brand-500/40 object-cover"
+                  className="w-8 h-8 rounded-full border border-gray-300 object-cover shadow-sm"
                 />
                 <div className="hidden sm:block text-left text-xs">
-                  <p className="font-semibold text-white leading-tight truncate max-w-[120px]">
+                  <p className="font-extrabold text-gray-900 leading-tight truncate max-w-[120px]">
                     {user.fullName}
                   </p>
-                  <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
-                    {user.role === 'ROLE_CUSTOMER' ? 'Verified Passenger' : user.role === 'ROLE_DRIVER' ? 'Certified Pilot' : 'Operations Lead'}
+                  <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">
+                    {user.role === 'ROLE_CUSTOMER' ? 'Passenger' : user.role === 'ROLE_DRIVER' ? 'Certified Pilot' : 'Admin'}
                   </p>
                 </div>
                 <button
                   onClick={logout}
                   title="Sign Out"
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                  className="p-1.5 rounded-xl text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors ml-1"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>

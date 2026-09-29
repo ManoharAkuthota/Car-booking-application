@@ -10,18 +10,20 @@ export const AuthProvider = ({ children }) => {
     if (stored) {
       try { return JSON.parse(stored); } catch (e) {}
     }
-    return DEMO_USERS.customer;
+    return null;
   });
-  const [token, setToken] = useState(localStorage.getItem('drivepulse_token') || 'demo_token');
+  const [token, setToken] = useState(() => localStorage.getItem('drivepulse_token') || null);
   const [loading, setLoading] = useState(false);
 
   // Load user profile on mount if token exists
   useEffect(() => {
     const initAuth = async () => {
+      if (!token) return;
       try {
         const res = await authApi.getMe();
         if (res?.data) {
           setUser(res.data);
+          localStorage.setItem('drivepulse_user', JSON.stringify(res.data));
         }
       } catch (err) {
         console.error("Auth init error:", err);
@@ -29,13 +31,14 @@ export const AuthProvider = ({ children }) => {
     };
 
     initAuth();
-  }, []);
+  }, [token]);
 
   const login = async (email, password) => {
     try {
       const res = await authApi.login({ email, password });
       const { token: jwtToken, user: userData } = res.data;
       localStorage.setItem('drivepulse_token', jwtToken);
+      localStorage.setItem('drivepulse_user', JSON.stringify(userData));
       setToken(jwtToken);
       setUser(userData);
       return { success: true, user: userData };
@@ -52,6 +55,7 @@ export const AuthProvider = ({ children }) => {
       const res = await authApi.register(formData);
       const { token: jwtToken, user: userData } = res.data;
       localStorage.setItem('drivepulse_token', jwtToken);
+      localStorage.setItem('drivepulse_user', JSON.stringify(userData));
       setToken(jwtToken);
       setUser(userData);
       return { success: true, user: userData };
@@ -65,32 +69,9 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('drivepulse_token');
+    localStorage.removeItem('drivepulse_user');
     setToken(null);
     setUser(null);
-  };
-
-  const quickSwitchRole = async (targetRole) => {
-    let email = 'customer@drivepulse.com';
-    let password = 'password123';
-
-    if (targetRole === 'ROLE_DRIVER') {
-      email = 'driver@drivepulse.com';
-      password = 'password123';
-    } else if (targetRole === 'ROLE_ADMIN') {
-      email = 'admin@drivepulse.com';
-      password = 'admin123';
-    }
-
-    try {
-      const res = await authApi.login({ email, password });
-      const { token: jwtToken, user: userData } = res.data;
-      localStorage.setItem('drivepulse_token', jwtToken);
-      setToken(jwtToken);
-      setUser(userData);
-      return userData;
-    } catch (err) {
-      console.error("Quick role switch error:", err);
-    }
   };
 
   return (
@@ -102,10 +83,7 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
-        quickSwitchRole,
-        isCustomer: user?.role === 'ROLE_CUSTOMER',
-        isDriver: user?.role === 'ROLE_DRIVER',
-        isAdmin: user?.role === 'ROLE_ADMIN',
+        isAuthenticated: !!user,
       }}
     >
       {children}
@@ -113,4 +91,10 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
