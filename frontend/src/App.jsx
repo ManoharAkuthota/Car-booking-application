@@ -6,6 +6,7 @@ import CustomerExplore from './pages/CustomerExplore';
 import CustomerRides from './pages/CustomerRides';
 import DriverDashboard from './pages/DriverDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import RideBooking from './pages/RideBooking';
 import { Loader2, Car, Shield } from 'lucide-react';
 
 const MainLayout = () => {
@@ -31,7 +32,7 @@ const MainLayout = () => {
     return <LoginPage />;
   }
 
-  const isExploreMode = user?.role === 'ROLE_CUSTOMER' && activeTab === 'explore';
+  const isExploreMode = user?.role === 'ROLE_CUSTOMER' && (activeTab === 'explore' || activeTab === 'arrival-sim');
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col selection:bg-brand-500 selection:text-slate-950">
@@ -47,8 +48,13 @@ const MainLayout = () => {
           <>
             {activeTab === 'my-trips' ? (
               <CustomerRides onSelectActiveTrip={() => setActiveTab('explore')} />
+            ) : activeTab === 'arrival-sim' ? (
+              <RideBooking onBackToExplore={() => setActiveTab('explore')} />
             ) : (
-              <CustomerExplore onNavigateToTrips={() => setActiveTab('my-trips')} />
+              <CustomerExplore
+                onNavigateToTrips={() => setActiveTab('my-trips')}
+                onNavigateToArrivalSim={() => setActiveTab('arrival-sim')}
+              />
             )}
           </>
         )}

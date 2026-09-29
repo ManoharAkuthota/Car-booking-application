@@ -102,7 +102,7 @@ const RAPIDO_SERVICES = [
   },
 ];
 
-const CustomerExplore = ({ onNavigateToTrips }) => {
+const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeBooking, setActiveBooking] = useState(null);
@@ -342,9 +342,21 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
           </div>
 
           <div className="flex items-center space-x-2">
+            {onNavigateToArrivalSim && (
+              <button
+                type="button"
+                onClick={onNavigateToArrivalSim}
+                className="py-1.5 px-3 rounded-xl bg-gradient-to-r from-amber-400 to-brand-500 hover:from-amber-500 hover:to-brand-600 text-slate-950 font-black text-xs shadow-xs flex items-center space-x-1.5 active:scale-95 transition-all"
+                title="View Rapido/Uber Real-Time Vehicle Arrival Animation"
+              >
+                <span>⚡</span>
+                <span className="hidden sm:inline">Arrival Simulation</span>
+                <span className="sm:hidden">Animation</span>
+              </button>
+            )}
             <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center space-x-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Live Google Maps</span>
+              <span>Live Fleet</span>
             </span>
           </div>
         </div>

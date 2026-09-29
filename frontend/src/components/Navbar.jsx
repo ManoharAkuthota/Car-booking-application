@@ -46,6 +46,16 @@ const Navbar = ({ activeTab, setActiveTab }) => {
                   Book Rides
                 </button>
                 <button
+                  onClick={() => setActiveTab('arrival-sim')}
+                  className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center space-x-1.5 ${
+                    activeTab === 'arrival-sim'
+                      ? 'bg-amber-100 text-amber-950 border border-amber-300 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-950 hover:bg-gray-100'
+                  }`}
+                >
+                  <span>⚡ Arrival Animation</span>
+                </button>
+                <button
                   onClick={() => setActiveTab('my-trips')}
                   className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                     activeTab === 'my-trips'

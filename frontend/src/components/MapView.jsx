@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { Layers, Crosshair, Navigation, Compass, ShieldCheck } from 'lucide-react';
-import { fetchRoadRoute, calculateBearing, getVehicleVisuals } from '../api/routeService';
+import { fetchRoadRoute, generateRoadRoute, calculateBearing, getVehicleVisuals } from '../api/routeService';
 
 // Custom SVG icons for Pickup, Dropoff, and Markers
 const createIcon = (svgString, className) => {
@@ -27,8 +27,8 @@ const dropoffIcon = createIcon(`
   </div>
 `);
 
-// Nearby vehicle icon generator matching selected vehicle category
-const getNearbyIcon = (type = 'BIKE') => {
+// Nearby vehicle icon generator matching selected vehicle category with compass heading
+const getNearbyIcon = (type = 'BIKE', heading = 0) => {
   let emoji = '🏍️';
   let bg = 'bg-amber-400 text-amber-950 border-amber-300 ring-amber-400/40';
   if (type === 'AUTO') {
@@ -44,8 +44,8 @@ const getNearbyIcon = (type = 'BIKE') => {
 
   return L.divIcon({
     html: `
-      <div class="relative flex items-center justify-center">
-        <div class="w-8 h-8 rounded-full ${bg} flex items-center justify-center shadow-lg border-2 ring-2 text-sm transform transition-all duration-1000 ease-linear">
+      <div class="relative flex items-center justify-center transition-all duration-700 ease-linear" style="transform: rotate(${heading}deg);">
+        <div class="w-8 h-8 rounded-full ${bg} flex items-center justify-center shadow-lg border-2 ring-2 text-sm">
           ${emoji}
         </div>
       </div>
@@ -56,7 +56,7 @@ const getNearbyIcon = (type = 'BIKE') => {
   });
 };
 
-// Live animated moving vehicle with heading rotation & motion beam
+// Live animated moving vehicle with heading rotation & forward motion beam
 const createLiveVehicleIcon = (category = 'BIKE', heading = 0, isArrived = false) => {
   const visuals = getVehicleVisuals(category);
 
@@ -79,13 +79,13 @@ const createLiveVehicleIcon = (category = 'BIKE', heading = 0, isArrived = false
 
   return L.divIcon({
     html: `
-      <div class="relative flex items-center justify-center transition-transform duration-700 ease-linear" style="transform: rotate(${heading}deg);">
+      <div class="relative flex items-center justify-center transition-transform duration-500 ease-linear" style="transform: rotate(${heading}deg);">
         <div class="w-11 h-11 rounded-2xl ${visuals.bg} flex items-center justify-center shadow-2xl border-2 border-white ring-4 ${visuals.ring} text-xl font-black">
           ${visuals.emoji}
         </div>
         <!-- Forward motion beam -->
         <div class="absolute -top-3 w-3 h-5 bg-gradient-to-t from-white/70 to-transparent rounded-full opacity-60 pointer-events-none"></div>
-        <!-- Live pulse dot -->
+        <!-- Live motion indicator dot -->
         <div class="absolute -bottom-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border border-white animate-pulse"></div>
       </div>
     `,
@@ -147,27 +147,36 @@ const MAP_LAYERS = {
   },
 };
 
-// Generate realistic nearby drivers around the pickup location
+// Generate realistic dynamic orbital patrols around pickup point
 const generateNearbyDrivers = (centerCoord, type) => {
   if (!centerCoord || !centerCoord[0]) return [];
-  const baseOffsets = [
-    { dLat: 0.0024, dLng: 0.0018, speedLat: 0.0001, speedLng: -0.00008, eta: 2 },
-    { dLat: -0.0019, dLng: 0.0026, speedLat: -0.00008, speedLng: 0.00012, eta: 3 },
-    { dLat: 0.0016, dLng: -0.0029, speedLat: 0.00012, speedLng: 0.00006, eta: 2 },
-    { dLat: -0.0028, dLng: -0.0016, speedLat: -0.00006, speedLng: -0.0001, eta: 4 },
-    { dLat: 0.0036, dLng: -0.0008, speedLat: 0.00005, speedLng: 0.00011, eta: 3 },
-    { dLat: -0.0011, dLng: 0.0035, speedLat: -0.00011, speedLng: -0.00005, eta: 4 },
+  const patrols = [
+    { radiusLat: 0.0028, radiusLng: 0.0035, angle: 0.2, speed: 0.06, eta: 2 },
+    { radiusLat: 0.0035, radiusLng: 0.0022, angle: 1.5, speed: -0.05, eta: 3 },
+    { radiusLat: 0.0022, radiusLng: 0.0040, angle: 2.8, speed: 0.07, eta: 2 },
+    { radiusLat: 0.0040, radiusLng: 0.0028, angle: 3.9, speed: -0.06, eta: 4 },
+    { radiusLat: 0.0030, radiusLng: 0.0032, angle: 4.8, speed: 0.05, eta: 3 },
+    { radiusLat: 0.0025, radiusLng: 0.0025, angle: 5.8, speed: -0.07, eta: 4 },
   ];
 
-  return baseOffsets.map((o, idx) => ({
-    id: `${type}-${idx}`,
-    type: type,
-    offsetLat: o.dLat,
-    offsetLng: o.dLng,
-    speedLat: o.speedLat,
-    speedLng: o.speedLng,
-    eta: o.eta,
-  }));
+  return patrols.map((p, idx) => {
+    const lat = centerCoord[0] + p.radiusLat * Math.sin(p.angle);
+    const lng = centerCoord[1] + p.radiusLng * Math.cos(p.angle);
+    const heading = Math.round(((p.angle + (p.speed > 0 ? Math.PI / 2 : -Math.PI / 2)) * 180) / Math.PI + 360) % 360;
+
+    return {
+      id: `${type}-${idx}`,
+      type: type,
+      lat: lat,
+      lng: lng,
+      angle: p.angle,
+      radiusLat: p.radiusLat,
+      radiusLng: p.radiusLng,
+      speed: p.speed,
+      eta: p.eta,
+      heading: heading,
+    };
+  });
 };
 
 const MapView = ({
@@ -195,52 +204,71 @@ const MapView = ({
 
   const visuals = useMemo(() => getVehicleVisuals(vehicleType), [vehicleType]);
 
-  // Real OSRM Road Route Points between Pickup and Dropoff
-  const [tripRoadPoints, setTripRoadPoints] = useState([]);
-  const [tripDistanceKm, setTripDistanceKm] = useState(0);
+  // Synchronously compute initial road route to guarantee 0ms latency
+  const initialTripRoute = useMemo(
+    () => generateRoadRoute(pickup, dropoff),
+    [pickup?.[0], pickup?.[1], dropoff?.[0], dropoff?.[1]]
+  );
 
-  // Approach Route Points (Driver -> Pickup when ACCEPTED)
-  const [approachRoadPoints, setApproachRoadPoints] = useState([]);
+  const [tripRoadPoints, setTripRoadPoints] = useState(() => initialTripRoute.points);
+  const [tripDistanceKm, setTripDistanceKm] = useState(() => initialTripRoute.distanceKm);
 
-  // Live Vehicle Animated Position & Heading
-  const [liveVehiclePos, setLiveVehiclePos] = useState(null);
-  const [liveHeading, setLiveHeading] = useState(0);
+  // Approach Route (Driver -> Pickup when ACCEPTED)
+  const driverStartPos = useMemo(
+    () => [pickup[0] + 0.0085, pickup[1] - 0.0075],
+    [pickup?.[0], pickup?.[1]]
+  );
+
+  const initialApproachRoute = useMemo(
+    () => generateRoadRoute(driverStartPos, pickup),
+    [driverStartPos, pickup?.[0], pickup?.[1]]
+  );
+
+  const [approachRoadPoints, setApproachRoadPoints] = useState(() => initialApproachRoute.points);
+
+  // Live Vehicle Animated Position & Heading (Initializes immediately)
+  const [liveVehiclePos, setLiveVehiclePos] = useState(() => {
+    if (tripStatus === 'ACCEPTED') return initialApproachRoute.points[0] || driverStartPos;
+    if (tripStatus === 'DRIVER_ARRIVING') return pickup;
+    if (tripStatus === 'IN_PROGRESS') return initialTripRoute.points[0] || pickup;
+    if (tripStatus === 'COMPLETED') return dropoff;
+    return pickup;
+  });
+
+  const [liveHeading, setLiveHeading] = useState(45);
   const [liveEtaMins, setLiveEtaMins] = useState(3);
   const [liveRemainingKm, setLiveRemainingKm] = useState(1.2);
 
   // Animation step tracker
   const animIndexRef = useRef(0);
 
-  // Fetch real road routes whenever pickup or dropoff changes
+  // Non-blocking background route upgrade from OSRM
   useEffect(() => {
     let isCancelled = false;
-    const loadRoutes = async () => {
+    const upgradeRoutes = async () => {
       if (!pickup || !dropoff) return;
 
-      // 1. Fetch Main Trip Route (Pickup -> Dropoff)
       const tripRes = await fetchRoadRoute(pickup, dropoff);
-      if (!isCancelled) {
+      if (!isCancelled && tripRes.points.length > 0) {
         setTripRoadPoints(tripRes.points);
         setTripDistanceKm(tripRes.distanceKm);
       }
 
-      // 2. If trip is accepted, fetch Approach Route (Driver -> Pickup)
       if (isLiveTrip && (tripStatus === 'ACCEPTED' || tripStatus === 'DRIVER_ARRIVING')) {
-        const driverStartPos = [pickup[0] + 0.0085, pickup[1] - 0.0075];
         const approachRes = await fetchRoadRoute(driverStartPos, pickup);
-        if (!isCancelled) {
+        if (!isCancelled && approachRes.points.length > 0) {
           setApproachRoadPoints(approachRes.points);
         }
       }
     };
 
-    loadRoutes();
+    upgradeRoutes();
     return () => {
       isCancelled = true;
     };
-  }, [pickup?.[0], pickup?.[1], dropoff?.[0], dropoff?.[1], isLiveTrip, tripStatus]);
+  }, [pickup?.[0], pickup?.[1], dropoff?.[0], dropoff?.[1], isLiveTrip, tripStatus, driverStartPos]);
 
-  // Live Vehicle Auto-Movement Animation Engine
+  // Live Vehicle Smooth Auto-Movement Animation Engine (500ms intervals)
   useEffect(() => {
     if (!isLiveTrip) return;
 
@@ -248,16 +276,17 @@ const MapView = ({
 
     // Phase 1: ACCEPTED -> Moving from driver start toward Pickup
     if (tripStatus === 'ACCEPTED') {
-      if (!approachRoadPoints || approachRoadPoints.length === 0) return;
+      const route = approachRoadPoints.length > 0 ? approachRoadPoints : initialApproachRoute.points;
+      const total = route.length;
+      if (total === 0) return;
 
-      const total = approachRoadPoints.length;
-      setLiveVehiclePos(approachRoadPoints[0]);
+      setLiveVehiclePos(route[0]);
 
       const interval = setInterval(() => {
         animIndexRef.current = (animIndexRef.current + 1) % total;
         const curIdx = animIndexRef.current;
-        const currentCoord = approachRoadPoints[curIdx];
-        const nextCoord = approachRoadPoints[Math.min(curIdx + 1, total - 1)];
+        const currentCoord = route[curIdx];
+        const nextCoord = route[Math.min(curIdx + 1, total - 1)];
 
         const heading = calculateBearing(
           currentCoord[0], currentCoord[1],
@@ -272,12 +301,12 @@ const MapView = ({
         setLiveHeading(heading);
         setLiveRemainingKm(remKm);
         setLiveEtaMins(eta);
-      }, 1200);
+      }, 500);
 
       return () => clearInterval(interval);
     }
 
-    // Phase 2: DRIVER_ARRIVING -> Arrived at Pickup
+    // Phase 2: DRIVER_ARRIVING -> At Pickup
     if (tripStatus === 'DRIVER_ARRIVING') {
       setLiveVehiclePos(pickup);
       setLiveHeading(0);
@@ -288,16 +317,17 @@ const MapView = ({
 
     // Phase 3: IN_PROGRESS -> Moving from Pickup to Dropoff
     if (tripStatus === 'IN_PROGRESS') {
-      if (!tripRoadPoints || tripRoadPoints.length === 0) return;
+      const route = tripRoadPoints.length > 0 ? tripRoadPoints : initialTripRoute.points;
+      const total = route.length;
+      if (total === 0) return;
 
-      const total = tripRoadPoints.length;
-      setLiveVehiclePos(tripRoadPoints[0]);
+      setLiveVehiclePos(route[0]);
 
       const interval = setInterval(() => {
         animIndexRef.current = (animIndexRef.current + 1) % total;
         const curIdx = animIndexRef.current;
-        const currentCoord = tripRoadPoints[curIdx];
-        const nextCoord = tripRoadPoints[Math.min(curIdx + 1, total - 1)];
+        const currentCoord = route[curIdx];
+        const nextCoord = route[Math.min(curIdx + 1, total - 1)];
 
         const heading = calculateBearing(
           currentCoord[0], currentCoord[1],
@@ -312,7 +342,7 @@ const MapView = ({
         setLiveHeading(heading);
         setLiveRemainingKm(remKm);
         setLiveEtaMins(eta);
-      }, 1200);
+      }, 500);
 
       return () => clearInterval(interval);
     }
@@ -324,9 +354,19 @@ const MapView = ({
       setLiveRemainingKm(0);
       setLiveEtaMins(0);
     }
-  }, [isLiveTrip, tripStatus, approachRoadPoints, tripRoadPoints, tripDistanceKm, pickup, dropoff]);
+  }, [
+    isLiveTrip,
+    tripStatus,
+    approachRoadPoints,
+    tripRoadPoints,
+    initialApproachRoute.points,
+    initialTripRoute.points,
+    tripDistanceKm,
+    pickup,
+    dropoff,
+  ]);
 
-  // Nearby simulated idle vehicles (only shown in explore mode)
+  // Explore Mode: Nearby simulated active patrolling vehicles (700ms smooth updates)
   const [nearbyVehicles, setNearbyVehicles] = useState(() =>
     generateNearbyDrivers(pickup, vehicleType)
   );
@@ -339,23 +379,29 @@ const MapView = ({
 
   useEffect(() => {
     if (isLiveTrip) return;
+
     const interval = setInterval(() => {
       setNearbyVehicles((prev) =>
         prev.map((v) => {
-          let newOffsetLat = v.offsetLat + v.speedLat + (Math.random() - 0.5) * 0.0002;
-          let newOffsetLng = v.offsetLng + v.speedLng + (Math.random() - 0.5) * 0.0002;
-          if (Math.abs(newOffsetLat) > 0.005) v.speedLat = -v.speedLat;
-          if (Math.abs(newOffsetLng) > 0.005) v.speedLng = -v.speedLng;
+          const newAngle = v.angle + v.speed;
+          const newLat = pickup[0] + v.radiusLat * Math.sin(newAngle);
+          const newLng = pickup[1] + v.radiusLng * Math.cos(newAngle);
+          const newHeading =
+            Math.round(((newAngle + (v.speed > 0 ? Math.PI / 2 : -Math.PI / 2)) * 180) / Math.PI + 360) % 360;
+
           return {
             ...v,
-            offsetLat: newOffsetLat,
-            offsetLng: newOffsetLng,
+            angle: newAngle,
+            lat: newLat,
+            lng: newLng,
+            heading: newHeading,
           };
         })
       );
-    }, 2000);
+    }, 700);
+
     return () => clearInterval(interval);
-  }, [isLiveTrip]);
+  }, [isLiveTrip, pickup?.[0], pickup?.[1]]);
 
   // Determine bounds points for map auto-center
   const boundsPoints = useMemo(() => {
@@ -422,7 +468,7 @@ const MapView = ({
             <Polyline
               positions={approachRoadPoints}
               color="#0284c7"
-              weight={4}
+              weight={4.5}
               opacity={0.95}
               dashArray="6, 8"
             />
@@ -448,12 +494,12 @@ const MapView = ({
           </>
         )}
 
-        {/* Explore Mode: ONLY Nearby Drivers of the Selected Vehicle Category around Pickup */}
+        {/* Explore Mode: ONLY Nearby Drivers of the Selected Category actively moving around Pickup */}
         {!isLiveTrip && pickup && nearbyVehicles.map((v) => (
           <Marker
             key={v.id}
-            position={[pickup[0] + v.offsetLat, pickup[1] + v.offsetLng]}
-            icon={getNearbyIcon(v.type)}
+            position={[v.lat, v.lng]}
+            icon={getNearbyIcon(v.type, v.heading)}
           >
             <Popup className="text-gray-900 font-bold text-[11px]">
               <div className="space-y-0.5">
@@ -461,13 +507,13 @@ const MapView = ({
                   <span>{visuals.emoji} Nearby {visuals.label} Pilot</span>
                 </p>
                 <p className="text-[10px] text-emerald-700 font-semibold">⚡ ~{v.eta} mins to pickup</p>
-                <p className="text-[10px] text-gray-500 font-normal">⭐ 4.9 Verified Pilot • Ready to ride</p>
+                <p className="text-[10px] text-gray-500 font-normal">⭐ 4.9 Verified Pilot • Cruising nearby</p>
               </div>
             </Popup>
           </Marker>
         ))}
 
-        {/* Live Trip Mode: Auto-Moving Animated Vehicle with Heading Rotation */}
+        {/* Live Trip Mode: Auto-Moving Animated Vehicle with Heading Rotation & Motion Beam */}
         {isLiveTrip && liveVehiclePos && (
           <Marker
             position={liveVehiclePos}
@@ -583,7 +629,7 @@ const MapView = ({
       <div className="absolute bottom-3 left-3 z-[1000] px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-md text-[11px] font-mono text-gray-700 flex items-center space-x-2 border border-gray-200 shadow-md pointer-events-none">
         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
         <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-700">
-          OSRM Real Road Routing • Rapido Live Telemetry
+          Live GPS Telemetry Active
         </span>
       </div>
     </div>
