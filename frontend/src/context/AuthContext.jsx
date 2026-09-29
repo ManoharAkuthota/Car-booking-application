@@ -1,30 +1,31 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authApi } from '../api/client';
+import { DEMO_USERS } from '../api/mockData';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('drivepulse_token') || null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(() => {
+    const stored = localStorage.getItem('drivepulse_user');
+    if (stored) {
+      try { return JSON.parse(stored); } catch (e) {}
+    }
+    return DEMO_USERS.customer;
+  });
+  const [token, setToken] = useState(localStorage.getItem('drivepulse_token') || 'demo_token');
+  const [loading, setLoading] = useState(false);
 
   // Load user profile on mount if token exists
   useEffect(() => {
     const initAuth = async () => {
-      const storedToken = localStorage.getItem('drivepulse_token');
-      if (storedToken) {
-        try {
-          const res = await authApi.getMe();
+      try {
+        const res = await authApi.getMe();
+        if (res?.data) {
           setUser(res.data);
-        } catch (err) {
-          console.error("Session expired, switching to demo customer", err);
-          await quickSwitchRole('ROLE_CUSTOMER');
         }
-      } else {
-        // Default login as demo customer on fresh start
-        await quickSwitchRole('ROLE_CUSTOMER');
+      } catch (err) {
+        console.error("Auth init error:", err);
       }
-      setLoading(false);
     };
 
     initAuth();

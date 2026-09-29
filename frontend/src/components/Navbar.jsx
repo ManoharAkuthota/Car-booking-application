@@ -36,7 +36,7 @@ const Navbar = ({ activeTab, setActiveTab }) => {
                       : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
                   }`}
                 >
-                  Book a Car
+                  Book Rides & Cargo
                 </button>
                 <button
                   onClick={() => setActiveTab('my-trips')}
@@ -113,34 +113,34 @@ const Navbar = ({ activeTab, setActiveTab }) => {
           </nav>
 
           {/* Quick Demo Role Switcher + User Profile */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2">
             {/* 1-Click Role Switcher */}
-            <div className="hidden lg:flex items-center bg-slate-900/90 p-1 rounded-xl border border-slate-800 text-xs">
-              <span className="px-2 text-slate-500 font-semibold flex items-center">
-                <Sparkles className="w-3.5 h-3.5 mr-1 text-amber-400" />
-                Demo Switch:
+            <div className="flex items-center bg-slate-900/90 p-0.5 sm:p-1 rounded-xl border border-slate-800 text-[11px] sm:text-xs">
+              <span className="hidden sm:inline-flex px-2 text-slate-500 font-semibold items-center">
+                <Sparkles className="w-3 h-3 mr-1 text-amber-400" />
+                Role:
               </span>
               <button
                 onClick={() => {
                   quickSwitchRole('ROLE_CUSTOMER');
                   setActiveTab('explore');
                 }}
-                className={`px-2.5 py-1 rounded-lg transition-all ${
+                className={`px-2 sm:px-2.5 py-1 rounded-lg transition-all ${
                   user?.role === 'ROLE_CUSTOMER'
-                    ? 'bg-brand-500 text-slate-950 font-bold shadow'
+                    ? 'bg-brand-500 text-slate-950 font-black shadow'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                Customer
+                Rider
               </button>
               <button
                 onClick={() => {
                   quickSwitchRole('ROLE_DRIVER');
                   setActiveTab('driver-cockpit');
                 }}
-                className={`px-2.5 py-1 rounded-lg transition-all ${
+                className={`px-2 sm:px-2.5 py-1 rounded-lg transition-all ${
                   user?.role === 'ROLE_DRIVER'
-                    ? 'bg-accent-cyan text-slate-950 font-bold shadow'
+                    ? 'bg-accent-cyan text-slate-950 font-black shadow'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -151,9 +151,9 @@ const Navbar = ({ activeTab, setActiveTab }) => {
                   quickSwitchRole('ROLE_ADMIN');
                   setActiveTab('admin-stats');
                 }}
-                className={`px-2.5 py-1 rounded-lg transition-all ${
+                className={`px-2 sm:px-2.5 py-1 rounded-lg transition-all ${
                   user?.role === 'ROLE_ADMIN'
-                    ? 'bg-purple-500 text-slate-950 font-bold shadow'
+                    ? 'bg-purple-500 text-slate-950 font-black shadow'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
