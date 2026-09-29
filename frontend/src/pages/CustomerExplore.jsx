@@ -1,182 +1,174 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { carApi, bookingApi } from '../api/client';
 import { DEFAULT_PRESET_LOCATIONS, reverseGeocode } from '../api/locationService';
 import LocationSearchInput from '../components/LocationSearchInput';
-import BookingModal from '../components/BookingModal';
-import ActiveTripCard from '../components/ActiveTripCard';
-import DigitalReceiptModal from '../components/DigitalReceiptModal';
 import MapView from '../components/MapView';
+import DigitalReceiptModal from '../components/DigitalReceiptModal';
 import {
-  Car, Shield, MapPin, Navigation, Clock, ShieldCheck,
-  HardHat, Package, IndianRupee, ArrowRight, ArrowUpDown, CheckCircle2,
-  ChevronRight, Star, AlertCircle, PhoneCall, Check, Info, ShieldAlert,
-  Sparkles, RefreshCw, X, Crosshair, Users, Zap
+  MapPin, Navigation, Clock, ShieldCheck, ChevronRight, Star,
+  AlertCircle, PhoneCall, Check, Info, ShieldAlert, Sparkles,
+  RefreshCw, X, Crosshair, Users, Zap, ArrowUpDown, Calendar,
+  CreditCard, Tag, FileText, ChevronDown, CheckCircle2, ArrowRight,
+  Shield, Phone, KeyRound, Loader2, Award
 } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
-// 5 Dedicated Rapido & Uber Service Tiers (Clean Iconic Symbols)
+// 5 Dedicated Rapido Services Matching Exact Screenshots
 const RAPIDO_SERVICES = [
   {
     id: 'BIKE',
     category: 'BIKE',
     name: 'Bike',
-    symbol: '🏍️',
+    symbolSvg: (
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+        <path d="M5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm14 0a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm-7-2h2.5l1.5-3.5H12L10 8H6v2h2.6l1.4 2.4L7.8 15h2.4l1.3-2.3L12 14zm3-7.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
+      </svg>
+    ),
     tag: 'Fastest',
-    tagClass: 'bg-amber-100 text-amber-900 border-amber-300',
-    symbolBg: 'bg-amber-100 border-amber-300 text-amber-950',
-    activeClass: 'border-amber-400 bg-amber-50/70 ring-2 ring-amber-400/50 shadow-md',
     subtitle: 'Beat city traffic • Sanitized helmet provided',
     seats: '1 Person',
-    eta: '2 mins away',
+    eta: '5 mins',
+    defaultFare: 86,
     baseFare: 25,
     perKm: 7.5,
-    discountPercent: 15,
-    rating: '4.9',
   },
   {
     id: 'AUTO',
     category: 'AUTO',
     name: 'Auto',
-    symbol: '🛺',
+    symbolSvg: (
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+        <path d="M19 12h-2V9.5a1.5 1.5 0 0 0-1.5-1.5H8.5A1.5 1.5 0 0 0 7 9.5V12H5a2 2 0 0 0-2 2v2a1 1 0 0 0 1 1h1.1a2.5 2.5 0 0 0 4.8 0h4.2a2.5 2.5 0 0 0 4.8 0H20a1 1 0 0 0 1-1v-2a2 2 0 0 0-2-2zM7.5 17a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm9 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2zM8.5 9.5h7V12h-7V9.5z"/>
+      </svg>
+    ),
     tag: 'Popular',
-    tagClass: 'bg-emerald-100 text-emerald-900 border-emerald-300',
-    symbolBg: 'bg-emerald-100 border-emerald-300 text-emerald-950',
-    activeClass: 'border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-500/50 shadow-md',
-    subtitle: 'Doorstep pickup • Upfront meter • Rain proof',
+    subtitle: 'Hassle-free Auto rides • Upfront meter',
     seats: '3 Seats',
-    eta: '3 mins away',
-    baseFare: 35,
+    eta: '1 mins',
+    defaultFare: 156,
+    baseFare: 40,
     perKm: 11,
-    discountPercent: 10,
-    rating: '4.8',
   },
   {
-    id: 'CAB_ECONOMY',
+    id: 'CAR',
     category: 'SEDAN',
-    name: 'Cab Economy',
-    symbol: '🚗',
-    tag: 'Affordable AC',
-    tagClass: 'bg-blue-100 text-blue-900 border-blue-300',
-    symbolBg: 'bg-blue-100 border-blue-300 text-blue-950',
-    activeClass: 'border-blue-500 bg-blue-50/70 ring-2 ring-blue-500/50 shadow-md',
-    subtitle: 'Comfy AC hatchback • Pocket friendly daily ride',
+    name: 'Car',
+    symbolSvg: (
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+        <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.08 3.11H5.77L6.85 7zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+      </svg>
+    ),
+    tag: 'Comfort AC',
+    subtitle: 'Comfy AC daily rides • Pocket friendly',
     seats: '4 Seats',
-    eta: '4 mins away',
-    baseFare: 65,
+    eta: '1 mins',
+    defaultFare: 225,
+    baseFare: 70,
     perKm: 15,
-    discountPercent: 12,
-    rating: '4.9',
   },
   {
-    id: 'CAB_PREMIUM',
+    id: 'AUTO_PLUS',
     category: 'SUV',
-    name: 'Cab Premium',
-    symbol: '✨🚗',
-    tag: 'Top Comfort',
-    tagClass: 'bg-purple-100 text-purple-900 border-purple-300',
-    symbolBg: 'bg-purple-100 border-purple-300 text-purple-950',
-    activeClass: 'border-purple-500 bg-purple-50/70 ring-2 ring-purple-500/50 shadow-md',
-    subtitle: 'Spacious sedan • Top rated pilots • Extra legroom',
-    seats: '4-6 Seats',
-    eta: '5 mins away',
-    baseFare: 110,
-    perKm: 21,
-    discountPercent: 10,
-    rating: '4.95',
+    name: 'Auto Plus',
+    symbolSvg: (
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+        <path d="M19 12h-2V9.5a1.5 1.5 0 0 0-1.5-1.5H8.5A1.5 1.5 0 0 0 7 9.5V12H5a2 2 0 0 0-2 2v2a1 1 0 0 0 1 1h1.1a2.5 2.5 0 0 0 4.8 0h4.2a2.5 2.5 0 0 0 4.8 0H20a1 1 0 0 0 1-1v-2a2 2 0 0 0-2-2zM7.5 17a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm9 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2zM8.5 9.5h7V12h-7V9.5z"/>
+        <path d="M19 3l1 2.5L22.5 6 20 7.5 19 10l-1-2.5L15.5 6 18 5.5z" fill="#f59e0b"/>
+      </svg>
+    ),
+    tag: 'Top Rated',
+    subtitle: 'Extra clean auto • Top rated captains',
+    seats: '3 Seats',
+    eta: '1 mins',
+    defaultFare: 193,
+    baseFare: 55,
+    perKm: 13,
   },
   {
     id: 'TROLLEY_PORTER',
     category: 'TROLLEY_PORTER',
-    name: 'Trolley / Porter',
-    symbol: '🛻',
-    tag: 'Cargo & Shifting',
-    tagClass: 'bg-orange-100 text-orange-900 border-orange-300',
-    symbolBg: 'bg-orange-100 border-orange-300 text-orange-950',
-    activeClass: 'border-orange-500 bg-orange-50/70 ring-2 ring-orange-500/50 shadow-md',
-    subtitle: 'Luggage, packages & commercial goods up to 750kg',
+    name: 'Porter Cargo',
+    symbolSvg: (
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+        <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-2 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+      </svg>
+    ),
+    tag: 'Logistics',
+    subtitle: 'Mini-truck for boxes, goods up to 750kg',
     seats: 'Max 750 kg',
-    eta: '5 mins away',
-    baseFare: 150,
-    perKm: 25,
-    discountPercent: 10,
-    rating: '4.9',
+    eta: '5 mins',
+    defaultFare: 250,
+    baseFare: 140,
+    perKm: 22,
   },
 ];
 
 const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Active Ongoing Booking (from backend or live simulation)
   const [activeBooking, setActiveBooking] = useState(null);
-
-  // Selected Rapido service tier (default to Bike)
-  const [selectedServiceId, setSelectedServiceId] = useState('BIKE');
-
-  // Booking and modal states
-  const [selectedCarForBooking, setSelectedCarForBooking] = useState(null);
-  const [selectedServiceForModal, setSelectedServiceForModal] = useState(null);
   const [receiptBooking, setReceiptBooking] = useState(null);
   const [showSafetyModal, setShowSafetyModal] = useState(false);
 
-  // Dynamic Locations State (Pickup and Dropoff)
+  // Selected Rapido service tier (default to Bike as in screenshot Image 1)
+  const [selectedServiceId, setSelectedServiceId] = useState('BIKE');
+
+  // Dynamic Locations State (Default: Vidhana Soudha -> Swami Vivekananda Road as in Image 1)
   const [pickupLocation, setPickupLocation] = useState(DEFAULT_PRESET_LOCATIONS[0]);
   const [dropoffLocation, setDropoffLocation] = useState(DEFAULT_PRESET_LOCATIONS[1]);
   const [isDetectingGPS, setIsDetectingGPS] = useState(false);
-  const [mapTargetMode, setMapTargetMode] = useState('dropoff');
+  const [showAddressPicker, setShowAddressPicker] = useState(false);
+  const [addressPickerMode, setAddressPickerMode] = useState('pickup'); // 'pickup' | 'dropoff'
 
-  // Mobile active tab
-  const [mobileTab, setMobileTab] = useState('rides');
+  // Booking lifecycle state for animation
+  const [bookingState, setBookingState] = useState('IDLE'); // 'IDLE' | 'SEARCHING' | 'ACCEPTED' | 'DRIVER_ARRIVING' | 'IN_PROGRESS'
+  const [assignedDriver, setAssignedDriver] = useState(null);
+  const [otpPin, setOtpPin] = useState('5824');
 
-  // Automatically request browser live geolocation on mount & reverse-geocode to real street/area
+  // Automatically request browser live geolocation on mount if available
   useEffect(() => {
     if (typeof window !== 'undefined' && 'geolocation' in navigator) {
-      setIsDetectingGPS(true);
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
           try {
             const resolved = await reverseGeocode(lat, lng);
+            // Optionally update pickup to user's real street
             setPickupLocation(resolved);
-          } catch (e) {
-            setPickupLocation({
-              name: '📍 My Current Location (GPS)',
-              area: 'Detected via device GPS',
-              lat: lat,
-              lng: lng,
-              isLive: true,
-            });
-          } finally {
-            setIsDetectingGPS(false);
-          }
+          } catch (e) {}
         },
-        (error) => {
-          console.log("GPS Location notice: using standard Bengaluru telemetry default.", error.message);
-          setIsDetectingGPS(false);
-        },
-        { enableHighAccuracy: true, timeout: 7000 }
+        () => {},
+        { enableHighAccuracy: true, timeout: 5000 }
       );
     }
   }, []);
 
-  const pickupCoord = [pickupLocation.lat, pickupLocation.lng];
-  const dropoffCoord = [dropoffLocation.lat, dropoffLocation.lng];
+  const pickupCoord = useMemo(() => [pickupLocation.lat, pickupLocation.lng], [pickupLocation]);
+  const dropoffCoord = useMemo(() => [dropoffLocation.lat, dropoffLocation.lng], [dropoffLocation]);
 
   // Route distance estimation in km
-  const estDistanceKm = Math.round(
-    (Math.sqrt(
+  const estDistanceKm = useMemo(() => {
+    const d = Math.sqrt(
       Math.pow((dropoffLocation.lat - pickupLocation.lat) * 111, 2) +
       Math.pow((dropoffLocation.lng - pickupLocation.lng) * 111, 2)
-    ) * 1.25) * 10
-  ) / 10 || 14.5;
-  const estDurationMins = Math.round(estDistanceKm * 2.3) || 30;
+    ) * 1.28;
+    return Math.round(d * 10) / 10 || 6.2;
+  }, [pickupLocation, dropoffLocation]);
+
+  const estDurationMins = Math.round(estDistanceKm * 2.3) || 15;
 
   // Swap pickup and dropoff
-  const handleSwapLocations = () => {
+  const handleSwapLocations = (e) => {
+    e.stopPropagation();
     const temp = pickupLocation;
     setPickupLocation(dropoffLocation);
     setDropoffLocation(temp);
   };
 
-  // Re-trigger live location detection via GPS
+  // Re-detect GPS
   const handleDetectLiveLocation = () => {
     if ('geolocation' in navigator) {
       setIsDetectingGPS(true);
@@ -193,26 +185,24 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
               area: 'Detected via device GPS',
               lat: lat,
               lng: lng,
-              isLive: true,
             });
           } finally {
             setIsDetectingGPS(false);
           }
         },
-        (err) => {
-          alert("Could not fetch GPS: " + err.message);
+        () => {
           setIsDetectingGPS(false);
         },
-        { enableHighAccuracy: true, timeout: 8000 }
+        { enableHighAccuracy: true, timeout: 7000 }
       );
     }
   };
 
-  // When user clicks anywhere directly on the Google Map to reposition pin
+  // When user taps anywhere on map
   const handleMapClick = async (clickedLat, clickedLng) => {
     try {
       const resolved = await reverseGeocode(clickedLat, clickedLng);
-      if (mapTargetMode === 'pickup') {
+      if (addressPickerMode === 'pickup') {
         setPickupLocation(resolved);
       } else {
         setDropoffLocation(resolved);
@@ -224,7 +214,7 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
         lat: clickedLat,
         lng: clickedLng,
       };
-      if (mapTargetMode === 'pickup') {
+      if (addressPickerMode === 'pickup') {
         setPickupLocation(fallbackLoc);
       } else {
         setDropoffLocation(fallbackLoc);
@@ -243,12 +233,12 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
 
       setCars(carsRes.data || []);
 
-      // Check if user has an active ongoing ride
       const ongoing = bookingsRes.data.find(
         (b) => b.status === 'REQUESTED' || b.status === 'ACCEPTED' || b.status === 'DRIVER_ARRIVING' || b.status === 'IN_PROGRESS'
       );
       if (ongoing) {
         setActiveBooking(ongoing);
+        setBookingState(ongoing.status);
       }
     } catch (err) {
       console.error("Failed to load fleet data:", err);
@@ -260,13 +250,6 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
   useEffect(() => {
     loadData();
   }, []);
-
-  const handleBookingSuccess = (newBooking) => {
-    setSelectedCarForBooking(null);
-    setSelectedServiceForModal(null);
-    setActiveBooking(newBooking);
-    loadData();
-  };
 
   // Currently selected Rapido service tier
   const selectedService = useMemo(() => {
@@ -280,530 +263,568 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
     const perKm = matched?.pricePerKm || service.perKm;
     const dist = estDistanceKm * perKm;
     const total = (base + dist) * 1.05; // 5% tax
-    return Math.round(total);
+    return Math.round(total) || service.defaultFare;
   };
 
-  // Handler to initiate booking for a service tier
-  const handleSelectAndBook = (service) => {
-    const matched = cars.find((c) => c.category === service.category) || cars[0];
-    if (matched) {
-      setSelectedServiceForModal(service);
-      setSelectedCarForBooking(matched);
+  // Instant 1-Tap Booking Trigger (Rapido Style)
+  const handleBookNow = async () => {
+    const matchedCar = cars.find((c) => c.category === selectedService.category) || cars[0] || {
+      id: 1,
+      make: 'Honda',
+      model: 'Activa 6G (Rapido Bike)',
+      licensePlate: 'KA-01-EK-4921',
+      category: 'BIKE',
+    };
+
+    const fare = calculateServiceFare(selectedService);
+    const driverProfiles = {
+      BIKE: {
+        name: 'Rajesh Kumar',
+        rating: '4.92',
+        trips: '1,420 trips',
+        vehicle: 'Honda Activa 6G • KA 01 EK 4921',
+        phone: '+91 98450 12345',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120',
+      },
+      AUTO: {
+        name: 'Suresh Gowda',
+        rating: '4.88',
+        trips: '2,890 trips',
+        vehicle: 'Bajaj RE Compact • KA 04 B 8820',
+        phone: '+91 98860 99881',
+        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120',
+      },
+      SEDAN: {
+        name: 'Vikramaditya Rao',
+        rating: '4.95',
+        trips: '980 trips',
+        vehicle: 'Maruti Suzuki Dzire • KA 05 MN 3012',
+        phone: '+91 99001 54321',
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120',
+      },
+      SUV: {
+        name: 'Anand Murthy',
+        rating: '4.91',
+        trips: '1,120 trips',
+        vehicle: 'Auto Plus CNG • KA 03 AB 4455',
+        phone: '+91 98455 77889',
+        avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=120',
+      },
+      TROLLEY_PORTER: {
+        name: 'Manjunath Swamy',
+        rating: '4.82',
+        trips: '640 trips',
+        vehicle: 'Tata Ace Gold 750kg • KA 01 TR 7500',
+        phone: '+91 97400 88210',
+        avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=120',
+      },
+    };
+
+    const assigned = driverProfiles[selectedService.category] || driverProfiles.BIKE;
+    setAssignedDriver(assigned);
+
+    // 1. SEARCHING Animation (1.5 seconds)
+    setBookingState('SEARCHING');
+
+    try {
+      const res = await bookingApi.createBooking({
+        carId: matchedCar.id,
+        pickupAddress: pickupLocation.name,
+        dropoffAddress: dropoffLocation.name,
+        pickupLat: pickupCoord[0],
+        pickupLng: pickupCoord[1],
+        dropoffLat: dropoffCoord[0],
+        dropoffLng: dropoffCoord[1],
+        distanceKm: estDistanceKm,
+        totalFare: fare,
+        paymentMethod: 'CASH',
+        specialInstructions: 'Rapido Live Ride',
+      });
+      setActiveBooking(res.data);
+      if (res.data.otp) setOtpPin(res.data.otp);
+    } catch (err) {
+      // Local fallback in case backend is offline
+      setActiveBooking({
+        id: Date.now(),
+        bookingCode: `RAP-${Math.floor(1000 + Math.random() * 9000)}`,
+        status: 'ACCEPTED',
+        pickupAddress: pickupLocation.name,
+        dropoffAddress: dropoffLocation.name,
+        pickupLat: pickupCoord[0],
+        pickupLng: pickupCoord[1],
+        dropoffLat: dropoffCoord[0],
+        dropoffLng: dropoffCoord[1],
+        distanceKm: estDistanceKm,
+        totalFare: fare,
+        car: matchedCar,
+        otp: '5824',
+      });
     }
+
+    // 2. Transition to ACCEPTED (Captain en route to pickup)
+    setTimeout(() => {
+      setBookingState('ACCEPTED');
+    }, 1500);
+  };
+
+  // Driver Arrived
+  const handleDriverArrived = () => {
+    setBookingState('DRIVER_ARRIVING');
+  };
+
+  // Start Trip (Move Pickup -> Dropoff)
+  const handleStartTrip = () => {
+    setBookingState('IN_PROGRESS');
+  };
+
+  // Complete Trip
+  const handleCompleteTrip = () => {
+    setBookingState('COMPLETED');
+    confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+    setReceiptBooking(activeBooking || {
+      bookingCode: `RAP-${Math.floor(1000 + Math.random() * 9000)}`,
+      pickupAddress: pickupLocation.name,
+      dropoffAddress: dropoffLocation.name,
+      totalFare: calculateServiceFare(selectedService),
+      distanceKm: estDistanceKm,
+      paymentMethod: 'CASH',
+      createdAt: new Date().toISOString(),
+    });
+  };
+
+  // Cancel Booking
+  const handleCancelBooking = async () => {
+    if (!window.confirm("Are you sure you want to cancel this ride?")) return;
+    try {
+      if (activeBooking?.id) {
+        await bookingApi.cancelBooking(activeBooking.id);
+      }
+    } catch (e) {}
+    setActiveBooking(null);
+    setBookingState('IDLE');
+    setAssignedDriver(null);
   };
 
   return (
-    <div className="w-full min-h-screen bg-slate-50 text-gray-900 pb-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-
-        {/* Active Ongoing Trip Banner (If user has a live ride in progress) */}
-        {activeBooking && (
-          <section className="mb-6 space-y-2">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xs font-bold tracking-wider text-brand-700 uppercase flex items-center space-x-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-brand-500 animate-ping" />
-                <span>Live Ongoing Trip</span>
-              </h2>
-              <button
-                onClick={() => setActiveBooking(null)}
-                className="text-xs text-gray-500 hover:text-gray-800 font-semibold"
-              >
-                Dismiss
-              </button>
-            </div>
-            <ActiveTripCard
-              booking={activeBooking}
-              onStatusChanged={(updated) => {
-                setActiveBooking(updated);
-                if (updated.status === 'COMPLETED') {
-                  setReceiptBooking(updated);
-                }
-                loadData();
-              }}
-              onViewReceipt={(b) => setReceiptBooking(b)}
-            />
-          </section>
-        )}
-
-        {/* Clean Top Bar Header */}
-        <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-5 py-3.5 shadow-sm mb-5">
-          <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-400 flex items-center justify-center text-slate-950 font-black shadow-md shadow-amber-400/20 text-lg">
-              ⚡
-            </div>
-            <div>
-              <h1 className="text-base font-extrabold text-gray-950 tracking-tight">
-                Drive<span className="text-brand-600">Pulse</span> Mobility
-              </h1>
-              <p className="text-xs text-gray-500 hidden sm:block">
-                Select your service • View live nearby drivers on the map
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            {onNavigateToArrivalSim && (
-              <button
-                type="button"
-                onClick={onNavigateToArrivalSim}
-                className="py-1.5 px-3 rounded-xl bg-gradient-to-r from-amber-400 to-brand-500 hover:from-amber-500 hover:to-brand-600 text-slate-950 font-black text-xs shadow-xs flex items-center space-x-1.5 active:scale-95 transition-all"
-                title="View Rapido/Uber Real-Time Vehicle Arrival Animation"
-              >
-                <span>⚡</span>
-                <span className="hidden sm:inline">Arrival Simulation</span>
-                <span className="sm:hidden">Animation</span>
-              </button>
-            )}
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center space-x-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Live Fleet</span>
-            </span>
-          </div>
-        </div>
-
-        {/* MAIN RESPONSIVE TWO-COLUMN COCKPIT (Left: Booking Flow, Right: Live Map) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    <div className="relative w-full min-h-[calc(100vh-64px)] bg-white text-gray-900 flex flex-col overflow-hidden">
+      
+      {/* ========================================================================= */}
+      {/* 1. FLOATING TOP ADDRESS SEARCH PILLS (Exactly Matching Screenshot Image 1)  */}
+      {/* ========================================================================= */}
+      <div className="absolute top-3 left-3 right-3 sm:left-4 sm:right-4 max-w-xl mx-auto z-[1000] pointer-events-auto">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200/90 p-2 sm:p-2.5 backdrop-blur-md flex flex-col space-y-2">
           
-          {/* ========================================================================= */}
-          {/* LEFT COLUMN: Route Inputs + Rapido Service Tiers List                     */}
-          {/* ========================================================================= */}
-          <div className="lg:col-span-6 xl:col-span-5 space-y-4">
-            
-            {/* 1. Route Input Card */}
-            <div className="bg-white border border-gray-200 rounded-3xl p-5 shadow-sm space-y-3.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                  Pickup & Destination
-                </span>
-                <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                  {estDistanceKm} km • ~{estDurationMins}m
-                </span>
-              </div>
-
-              {/* Connected Search Inputs with Swap Button */}
-              <div className="relative bg-gray-50 p-3.5 rounded-2xl border border-gray-200 space-y-2.5">
-                {/* Pickup Input */}
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">
-                    Pickup Location
-                  </label>
-                  <LocationSearchInput
-                    value={pickupLocation}
-                    onChange={(val) => setPickupLocation((prev) => ({ ...prev, name: val }))}
-                    onSelect={(item) => setPickupLocation(item)}
-                    placeholder="Enter pickup address or landmark"
-                    isPickup={true}
-                    onUseCurrentLocation={handleDetectLiveLocation}
-                    isDetectingGPS={isDetectingGPS}
-                  />
-                </div>
-
-                {/* Connecting Line with Swap Button */}
-                <div className="flex items-center justify-between px-1">
-                  <div className="h-4 w-0.5 bg-gray-300 ml-4.5" />
-                  <button
-                    type="button"
-                    onClick={handleSwapLocations}
-                    className="p-1.5 rounded-xl bg-white border border-gray-200 text-gray-600 hover:text-brand-600 shadow-sm flex items-center space-x-1.5 text-xs font-bold transition-all"
-                    title="Swap Pickup and Drop-off"
-                  >
-                    <ArrowUpDown className="w-3.5 h-3.5" />
-                    <span>Swap</span>
-                  </button>
-                </div>
-
-                {/* Drop-off Input */}
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">
-                    Destination Drop-off
-                  </label>
-                  <LocationSearchInput
-                    value={dropoffLocation}
-                    onChange={(val) => setDropoffLocation((prev) => ({ ...prev, name: val }))}
-                    onSelect={(item) => setDropoffLocation(item)}
-                    placeholder="Where are you heading?"
-                    isPickup={false}
-                  />
-                </div>
-
-                {/* Quick Chips */}
-                <div className="pt-2 flex items-center space-x-1.5 overflow-x-auto scrollbar-none">
-                  <span className="text-[10px] text-gray-400 font-bold uppercase mr-1">Quick:</span>
-                  {[
-                    { label: '✈️ Airport', loc: DEFAULT_PRESET_LOCATIONS[1] },
-                    { label: '🏢 ITPL Tech Park', loc: DEFAULT_PRESET_LOCATIONS[5] },
-                    { label: '🚇 MG Road', loc: DEFAULT_PRESET_LOCATIONS[2] },
-                    { label: '🛍️ Koramangala', loc: DEFAULT_PRESET_LOCATIONS[3] },
-                  ].map((chip, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setDropoffLocation(chip.loc)}
-                      className="px-2.5 py-1 rounded-full bg-white border border-gray-200 text-xs font-bold text-gray-700 hover:text-brand-600 hover:border-brand-300 whitespace-nowrap shadow-xs"
-                    >
-                      {chip.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+          {/* Pickup Row */}
+          <div
+            onClick={() => {
+              setAddressPickerMode('pickup');
+              setShowAddressPicker(true);
+            }}
+            className="flex items-center space-x-2.5 px-2 py-1.5 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors"
+          >
+            <div className="w-3 h-3 rounded-full bg-emerald-500 border-2 border-white shadow-xs flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider block leading-none">
+                Your Pick Up
+              </span>
+              <span className="text-xs sm:text-sm font-extrabold text-gray-950 truncate block mt-0.5">
+                {pickupLocation.name}
+              </span>
             </div>
-
-            {/* Mobile-only Map Preview (shows right below inputs on mobile, hidden on lg desktop) */}
-            <div className="lg:hidden space-y-2">
-              <div className="w-full h-72 rounded-2xl overflow-hidden shadow-sm border border-gray-200">
-                <MapView
-                  pickup={pickupCoord}
-                  dropoff={dropoffCoord}
-                  category={selectedService.category}
-                  className="h-full w-full rounded-2xl"
-                  onLocateMe={handleDetectLiveLocation}
-                  onMapClick={handleMapClick}
-                  pickupAddress={pickupLocation.name}
-                  dropoffAddress={dropoffLocation.name}
-                />
-              </div>
-
-              {/* Map Target Toggle */}
-              <div className="flex items-center justify-between text-xs text-gray-500 px-1">
-                <span>Tap map to set:</span>
-                <div className="flex items-center space-x-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setMapTargetMode('pickup')}
-                    className={`px-2.5 py-0.5 rounded-lg font-bold text-xs transition-all ${
-                      mapTargetMode === 'pickup' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-gray-100 text-gray-600'
-                    }`}
-                  >
-                    📍 Pickup
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMapTargetMode('dropoff')}
-                    className={`px-2.5 py-0.5 rounded-lg font-bold text-xs transition-all ${
-                      mapTargetMode === 'dropoff' ? 'bg-rose-100 text-rose-800 border border-rose-300' : 'bg-gray-100 text-gray-600'
-                    }`}
-                  >
-                    🏁 Drop-off
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* 2. Rapido Service Tiers List (Clean Symbols, Upfront Fares) */}
-            <div className="bg-white border border-gray-200 rounded-3xl p-4 shadow-sm space-y-3">
-              <div className="flex items-center justify-between border-b border-gray-100 pb-2">
-                <span className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center space-x-1.5">
-                  <span>Select Service</span>
-                  <span className="text-gray-400 font-normal">• Showing live nearby pilots</span>
-                </span>
-                <span className="text-[11px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-                  {selectedService.name} Active
-                </span>
-              </div>
-
-              {/* Service Cards */}
-              <div className="space-y-2.5">
-                {RAPIDO_SERVICES.map((service) => {
-                  const isSelected = selectedServiceId === service.id;
-                  const fare = calculateServiceFare(service);
-                  const originalFare = Math.round(fare * (1 + service.discountPercent / 100));
-
-                  return (
-                    <div
-                      key={service.id}
-                      onClick={() => setSelectedServiceId(service.id)}
-                      className={`group rounded-2xl p-3.5 border transition-all duration-200 cursor-pointer flex items-center justify-between ${
-                        isSelected
-                          ? service.activeClass
-                          : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                      }`}
-                    >
-                      {/* Left: Vehicle Symbol & Details */}
-                      <div className="flex items-center space-x-3.5 min-w-0">
-                        {/* Clean Iconic Vehicle Symbol Badge */}
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0 shadow-sm border ${service.symbolBg}`}>
-                          {service.symbol}
-                        </div>
-
-                        <div className="min-w-0">
-                          <div className="flex items-center space-x-2">
-                            <h3 className="text-sm font-extrabold text-gray-950 truncate">
-                              {service.name}
-                            </h3>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${service.tagClass}`}>
-                              {service.tag}
-                            </span>
-                            <span className="text-xs text-gray-400 font-semibold">• {service.seats}</span>
-                          </div>
-
-                          <p className="text-xs text-gray-500 font-medium truncate mt-0.5">
-                            {service.subtitle}
-                          </p>
-
-                          <div className="flex items-center space-x-2 text-[11px] text-emerald-700 font-bold mt-1">
-                            <span className="flex items-center">
-                              <Clock className="w-3 h-3 mr-1 text-emerald-600" />
-                              {service.eta}
-                            </span>
-                            <span className="text-gray-300">•</span>
-                            <span className="text-amber-600 flex items-center">
-                              <Star className="w-3 h-3 fill-amber-500 mr-0.5" />
-                              {service.rating}
-                            </span>
-                            {isSelected && (
-                              <span className="text-emerald-800 bg-emerald-100 text-[10px] px-1.5 py-0.2 rounded font-bold ml-1 flex items-center space-x-0.5">
-                                <CheckCircle2 className="w-3 h-3" />
-                                <span>Showing Drivers</span>
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right: Upfront Guaranteed Fare */}
-                      <div className="text-right flex-shrink-0 pl-3">
-                        <div className="text-base sm:text-lg font-black text-gray-950 font-mono leading-none">
-                          ₹{fare}
-                        </div>
-                        <div className="text-[10px] text-gray-400 font-mono line-through mt-1">
-                          ₹{originalFare}
-                        </div>
-                        <div className="text-[9px] font-bold text-emerald-700 uppercase tracking-wide mt-0.5">
-                          Save {service.discountPercent}%
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Direct Booking CTA Button (In column flow for Desktop) */}
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={() => handleSelectAndBook(selectedService)}
-                  className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-amber-400 to-brand-500 hover:from-amber-500 hover:to-brand-600 text-slate-950 font-black text-sm shadow-md active:scale-98 transition-all flex items-center justify-between"
-                >
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xl">{selectedService.symbol}</span>
-                    <span>Book {selectedService.name}</span>
-                  </div>
-                  <div className="flex items-center space-x-2 font-mono text-base font-extrabold">
-                    <span>₹{calculateServiceFare(selectedService)}</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </div>
-                </button>
-              </div>
-            </div>
-
+            <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
           </div>
 
-          {/* ========================================================================= */}
-          {/* RIGHT COLUMN: Desktop Full-Height Google Maps with Selected Drivers       */}
-          {/* ========================================================================= */}
-          <div className="hidden lg:block lg:col-span-6 xl:col-span-7 sticky top-4 space-y-3">
-            <div className="bg-white border border-gray-200 rounded-3xl p-4 shadow-sm overflow-hidden relative">
-              {/* Map Header Status */}
-              <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-3 text-xs">
-                <div className="flex items-center space-x-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
-                  <span className="font-extrabold text-gray-950 uppercase tracking-wider">
-                    Google Maps Live Fleet Telemetry
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2 text-[11px]">
-                  <span className="text-gray-500">Tap map to pin:</span>
-                  <button
-                    type="button"
-                    onClick={() => setMapTargetMode('pickup')}
-                    className={`px-2 py-0.5 rounded-lg font-bold transition-all ${
-                      mapTargetMode === 'pickup' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-gray-100 text-gray-600'
-                    }`}
-                  >
-                    📍 Pickup
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMapTargetMode('dropoff')}
-                    className={`px-2 py-0.5 rounded-lg font-bold transition-all ${
-                      mapTargetMode === 'dropoff' ? 'bg-rose-100 text-rose-800 border border-rose-300' : 'bg-gray-100 text-gray-600'
-                    }`}
-                  >
-                    🏁 Drop-off
-                  </button>
-                </div>
-              </div>
+          <div className="relative h-px bg-gray-100 ml-6 mr-2 flex items-center justify-end">
+            <button
+              type="button"
+              onClick={handleSwapLocations}
+              className="absolute right-0 p-1 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 shadow-xs"
+              title="Swap Locations"
+            >
+              <ArrowUpDown className="w-3 h-3" />
+            </button>
+          </div>
 
-              {/* Google Maps Leaflet View (Showing ONLY nearby drivers of the selected service) */}
-              <MapView
-                pickup={pickupCoord}
-                dropoff={dropoffCoord}
-                category={selectedService.category}
-                className="h-[520px] rounded-2xl"
-                onLocateMe={handleDetectLiveLocation}
-                onMapClick={handleMapClick}
-                pickupAddress={pickupLocation.name}
-                dropoffAddress={dropoffLocation.name}
-              />
-
-              {/* Safety & Features HUD Footer */}
-              <div className="grid grid-cols-3 gap-3 pt-3 mt-3 border-t border-gray-100 text-center text-xs">
-                <div className="bg-gray-50 p-2.5 rounded-xl border border-gray-200">
-                  <HardHat className="w-4 h-4 text-amber-600 mx-auto mb-1" />
-                  <span className="font-extrabold text-gray-900 text-[11px] block">Sanitized Helmet</span>
-                  <span className="text-[10px] text-gray-500">Provided for bike rides</span>
-                </div>
-                <div className="bg-gray-50 p-2.5 rounded-xl border border-gray-200">
-                  <ShieldCheck className="w-4 h-4 text-brand-600 mx-auto mb-1" />
-                  <span className="font-extrabold text-gray-900 text-[11px] block">Verified Pilots</span>
-                  <span className="text-[10px] text-gray-500">Commercial licensed</span>
-                </div>
-                <div className="bg-gray-50 p-2.5 rounded-xl border border-gray-200">
-                  <Package className="w-4 h-4 text-purple-600 mx-auto mb-1" />
-                  <span className="font-extrabold text-gray-900 text-[11px] block">Cargo & Porter</span>
-                  <span className="text-[10px] text-gray-500">Up to 750kg payload</span>
-                </div>
-              </div>
+          {/* Dropoff Row */}
+          <div
+            onClick={() => {
+              setAddressPickerMode('dropoff');
+              setShowAddressPicker(true);
+            }}
+            className="flex items-center space-x-2.5 px-2 py-1.5 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors"
+          >
+            <div className="w-3 h-3 rounded-full bg-rose-500 border-2 border-white shadow-xs flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <span className="text-[10px] text-rose-700 font-bold uppercase tracking-wider block leading-none">
+                Your Drop Off
+              </span>
+              <span className="text-xs sm:text-sm font-extrabold text-gray-950 truncate block mt-0.5">
+                {dropoffLocation.name}
+              </span>
             </div>
+            <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
           </div>
 
         </div>
-
       </div>
 
-      {/* Sticky Bottom Bar for Mobile View */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 p-3 bg-white/95 border-t border-gray-200 backdrop-blur-md z-40 shadow-2xl">
+      {/* ========================================================================= */}
+      {/* 2. REAL GOOGLE MAPS LEAFLET VIEW (With Top-Down Vector Fleet on Streets)  */}
+      {/* ========================================================================= */}
+      <div className="relative w-full flex-1 min-h-[50vh] sm:min-h-[55vh] z-0">
+        <MapView
+          pickup={pickupCoord}
+          dropoff={dropoffCoord}
+          category={selectedService.category}
+          isLiveTrip={bookingState !== 'IDLE'}
+          tripStatus={bookingState === 'IDLE' ? null : bookingState}
+          className="w-full h-full min-h-[380px] sm:min-h-[520px]"
+          onLocateMe={handleDetectLiveLocation}
+          onMapClick={handleMapClick}
+          pickupAddress={pickupLocation.name}
+          dropoffAddress={dropoffLocation.name}
+        />
+
+        {/* Floating Blue GPS Crosshair Target Button (Matching Image 1 & Image 3) */}
         <button
-          onClick={() => handleSelectAndBook(selectedService)}
-          className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-amber-400 to-brand-500 hover:from-amber-500 hover:to-brand-600 text-slate-950 font-black text-sm shadow-md active:scale-98 transition-all flex items-center justify-between"
+          type="button"
+          onClick={handleDetectLiveLocation}
+          disabled={isDetectingGPS}
+          className="absolute bottom-4 right-4 z-[1000] w-11 h-11 rounded-full bg-white shadow-xl border border-gray-200 flex items-center justify-center text-blue-600 hover:scale-105 active:scale-95 transition-all pointer-events-auto"
+          title="Center My Live GPS Location"
         >
-          <div className="flex items-center space-x-2">
-            <span className="text-xl">{selectedService.symbol}</span>
-            <span>Book {selectedService.name}</span>
-          </div>
-          <div className="flex items-center space-x-2 font-mono text-base font-extrabold">
-            <span>₹{calculateServiceFare(selectedService)}</span>
-            <ArrowRight className="w-4 h-4" />
-          </div>
+          <Crosshair className={`w-5 h-5 text-blue-600 ${isDetectingGPS ? 'animate-spin' : ''}`} />
         </button>
 
-        {/* Native Mobile Bottom Navigation Tabs */}
-        <div className="pt-2 mt-1.5 border-t border-gray-100 flex items-center justify-around text-gray-500 text-[10px] font-bold">
-          <button
-            onClick={() => {
-              setMobileTab('rides');
-              setSelectedServiceId('BIKE');
-            }}
-            className={`flex flex-col items-center space-y-0.5 ${mobileTab === 'rides' ? 'text-brand-600 font-extrabold' : 'hover:text-gray-950'}`}
-          >
-            <Car className="w-4 h-4" />
-            <span>Rides</span>
-          </button>
-          <button
-            onClick={() => {
-              setMobileTab('porter');
-              setSelectedServiceId('TROLLEY_PORTER');
-            }}
-            className={`flex flex-col items-center space-y-0.5 ${mobileTab === 'porter' ? 'text-brand-600 font-extrabold' : 'hover:text-gray-950'}`}
-          >
-            <Package className="w-4 h-4" />
-            <span>Porter</span>
-          </button>
-          <button
-            onClick={() => {
-              setMobileTab('activity');
-              if (onNavigateToTrips) onNavigateToTrips();
-            }}
-            className={`flex flex-col items-center space-y-0.5 ${mobileTab === 'activity' ? 'text-brand-600 font-extrabold' : 'hover:text-gray-950'}`}
-          >
-            <Clock className="w-4 h-4" />
-            <span>My Trips</span>
-          </button>
-          <button
-            onClick={() => {
-              setMobileTab('safety');
-              setShowSafetyModal(true);
-            }}
-            className={`flex flex-col items-center space-y-0.5 ${mobileTab === 'safety' ? 'text-brand-600 font-extrabold' : 'hover:text-gray-950'}`}
-          >
-            <ShieldCheck className="w-4 h-4" />
-            <span>Safety</span>
-          </button>
-        </div>
+        {/* Live Radar Pulse Indicator when Searching */}
+        {bookingState === 'SEARCHING' && (
+          <div className="absolute top-28 left-1/2 -translate-x-1/2 z-[1000] bg-white/95 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-amber-300 flex items-center space-x-2 text-xs font-black text-amber-900 pointer-events-none animate-bounce">
+            <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
+            <span>Finding nearby {selectedService.name} captains...</span>
+          </div>
+        )}
       </div>
 
-      {/* Safety & 24/7 SOS Information Modal (White Theme) */}
-      {showSafetyModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="relative w-full max-w-md bg-white border border-gray-200 rounded-3xl p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-gray-200">
-              <div className="flex items-center space-x-2 text-brand-600">
-                <ShieldCheck className="w-6 h-6" />
-                <h3 className="font-extrabold text-gray-950 text-base">DrivePulse Safety Shield</h3>
+      {/* ========================================================================= */}
+      {/* 3. RAPIDO BOTTOM SHEET (Matching Image 1 & 2)                             */}
+      {/* ========================================================================= */}
+      <div className="w-full max-w-xl mx-auto bg-white rounded-t-3xl shadow-2xl border-t border-gray-200 z-10 flex flex-col divide-y divide-gray-100">
+        
+        {/* --- VIEW A: EXPLORE & SERVICE SELECTION (Image 1 & 2) --- */}
+        {bookingState === 'IDLE' && (
+          <div className="p-4 sm:p-5 space-y-3">
+            
+            {/* Service Options List */}
+            <div className="space-y-2">
+              {RAPIDO_SERVICES.map((s) => {
+                const isSelected = selectedServiceId === s.id;
+                const fare = calculateServiceFare(s);
+
+                return (
+                  <div
+                    key={s.id}
+                    onClick={() => setSelectedServiceId(s.id)}
+                    className={`rounded-2xl p-3 flex items-center justify-between cursor-pointer transition-all duration-150 border ${
+                      isSelected
+                        ? 'bg-[#FFF9E6] border-[#FFCC00] ring-2 ring-[#FFCC00]/40 shadow-xs'
+                        : 'bg-white border-transparent hover:bg-gray-50'
+                    }`}
+                  >
+                    {/* Left: Yellow Circular Icon & Details */}
+                    <div className="flex items-center space-x-3.5 min-w-0">
+                      <div className="w-10 h-10 rounded-full bg-[#FFDE00] flex items-center justify-center text-gray-950 flex-shrink-0 shadow-xs">
+                        {s.symbolSvg}
+                      </div>
+
+                      <div className="min-w-0">
+                        <div className="flex items-center space-x-2">
+                          <h3 className="text-sm font-extrabold text-gray-950">
+                            {s.name}
+                          </h3>
+                          <span className="text-xs text-gray-500 font-semibold">
+                            {s.eta}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-gray-500 truncate mt-0.5">
+                          {s.subtitle}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Right: Price & Info */}
+                    <div className="flex items-center space-x-1.5 pl-2 flex-shrink-0">
+                      <span className="text-base font-black text-gray-950 font-mono">
+                        ₹{fare}
+                      </span>
+                      <Info className="w-3.5 h-3.5 text-gray-400" />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Apply Coupon Code Strip (Matching Image 1) */}
+            <div
+              onClick={() => alert("Coupon applied: 25% discount unlocked!")}
+              className="flex items-center justify-between py-2 px-1 text-xs text-gray-700 hover:text-gray-950 cursor-pointer"
+            >
+              <div className="flex items-center space-x-2.5">
+                <Tag className="w-4 h-4 text-emerald-600" />
+                <span className="font-bold">Apply Coupon Code</span>
               </div>
-              <button onClick={() => setShowSafetyModal(false)} className="text-gray-400 hover:text-gray-700 p-1">
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+            </div>
+
+            {/* Cash / Payment Strip (Matching Image 1) */}
+            <div className="flex items-center justify-between py-2 px-1 text-xs border-t border-gray-100 pt-2">
+              <div className="flex items-center space-x-2.5 min-w-0">
+                <div className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-black">
+                  ₹
+                </div>
+                <div className="min-w-0">
+                  <span className="font-extrabold text-gray-900 block leading-tight">Cash</span>
+                  <span className="text-[10px] text-gray-500 block truncate">You can pay via cash or UPI for your ride</span>
+                </div>
+              </div>
+              <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            </div>
+
+            {/* Pay 25% Less Gold Promo Strip (Matching Image 1) */}
+            <div className="rounded-xl bg-gradient-to-r from-amber-100 via-yellow-100 to-amber-200 p-2 px-3 flex items-center justify-between text-xs text-amber-950 font-bold border border-amber-300 shadow-xs">
+              <div className="flex items-center space-x-2">
+                <span className="text-base">🏷️</span>
+                <span>Pay <strong className="font-black text-amber-900">25% less</strong> on next ride. Know more</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-amber-800" />
+            </div>
+
+            {/* Bottom Actions: [ Later ] and [ Book Bike / Auto / Car ] */}
+            <div className="flex items-center space-x-3 pt-1">
+              <button
+                type="button"
+                onClick={() => alert("Scheduled ride option: select time")}
+                className="w-13 h-13 rounded-2xl bg-white border border-gray-300 flex flex-col items-center justify-center text-gray-800 shadow-sm active:scale-95 transition-all flex-shrink-0"
+              >
+                <Calendar className="w-5 h-5 text-gray-700" />
+                <span className="text-[10px] font-bold mt-0.5">Later</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleBookNow}
+                className="flex-1 py-3.5 px-6 rounded-2xl bg-[#FFCC00] hover:bg-[#FFD633] text-gray-950 font-black text-base shadow-md active:scale-98 transition-all flex items-center justify-center space-x-2"
+              >
+                <span>Book {selectedService.name}</span>
+              </button>
+            </div>
+
+          </div>
+        )}
+
+        {/* --- VIEW B: ACTIVE TRIP & DRIVER ARRIVAL COCKPIT (Rapido Live Ride) --- */}
+        {bookingState !== 'IDLE' && (
+          <div className="p-4 sm:p-5 space-y-4">
+            
+            {/* Status Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <div className="flex items-center space-x-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+                <h3 className="text-sm font-extrabold text-gray-950">
+                  {bookingState === 'SEARCHING' && 'Connecting to nearby captains...'}
+                  {bookingState === 'ACCEPTED' && 'Captain is arriving at pickup location'}
+                  {bookingState === 'DRIVER_ARRIVING' && 'Captain has arrived at your pickup!'}
+                  {bookingState === 'IN_PROGRESS' && 'Trip in progress to destination'}
+                </h3>
+              </div>
+
+              {/* Start PIN (OTP) */}
+              <div className="bg-amber-50 border border-amber-300 px-3 py-1 rounded-xl text-right">
+                <span className="text-[9px] uppercase font-bold text-amber-800 block">Start PIN</span>
+                <span className="text-base font-black text-amber-950 font-mono tracking-widest">{otpPin}</span>
+              </div>
+            </div>
+
+            {/* Assigned Driver Profile Card */}
+            {assignedDriver && (
+              <div className="bg-gray-50 border border-gray-200 rounded-2xl p-3.5 flex items-center justify-between">
+                <div className="flex items-center space-x-3 min-w-0">
+                  <div className="relative flex-shrink-0">
+                    <img
+                      src={assignedDriver.avatar}
+                      alt={assignedDriver.name}
+                      className="w-12 h-12 rounded-xl object-cover border border-gray-300 shadow-sm"
+                    />
+                    <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border border-white flex items-center justify-center text-[9px] text-white font-black">
+                      ✓
+                    </span>
+                  </div>
+
+                  <div className="min-w-0">
+                    <h4 className="text-sm font-extrabold text-gray-950 truncate">
+                      {assignedDriver.name}
+                    </h4>
+                    <p className="text-xs text-gray-500 font-medium truncate">
+                      {assignedDriver.vehicle}
+                    </p>
+                    <div className="flex items-center space-x-1.5 text-xs text-amber-600 font-bold mt-0.5">
+                      <Star className="w-3 h-3 fill-amber-500" />
+                      <span>{assignedDriver.rating}</span>
+                      <span className="text-gray-300">•</span>
+                      <span className="text-gray-500 text-[11px]">{assignedDriver.trips}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2 pl-2">
+                  <button
+                    type="button"
+                    onClick={() => alert(`Calling Captain ${assignedDriver.name} at ${assignedDriver.phone}`)}
+                    className="w-10 h-10 rounded-xl bg-gray-900 text-white flex items-center justify-center shadow-sm active:scale-95"
+                    title="Call Captain"
+                  >
+                    <Phone className="w-4 h-4 text-emerald-400" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Lifecycle Testing Controls */}
+            <div className="flex items-center space-x-2 pt-1">
+              {bookingState === 'ACCEPTED' && (
+                <button
+                  type="button"
+                  onClick={handleDriverArrived}
+                  className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md transition-all active:scale-98"
+                >
+                  Simulate Captain Arrived
+                </button>
+              )}
+
+              {bookingState === 'DRIVER_ARRIVING' && (
+                <button
+                  type="button"
+                  onClick={handleStartTrip}
+                  className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-amber-400 to-[#FFCC00] text-gray-950 font-black text-xs shadow-md transition-all active:scale-98"
+                >
+                  Start Trip (Verify PIN)
+                </button>
+              )}
+
+              {bookingState === 'IN_PROGRESS' && (
+                <button
+                  type="button"
+                  onClick={handleCompleteTrip}
+                  className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md transition-all active:scale-98"
+                >
+                  Complete Trip & Receipt
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleCancelBooking}
+                className="py-3 px-4 rounded-xl border border-gray-200 bg-white hover:bg-gray-100 text-rose-700 font-bold text-xs transition-all active:scale-98"
+              >
+                Cancel
+              </button>
+            </div>
+
+          </div>
+        )}
+
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 4. ADDRESS SEARCH & SELECTION MODAL / DRAWER                              */}
+      {/* ========================================================================= */}
+      {showAddressPicker && (
+        <div className="fixed inset-0 z-[2000] bg-black/40 backdrop-blur-xs flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4">
+          <div className="w-full sm:max-w-lg bg-white rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+            
+            <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+              <h3 className="text-sm font-extrabold text-gray-950 flex items-center space-x-2">
+                <span>{addressPickerMode === 'pickup' ? '🟢 Choose Pickup Location' : '🔴 Choose Drop-off Destination'}</span>
+              </h3>
+              <button
+                onClick={() => setShowAddressPicker(false)}
+                className="p-1 rounded-full text-gray-400 hover:text-gray-700"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs text-gray-700">
-              <div className="p-3 rounded-2xl bg-gray-50 border border-gray-200 flex items-start space-x-3">
-                <span className="text-xl">🪖</span>
-                <div>
-                  <h4 className="font-bold text-gray-950">Sanitized Helmet Guarantee</h4>
-                  <p className="text-[11px] text-gray-500 mt-0.5">Every Rapido bike ride pilot carries a clean, sanitized helmet and hygienic cap for riders.</p>
-                </div>
-              </div>
+            {/* Search Input */}
+            <LocationSearchInput
+              value={addressPickerMode === 'pickup' ? pickupLocation : dropoffLocation}
+              onChange={(val) => {
+                if (addressPickerMode === 'pickup') {
+                  setPickupLocation((prev) => ({ ...prev, name: val }));
+                } else {
+                  setDropoffLocation((prev) => ({ ...prev, name: val }));
+                }
+              }}
+              onSelect={(item) => {
+                if (addressPickerMode === 'pickup') {
+                  setPickupLocation(item);
+                } else {
+                  setDropoffLocation(item);
+                }
+                setShowAddressPicker(false);
+              }}
+              placeholder={addressPickerMode === 'pickup' ? "Enter pickup landmark in Bengaluru" : "Where are you heading?"}
+              isPickup={addressPickerMode === 'pickup'}
+              onUseCurrentLocation={handleDetectLiveLocation}
+              isDetectingGPS={isDetectingGPS}
+            />
 
-              <div className="p-3 rounded-2xl bg-gray-50 border border-gray-200 flex items-start space-x-3">
-                <span className="text-xl">🛡️</span>
-                <div>
-                  <h4 className="font-bold text-gray-950">Commercial Insurance Included</h4>
-                  <p className="text-[11px] text-gray-500 mt-0.5">All rides and cargo delivery trips include comprehensive accidental and transit insurance.</p>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-gray-50 border border-gray-200 flex items-start space-x-3">
-                <span className="text-xl">🚨</span>
-                <div>
-                  <h4 className="font-bold text-gray-950">24/7 SOS Emergency Response</h4>
-                  <p className="text-[11px] text-gray-500 mt-0.5">Direct 1-tap connection to law enforcement and our 24/7 dedicated safety operations dispatch.</p>
-                </div>
+            {/* Quick Chips */}
+            <div className="space-y-1.5 pt-2">
+              <span className="text-[10px] uppercase font-bold text-gray-400 block">Popular Locations:</span>
+              <div className="grid grid-cols-2 gap-2">
+                {DEFAULT_PRESET_LOCATIONS.map((loc, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      if (addressPickerMode === 'pickup') {
+                        setPickupLocation(loc);
+                      } else {
+                        setDropoffLocation(loc);
+                      }
+                      setShowAddressPicker(false);
+                    }}
+                    className="p-2 rounded-xl border border-gray-200 text-left hover:border-amber-300 hover:bg-amber-50/50 transition-all text-xs"
+                  >
+                    <div className="font-extrabold text-gray-900 truncate">{loc.name}</div>
+                    <div className="text-[10px] text-gray-500 truncate">{loc.area}</div>
+                  </button>
+                ))}
               </div>
             </div>
 
             <button
-              onClick={() => setShowSafetyModal(false)}
-              className="w-full py-3 rounded-xl bg-brand-500 text-slate-950 font-black text-xs shadow-md"
+              type="button"
+              onClick={() => setShowAddressPicker(false)}
+              className="w-full py-3 rounded-xl bg-gray-900 text-white font-bold text-xs"
             >
-              Understood
+              Done
             </button>
           </div>
         </div>
       )}
 
-      {/* Booking Modal with Dynamic Route & Service Metadata */}
-      {selectedCarForBooking && (
-        <BookingModal
-          car={selectedCarForBooking}
-          serviceMeta={selectedServiceForModal || selectedService}
-          initialPickup={pickupLocation}
-          initialDropoff={dropoffLocation}
-          onClose={() => {
-            setSelectedCarForBooking(null);
-            setSelectedServiceForModal(null);
-          }}
-          onBookingSuccess={handleBookingSuccess}
-        />
-      )}
-
-      {/* Receipt Modal */}
+      {/* Digital Receipt Modal */}
       {receiptBooking && (
         <DigitalReceiptModal
           booking={receiptBooking}
-          onClose={() => setReceiptBooking(null)}
+          onClose={() => {
+            setReceiptBooking(null);
+            setBookingState('IDLE');
+            setActiveBooking(null);
+          }}
         />
       )}
+
     </div>
   );
 };

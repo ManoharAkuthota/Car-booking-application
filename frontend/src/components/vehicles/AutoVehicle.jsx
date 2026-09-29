@@ -68,6 +68,12 @@ const AutoVehicle = ({ isMoving = true, speedKmh = 28 }) => {
           strokeWidth="1.2"
         />
 
+        {/* Signature White Star on Roof (Exact Rapido Accent) */}
+        <g transform="translate(26, 30)">
+          <circle cx="0" cy="0" r="5.5" fill="#d97706" fillOpacity="0.4" />
+          <path d="M 0 -4 L 1.2 -1.3 L 4 -1.3 L 1.8 0.4 L 2.6 3.2 L 0 1.6 L -2.6 3.2 L -1.8 0.4 L -4 -1.3 L -1.2 -1.3 Z" fill="#ffffff" />
+        </g>
+
         {/* Roof Beading & Rib Lines */}
         <path d="M19 25 Q26 23 33 25" stroke="#f59e0b" strokeWidth="1" fill="none" />
         <path d="M18 32 Q26 30 34 32" stroke="#f59e0b" strokeWidth="1" fill="none" />

@@ -2,6 +2,20 @@
 
 export const DEFAULT_PRESET_LOCATIONS = [
   {
+    name: 'Vidhana Soudha, Bengaluru',
+    area: 'Ambedkar Veedhi, Bengaluru',
+    lat: 12.9797,
+    lng: 77.5907,
+    type: 'landmark',
+  },
+  {
+    name: 'Swami Vivekananda Road Metro',
+    area: 'Indiranagar, Bengaluru',
+    lat: 12.9860,
+    lng: 77.6433,
+    type: 'metro',
+  },
+  {
     name: 'Indiranagar 100ft Rd',
     area: 'Central Bengaluru',
     lat: 12.9784,

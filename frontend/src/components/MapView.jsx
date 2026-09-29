@@ -15,83 +15,244 @@ const createIcon = (svgString, className) => {
   });
 };
 
-const pickupIcon = createIcon(`
-  <div class="flex items-center justify-center w-8 h-8 bg-emerald-600 rounded-full shadow-lg shadow-emerald-600/40 border-2 border-white ring-4 ring-emerald-500/20">
-    <div class="w-2.5 h-2.5 rounded-full bg-white"></div>
-  </div>
-`);
+// Top-Down Vector Vehicle SVG Sprites (100% Rapido & Uber Top-Down Vector Graphics)
+export const getAutoRickshawSvg = (heading = 0) => `
+  <div style="transform: rotate(${heading}deg); width: 30px; height: 44px; position: relative; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.38)); transition: transform 0.35s ease-out;">
+    <svg viewBox="0 0 44 64" width="30" height="44" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Front Wheel & Mudguard -->
+      <rect x="19" y="3" width="6" height="11" rx="3" fill="#18181b" />
+      <path d="M 17 8 L 27 8" stroke="#f59e0b" stroke-width="2" />
+      
+      <!-- Auto Body Frame (Tapered front, wide rear) -->
+      <path d="M 13 15 C 16 10, 28 10, 31 15 L 38 27 C 41 37, 41 49, 39 57 C 38 59, 6 59, 5 57 C 3 49, 3 37, 6 27 Z" fill="#f59e0b" stroke="#09090b" stroke-width="1.8" />
+      
+      <!-- Black Front Windshield & Dashboard -->
+      <path d="M 13 15 C 17 12, 27 12, 31 15 L 34 23 C 33 24, 11 24, 10 23 Z" fill="#09090b" />
+      <line x1="16" y1="17" x2="28" y2="19" stroke="#93c5fd" stroke-width="1.5" stroke-linecap="round" opacity="0.85" />
+      
+      <!-- Signature Rapido Bright Yellow Canopy Roof -->
+      <rect x="7" y="23" width="30" height="32" rx="6" fill="#facc15" stroke="#18181b" stroke-width="1.8" />
+      
+      <!-- Signature White Star on Roof (Exact match to Image 3 screenshot!) -->
+      <g transform="translate(22, 37)">
+        <circle cx="0" cy="0" r="7.5" fill="#eab308" fill-opacity="0.45" />
+        <path d="M 0 -5.5 L 1.6 -1.8 L 5.5 -1.8 L 2.4 0.6 L 3.5 4.5 L 0 2.2 L -3.5 4.5 L -2.4 0.6 L -5.5 -1.8 L -1.6 -1.8 Z" fill="#ffffff" />
+      </g>
 
-const dropoffIcon = createIcon(`
-  <div class="flex items-center justify-center w-8 h-8 bg-rose-600 rounded-full shadow-lg shadow-rose-600/40 border-2 border-white ring-4 ring-rose-500/20">
-    <div class="w-2.5 h-2.5 bg-white rounded-sm"></div>
+      <!-- Side Mirrors -->
+      <rect x="2" y="19" width="4" height="3" rx="1.5" fill="#18181b" />
+      <rect x="38" y="19" width="4" height="3" rx="1.5" fill="#18181b" />
+
+      <!-- Rear Taillights -->
+      <rect x="7" y="56" width="6" height="2.5" rx="1" fill="#ef4444" />
+      <rect x="31" y="56" width="6" height="2.5" rx="1" fill="#ef4444" />
+    </svg>
   </div>
-`);
+`;
+
+export const getBikeSvg = (heading = 0) => `
+  <div style="transform: rotate(${heading}deg); width: 24px; height: 42px; position: relative; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.4)); transition: transform 0.35s ease-out;">
+    <svg viewBox="0 0 36 64" width="24" height="42" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Front Wheel & Disc -->
+      <rect x="15" y="2" width="6" height="15" rx="3" fill="#18181b" />
+      <rect x="16.5" y="4" width="3" height="9" rx="1.5" fill="#71717a" />
+      
+      <!-- Front Mudguard & Headlight -->
+      <path d="M 13 13 C 13 9, 23 9, 23 13 L 22 18 L 14 18 Z" fill="#facc15" stroke="#ca8a04" stroke-width="1" />
+      <ellipse cx="18" cy="11" rx="3" ry="1.8" fill="#fef08a" />
+
+      <!-- Handlebars with Mirrors -->
+      <path d="M 4 20 L 32 20" stroke="#18181b" stroke-width="3.5" stroke-linecap="round" />
+      <rect x="2" y="18.5" width="4" height="3" rx="1" fill="#000000" />
+      <rect x="30" y="18.5" width="4" height="3" rx="1" fill="#000000" />
+
+      <!-- Fuel Tank with Yellow Accent -->
+      <path d="M 13 22 C 12 26, 12 30, 14 33 L 22 33 C 24 30, 24 26, 23 22 Z" fill="#facc15" stroke="#eab308" stroke-width="1.2" />
+
+      <!-- Rider Body (Dark Jacket) & Arms -->
+      <path d="M 6 22 L 12 29 L 24 29 L 30 22" stroke="#1e293b" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+      <ellipse cx="18" cy="33" rx="9" ry="7" fill="#0f172a" />
+      
+      <!-- Iconic Rapido Bright Yellow Helmet -->
+      <ellipse cx="18" cy="28" rx="6.5" ry="7" fill="#facc15" stroke="#18181b" stroke-width="1.5" />
+      <!-- Helmet Black Visor Shield -->
+      <path d="M 14.5 26 Q 18 24 21.5 26" stroke="#18181b" stroke-width="3" stroke-linecap="round" />
+      <ellipse cx="18" cy="27" rx="4" ry="1.2" fill="#09090b" opacity="0.9" />
+
+      <!-- Bike Seat & Rear Body -->
+      <path d="M 14 38 L 22 38 L 21 50 L 15 50 Z" fill="#18181b" />
+      
+      <!-- Rear Wheel & Taillight -->
+      <rect x="15" y="47" width="6" height="15" rx="3" fill="#18181b" />
+      <rect x="15.5" y="48" width="5" height="2.5" rx="1" fill="#ef4444" />
+    </svg>
+  </div>
+`;
+
+export const getCabSvg = (heading = 0) => `
+  <div style="transform: rotate(${heading}deg); width: 26px; height: 48px; position: relative; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.35)); transition: transform 0.35s ease-out;">
+    <svg viewBox="0 0 36 68" width="26" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Aerodynamic White Sedan Body -->
+      <rect x="4" y="6" width="28" height="54" rx="9" fill="#ffffff" stroke="#18181b" stroke-width="2" />
+      <path d="M 7 12 C 10 8, 26 8, 29 12" stroke="#e2e8f0" stroke-width="1.5" />
+      <rect x="6" y="7" width="5" height="3" rx="1" fill="#fef08a" />
+      <rect x="25" y="7" width="5" height="3" rx="1" fill="#fef08a" />
+      <!-- Windshield -->
+      <path d="M 7 19 L 29 19 L 26 27 L 10 27 Z" fill="#1e293b" />
+      <!-- Roof with Taxi Bar Sign -->
+      <rect x="8" y="27" width="20" height="20" rx="3" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+      <rect x="13" y="34" width="10" height="4" rx="2" fill="#f59e0b" stroke="#18181b" stroke-width="1" />
+      <!-- Rear Window -->
+      <path d="M 10 48 L 26 48 L 28 54 L 8 54 Z" fill="#1e293b" />
+      <!-- Side Mirrors & Taillights -->
+      <rect x="1" y="20" width="3" height="4" rx="1" fill="#18181b" />
+      <rect x="32" y="20" width="3" height="4" rx="1" fill="#18181b" />
+      <rect x="6" y="58" width="5" height="2" rx="1" fill="#ef4444" />
+      <rect x="25" y="58" width="5" height="2" rx="1" fill="#ef4444" />
+    </svg>
+  </div>
+`;
+
+export const getPorterSvg = (heading = 0) => `
+  <div style="transform: rotate(${heading}deg); width: 26px; height: 48px; position: relative; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.35)); transition: transform 0.35s ease-out;">
+    <svg viewBox="0 0 36 70" width="26" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="5" y="4" width="26" height="4" rx="2" fill="#18181b" />
+      <!-- Driver Cabin -->
+      <path d="M 5 8 C 5 6, 31 6, 31 8 L 31 24 L 5 24 Z" fill="#2563eb" stroke="#18181b" stroke-width="1.8" />
+      <path d="M 8 9 L 28 9 L 27 18 L 9 18 Z" fill="#0f172a" />
+      <rect x="2" y="12" width="3" height="4" rx="1" fill="#18181b" />
+      <rect x="31" y="12" width="3" height="4" rx="1" fill="#18181b" />
+      <!-- Cargo Bed with Strapped Boxes -->
+      <rect x="4" y="25" width="28" height="38" rx="3" fill="#cbd5e1" stroke="#334155" stroke-width="2" />
+      <rect x="7" y="28" width="10" height="15" rx="1" fill="#d97706" stroke="#92400e" stroke-width="1" />
+      <rect x="19" y="28" width="10" height="15" rx="1" fill="#b45309" stroke="#78350f" stroke-width="1" />
+      <rect x="8" y="45" width="20" height="14" rx="1" fill="#92400e" stroke="#451a03" stroke-width="1" />
+      <line x1="4" y1="36" x2="32" y2="36" stroke="#facc15" stroke-width="1.5" />
+      <line x1="4" y1="52" x2="32" y2="52" stroke="#facc15" stroke-width="1.5" />
+    </svg>
+  </div>
+`;
+
+// Exact Rapido Pickup Marker (Green Circle with Ring)
+const pickupIcon = L.divIcon({
+  html: `
+    <div class="relative flex items-center justify-center pointer-events-none">
+      <div class="absolute w-10 h-10 rounded-full bg-emerald-500/25 animate-ping"></div>
+      <div class="w-8 h-8 rounded-full bg-emerald-600 border-2 border-white shadow-xl flex items-center justify-center ring-4 ring-emerald-500/30">
+        <div class="w-2.5 h-2.5 rounded-full bg-white"></div>
+      </div>
+      <div class="absolute -bottom-2 w-1.5 h-2.5 bg-emerald-800 rounded-b"></div>
+    </div>
+  `,
+  className: 'rapido-pickup-marker',
+  iconSize: [32, 42],
+  iconAnchor: [16, 38],
+});
+
+// Exact Rapido Dropoff Target Marker (Red Bullseye)
+const dropoffIcon = L.divIcon({
+  html: `
+    <div class="relative flex items-center justify-center pointer-events-none">
+      <div class="w-8 h-8 rounded-full bg-rose-600 border-2 border-white shadow-xl flex items-center justify-center ring-4 ring-rose-500/30">
+        <div class="w-4 h-4 rounded-full bg-white flex items-center justify-center">
+          <div class="w-2 h-2 rounded-full bg-rose-600"></div>
+        </div>
+      </div>
+      <div class="absolute -bottom-2 w-1.5 h-2.5 bg-rose-800 rounded-b"></div>
+    </div>
+  `,
+  className: 'rapido-dropoff-marker',
+  iconSize: [32, 42],
+  iconAnchor: [16, 38],
+});
 
 // Nearby vehicle icon generator matching selected vehicle category with compass heading
 const getNearbyIcon = (type = 'BIKE', heading = 0) => {
-  let emoji = '🏍️';
-  let bg = 'bg-amber-400 text-amber-950 border-amber-300 ring-amber-400/40';
+  let svg = '';
+  let size = [28, 40];
+  let anchor = [14, 20];
+
   if (type === 'AUTO') {
-    emoji = '🛺';
-    bg = 'bg-emerald-500 text-white border-emerald-300 ring-emerald-500/40';
+    svg = getAutoRickshawSvg(heading);
+    size = [28, 40];
+    anchor = [14, 20];
   } else if (type === 'CAB') {
-    emoji = '🚗';
-    bg = 'bg-blue-600 text-white border-blue-400 ring-blue-500/40';
+    svg = getCabSvg(heading);
+    size = [26, 48];
+    anchor = [13, 24];
   } else if (type === 'TROLLEY_PORTER') {
-    emoji = '🛻';
-    bg = 'bg-purple-600 text-white border-purple-300 ring-purple-500/40';
+    svg = getPorterSvg(heading);
+    size = [26, 48];
+    anchor = [13, 24];
+  } else {
+    // BIKE
+    svg = getBikeSvg(heading);
+    size = [22, 40];
+    anchor = [11, 20];
   }
 
   return L.divIcon({
-    html: `
-      <div class="relative flex items-center justify-center transition-all duration-700 ease-linear" style="transform: rotate(${heading}deg);">
-        <div class="w-8 h-8 rounded-full ${bg} flex items-center justify-center shadow-lg border-2 ring-2 text-sm">
-          ${emoji}
-        </div>
-      </div>
-    `,
-    className: 'nearby-fleet-marker',
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
+    html: svg,
+    className: 'rapido-nearby-vehicle-marker',
+    iconSize: size,
+    iconAnchor: anchor,
   });
 };
 
 // Live animated moving vehicle with heading rotation & forward motion beam
 const createLiveVehicleIcon = (category = 'BIKE', heading = 0, isArrived = false) => {
-  const visuals = getVehicleVisuals(category);
+  let vehicleSvg = '';
+  let size = [28, 40];
+  let anchor = [14, 20];
+
+  if (category === 'AUTO') {
+    vehicleSvg = getAutoRickshawSvg(heading);
+    size = [28, 40];
+    anchor = [14, 20];
+  } else if (category === 'CAB' || category === 'SEDAN' || category === 'SUV') {
+    vehicleSvg = getCabSvg(heading);
+    size = [26, 48];
+    anchor = [13, 24];
+  } else if (category === 'TROLLEY_PORTER') {
+    vehicleSvg = getPorterSvg(heading);
+    size = [26, 48];
+    anchor = [13, 24];
+  } else {
+    vehicleSvg = getBikeSvg(heading);
+    size = [22, 40];
+    anchor = [11, 20];
+  }
 
   if (isArrived) {
     return L.divIcon({
       html: `
         <div class="relative flex items-center justify-center">
-          <div class="absolute w-14 h-14 rounded-full bg-emerald-500/20 animate-ping"></div>
-          <div class="w-11 h-11 rounded-2xl ${visuals.bg} flex items-center justify-center shadow-2xl border-2 border-white ring-4 ring-emerald-400 text-xl font-black">
-            ${visuals.emoji}
+          <div class="absolute w-14 h-14 rounded-full bg-emerald-500/30 animate-ping"></div>
+          ${vehicleSvg}
+          <div class="absolute -top-3 px-2 py-0.5 rounded-full bg-emerald-600 text-white font-extrabold text-[9px] uppercase tracking-wider shadow-md border border-white">
+            Arrived
           </div>
-          <div class="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white"></div>
         </div>
       `,
-      className: 'live-arrived-marker',
-      iconSize: [44, 44],
-      iconAnchor: [22, 22],
+      className: 'rapido-live-vehicle-arrived',
+      iconSize: size,
+      iconAnchor: anchor,
     });
   }
 
   return L.divIcon({
     html: `
-      <div class="relative flex items-center justify-center transition-transform duration-500 ease-linear" style="transform: rotate(${heading}deg);">
-        <div class="w-11 h-11 rounded-2xl ${visuals.bg} flex items-center justify-center shadow-2xl border-2 border-white ring-4 ${visuals.ring} text-xl font-black">
-          ${visuals.emoji}
-        </div>
-        <!-- Forward motion beam -->
-        <div class="absolute -top-3 w-3 h-5 bg-gradient-to-t from-white/70 to-transparent rounded-full opacity-60 pointer-events-none"></div>
-        <!-- Live motion indicator dot -->
+      <div class="relative flex items-center justify-center">
+        <!-- Forward motion headlight beam -->
+        <div class="absolute -top-4 w-6 h-8 bg-gradient-to-t from-yellow-300/40 to-transparent rounded-t-full pointer-events-none transform -rotate-12"></div>
+        ${vehicleSvg}
+        <!-- Pulsing radar dot behind vehicle -->
         <div class="absolute -bottom-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border border-white animate-pulse"></div>
       </div>
     `,
-    className: 'live-animated-vehicle-marker',
-    iconSize: [44, 44],
-    iconAnchor: [22, 22],
+    className: 'rapido-live-vehicle-moving',
+    iconSize: size,
+    iconAnchor: anchor,
   });
 };
 
@@ -147,36 +308,34 @@ const MAP_LAYERS = {
   },
 };
 
-// Generate realistic dynamic orbital patrols around pickup point
+// Generate realistic dynamic street cruising drivers around pickup point
 const generateNearbyDrivers = (centerCoord, type) => {
   if (!centerCoord || !centerCoord[0]) return [];
-  const patrols = [
-    { radiusLat: 0.0028, radiusLng: 0.0035, angle: 0.2, speed: 0.06, eta: 2 },
-    { radiusLat: 0.0035, radiusLng: 0.0022, angle: 1.5, speed: -0.05, eta: 3 },
-    { radiusLat: 0.0022, radiusLng: 0.0040, angle: 2.8, speed: 0.07, eta: 2 },
-    { radiusLat: 0.0040, radiusLng: 0.0028, angle: 3.9, speed: -0.06, eta: 4 },
-    { radiusLat: 0.0030, radiusLng: 0.0032, angle: 4.8, speed: 0.05, eta: 3 },
-    { radiusLat: 0.0025, radiusLng: 0.0025, angle: 5.8, speed: -0.07, eta: 4 },
+  // 10 realistic street road offsets and street directions around center (matching Rapido Image 3)
+  const streetSpots = [
+    { offsetLat: 0.0016, offsetLng: 0.0022, heading: 45 },
+    { offsetLat: 0.0024, offsetLng: -0.0018, heading: 135 },
+    { offsetLat: -0.0018, offsetLng: 0.0025, heading: 90 },
+    { offsetLat: 0.0031, offsetLng: 0.0012, heading: 210 },
+    { offsetLat: -0.0025, offsetLng: -0.0020, heading: 315 },
+    { offsetLat: 0.0012, offsetLng: -0.0028, heading: 60 },
+    { offsetLat: -0.0020, offsetLng: 0.0032, heading: 180 },
+    { offsetLat: 0.0035, offsetLng: -0.0025, heading: 270 },
+    { offsetLat: -0.0010, offsetLng: -0.0015, heading: 120 },
+    { offsetLat: 0.0020, offsetLng: 0.0035, heading: 330 },
   ];
 
-  return patrols.map((p, idx) => {
-    const lat = centerCoord[0] + p.radiusLat * Math.sin(p.angle);
-    const lng = centerCoord[1] + p.radiusLng * Math.cos(p.angle);
-    const heading = Math.round(((p.angle + (p.speed > 0 ? Math.PI / 2 : -Math.PI / 2)) * 180) / Math.PI + 360) % 360;
-
-    return {
-      id: `${type}-${idx}`,
-      type: type,
-      lat: lat,
-      lng: lng,
-      angle: p.angle,
-      radiusLat: p.radiusLat,
-      radiusLng: p.radiusLng,
-      speed: p.speed,
-      eta: p.eta,
-      heading: heading,
-    };
-  });
+  return streetSpots.map((spot, idx) => ({
+    id: `${type}-${idx}`,
+    type: type,
+    baseLat: centerCoord[0] + spot.offsetLat,
+    baseLng: centerCoord[1] + spot.offsetLng,
+    lat: centerCoord[0] + spot.offsetLat,
+    lng: centerCoord[1] + spot.offsetLng,
+    heading: spot.heading,
+    step: idx * 1.5,
+    eta: idx % 2 === 0 ? 1 : idx % 3 === 0 ? 3 : 2,
+  }));
 };
 
 const MapView = ({
@@ -383,25 +542,26 @@ const MapView = ({
     const interval = setInterval(() => {
       setNearbyVehicles((prev) =>
         prev.map((v) => {
-          const newAngle = v.angle + v.speed;
-          const newLat = pickup[0] + v.radiusLat * Math.sin(newAngle);
-          const newLng = pickup[1] + v.radiusLng * Math.cos(newAngle);
-          const newHeading =
-            Math.round(((newAngle + (v.speed > 0 ? Math.PI / 2 : -Math.PI / 2)) * 180) / Math.PI + 360) % 360;
+          const newStep = v.step + 0.12;
+          const drift = Math.sin(newStep) * 0.0006;
+          const currentHeading = Math.cos(newStep) >= 0 ? v.heading : (v.heading + 180) % 360;
+
+          const lat = v.baseLat + Math.sin((v.heading * Math.PI) / 180) * drift;
+          const lng = v.baseLng + Math.cos((v.heading * Math.PI) / 180) * drift;
 
           return {
             ...v,
-            angle: newAngle,
-            lat: newLat,
-            lng: newLng,
-            heading: newHeading,
+            step: newStep,
+            lat,
+            lng,
+            heading: currentHeading,
           };
         })
       );
-    }, 700);
+    }, 600);
 
     return () => clearInterval(interval);
-  }, [isLiveTrip, pickup?.[0], pickup?.[1]]);
+  }, [isLiveTrip]);
 
   // Determine bounds points for map auto-center
   const boundsPoints = useMemo(() => {
@@ -486,8 +646,8 @@ const MapView = ({
             />
             <Polyline
               positions={tripRoadPoints}
-              color="#2563eb"
-              weight={4.5}
+              color="#334155"
+              weight={5.5}
               opacity={0.95}
               dashArray={isLiveTrip && tripStatus !== 'IN_PROGRESS' ? '8, 8' : null}
             />
