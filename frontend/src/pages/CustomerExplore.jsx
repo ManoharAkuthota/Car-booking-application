@@ -13,15 +13,27 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
-// 5 Dedicated Rapido Services Matching Exact Screenshots
+// 5 Dedicated Rapido Services Enhanced from Reference Images
 const RAPIDO_SERVICES = [
   {
     id: 'BIKE',
     category: 'BIKE',
     name: 'Bike',
     symbolSvg: (
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-        <path d="M5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm14 0a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm-7-2h2.5l1.5-3.5H12L10 8H6v2h2.6l1.4 2.4L7.8 15h2.4l1.3-2.3L12 14zm3-7.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
+      <svg viewBox="0 0 48 48" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="34" r="5.5" fill="#18181b" stroke="#71717a" strokeWidth="1.2" />
+        <circle cx="12" cy="34" r="2.2" fill="#e2e8f0" />
+        <circle cx="36" cy="34" r="5.5" fill="#18181b" stroke="#71717a" strokeWidth="1.2" />
+        <circle cx="36" cy="34" r="2.2" fill="#e2e8f0" />
+        <path d="M 12 34 L 18 24 L 27 24 L 32 30 L 36 34" stroke="#ca8a04" strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M 17 25 C 19 18, 25 18, 29 23 L 34 29 C 36 31, 30 36, 25 35 L 18 35 Z" fill="#facc15" stroke="#09090b" strokeWidth="1.2" />
+        <path d="M 18 24 L 14 13 L 11 14" stroke="#09090b" strokeWidth="2.5" strokeLinecap="round" />
+        <ellipse cx="14" cy="13" rx="2" ry="1.5" fill="#ffffff" stroke="#09090b" strokeWidth="0.8" />
+        <path d="M 18 19 C 16 16, 12 16, 13 22 Z" fill="#facc15" stroke="#09090b" strokeWidth="1" />
+        <path d="M 22 22 C 24 20, 31 21, 32 24 L 23 24 Z" fill="#18181b" />
+        <circle cx="34" cy="14" r="5.5" fill="#facc15" stroke="#09090b" strokeWidth="1" />
+        <path d="M 33 8.7 C 33.5 8.5, 34.5 8.5, 35 8.7 L 35 19.3 C 34.5 19.5, 33.5 19.5, 33 19.3 Z" fill="#ffffff" />
+        <path d="M 30.5 13 Q 34 11 37.5 13" stroke="#09090b" strokeWidth="2" strokeLinecap="round" />
       </svg>
     ),
     tag: 'Fastest',
@@ -37,8 +49,17 @@ const RAPIDO_SERVICES = [
     category: 'AUTO',
     name: 'Auto',
     symbolSvg: (
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-        <path d="M19 12h-2V9.5a1.5 1.5 0 0 0-1.5-1.5H8.5A1.5 1.5 0 0 0 7 9.5V12H5a2 2 0 0 0-2 2v2a1 1 0 0 0 1 1h1.1a2.5 2.5 0 0 0 4.8 0h4.2a2.5 2.5 0 0 0 4.8 0H20a1 1 0 0 0 1-1v-2a2 2 0 0 0-2-2zM7.5 17a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm9 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2zM8.5 9.5h7V12h-7V9.5z"/>
+      <svg viewBox="0 0 48 48" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="11" cy="34" r="5.5" fill="#18181b" stroke="#52525b" strokeWidth="1.2" />
+        <circle cx="11" cy="34" r="2.2" fill="#e2e8f0" />
+        <circle cx="37" cy="34" r="5.5" fill="#18181b" stroke="#52525b" strokeWidth="1.2" />
+        <circle cx="37" cy="34" r="2.2" fill="#e2e8f0" />
+        <path d="M 8 26 C 8 22, 12 20, 16 20 L 35 20 C 39 20, 41 23, 41 28 L 41 33 C 41 35, 36 35, 34 35 L 14 35 C 10 35, 8 32, 8 26 Z" fill="#18181b" stroke="#09090b" strokeWidth="1.2" />
+        <path d="M 8 26 L 11 16 C 12 14, 15 13, 17 13 L 23 13 L 23 20 L 8 20 Z" fill="#93c5fd" fillOpacity="0.45" stroke="#09090b" strokeWidth="1" />
+        <line x1="12" y1="17" x2="20" y2="15" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" />
+        <path d="M 12 13 C 14 9, 37 9, 41 13 L 41 20 L 12 20 Z" fill="#facc15" stroke="#09090b" strokeWidth="1.2" />
+        <rect x="23" y="17" width="14" height="13" rx="2" fill="#fef08a" fillOpacity="0.3" stroke="#ca8a04" strokeWidth="0.8" />
+        <rect x="30" y="24" width="7" height="6" rx="1" fill="#eab308" />
       </svg>
     ),
     tag: 'Popular',
@@ -54,8 +75,16 @@ const RAPIDO_SERVICES = [
     category: 'SEDAN',
     name: 'Car',
     symbolSvg: (
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-        <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.08 3.11H5.77L6.85 7zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+      <svg viewBox="0 0 48 48" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="11" cy="34" r="5" fill="#18181b" stroke="#52525b" strokeWidth="1.2" />
+        <circle cx="11" cy="34" r="2" fill="#cbd5e1" />
+        <circle cx="37" cy="34" r="5" fill="#18181b" stroke="#52525b" strokeWidth="1.2" />
+        <circle cx="37" cy="34" r="2" fill="#cbd5e1" />
+        <path d="M 4 28 C 4 26, 7 24, 11 24 L 14 18 C 16 14, 32 14, 34 18 L 38 24 C 42 24, 44 26, 44 29 L 43 33 C 43 35, 40 35, 37 35 L 11 35 C 7 35, 4 33, 4 28 Z" fill="#ffffff" stroke="#09090b" strokeWidth="1.2" />
+        <path d="M 15 23 L 17 17 C 18 15, 24 15, 25 15 L 25 23 Z" fill="#0f172a" />
+        <path d="M 27 15 C 28 15, 32 15, 33 17 L 35 23 L 27 23 Z" fill="#0f172a" />
+        <line x1="18" y1="18" x2="23" y2="16" stroke="#93c5fd" strokeWidth="1" strokeLinecap="round" />
+        <rect x="22" y="11.5" width="7" height="3.5" rx="1.5" fill="#f59e0b" stroke="#09090b" strokeWidth="0.8" />
       </svg>
     ),
     tag: 'Comfort AC',
@@ -71,9 +100,16 @@ const RAPIDO_SERVICES = [
     category: 'SUV',
     name: 'Auto Plus',
     symbolSvg: (
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-        <path d="M19 12h-2V9.5a1.5 1.5 0 0 0-1.5-1.5H8.5A1.5 1.5 0 0 0 7 9.5V12H5a2 2 0 0 0-2 2v2a1 1 0 0 0 1 1h1.1a2.5 2.5 0 0 0 4.8 0h4.2a2.5 2.5 0 0 0 4.8 0H20a1 1 0 0 0 1-1v-2a2 2 0 0 0-2-2zM7.5 17a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm9 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2zM8.5 9.5h7V12h-7V9.5z"/>
-        <path d="M19 3l1 2.5L22.5 6 20 7.5 19 10l-1-2.5L15.5 6 18 5.5z" fill="#f59e0b"/>
+      <svg viewBox="0 0 48 48" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="11" cy="34" r="5.5" fill="#18181b" stroke="#ca8a04" strokeWidth="1.5" />
+        <circle cx="11" cy="34" r="2.2" fill="#facc15" />
+        <circle cx="37" cy="34" r="5.5" fill="#18181b" stroke="#ca8a04" strokeWidth="1.5" />
+        <circle cx="37" cy="34" r="2.2" fill="#facc15" />
+        <path d="M 8 26 C 8 22, 12 20, 16 20 L 35 20 C 39 20, 41 23, 41 28 L 41 33 C 41 35, 36 35, 34 35 L 14 35 C 10 35, 8 32, 8 26 Z" fill="#eab308" stroke="#09090b" strokeWidth="1.2" />
+        <path d="M 12 13 C 14 9, 37 9, 41 13 L 41 20 L 12 20 Z" fill="#1d4ed8" stroke="#09090b" strokeWidth="1.2" />
+        <path d="M 8 26 L 11 16 C 12 14, 15 13, 17 13 L 23 13 L 23 20 L 8 20 Z" fill="#93c5fd" fillOpacity="0.5" stroke="#09090b" strokeWidth="1" />
+        <circle cx="36" cy="11" r="4.5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1" />
+        <path d="M 36 8 L 37 10 L 39 10 L 37.5 11.5 L 38 13.5 L 36 12.2 L 34 13.5 L 34.5 11.5 L 33 10 L 35 10 Z" fill="#ffffff" />
       </svg>
     ),
     tag: 'Top Rated',
@@ -89,8 +125,17 @@ const RAPIDO_SERVICES = [
     category: 'TROLLEY_PORTER',
     name: 'Porter Cargo',
     symbolSvg: (
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-        <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-2 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+      <svg viewBox="0 0 48 48" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="34" r="5" fill="#18181b" stroke="#71717a" strokeWidth="1.2" />
+        <circle cx="12" cy="34" r="2" fill="#cbd5e1" />
+        <circle cx="36" cy="34" r="5" fill="#18181b" stroke="#71717a" strokeWidth="1.2" />
+        <circle cx="36" cy="34" r="2" fill="#cbd5e1" />
+        <path d="M 6 32 L 6 22 C 6 18, 9 15, 13 15 L 18 15 L 21 22 L 21 32 Z" fill="#2563eb" stroke="#09090b" strokeWidth="1.2" />
+        <path d="M 9 22 L 13 16 L 18 16 L 18 22 Z" fill="#93c5fd" fillOpacity="0.6" stroke="#09090b" strokeWidth="0.8" />
+        <rect x="21" y="20" width="22" height="12" rx="1.5" fill="#94a3b8" stroke="#334155" strokeWidth="1.2" />
+        <rect x="23" y="13" width="9" height="9" rx="1" fill="#d97706" stroke="#78350f" strokeWidth="0.8" />
+        <rect x="32" y="15" width="8" height="7" rx="1" fill="#b45309" stroke="#78350f" strokeWidth="0.8" />
+        <line x1="21" y1="24" x2="43" y2="24" stroke="#facc15" strokeWidth="1.2" strokeDasharray="3 1" />
       </svg>
     ),
     tag: 'Logistics',

@@ -12,118 +12,232 @@ import {
   getPolylineMetrics,
 } from '../api/routeService';
 
-// Raw Top-Down Vehicle SVGs (Pure vector graphics pointing 0 deg North)
+// Raw Top-Down Vehicle SVGs (Directly enhanced from reference images)
 
-// 1. Auto Rickshaw: Yellow canopy roof with white star in center (Image 3 exact match)
+// 1. Auto Rickshaw: Modeled on reference images with yellow canopy, windshield wiper & star emblem
 export const getAutoRickshawRawSvg = () => `
-  <svg viewBox="0 0 44 64" width="30" height="44" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <svg viewBox="0 0 48 70" width="32" height="46" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="autoCanopy" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#eab308" />
+        <stop offset="35%" stop-color="#fde047" />
+        <stop offset="70%" stop-color="#facc15" />
+        <stop offset="100%" stop-color="#ca8a04" />
+      </linearGradient>
+      <linearGradient id="autoGlass" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#1e293b" />
+        <stop offset="50%" stop-color="#0f172a" />
+        <stop offset="100%" stop-color="#1e293b" />
+      </linearGradient>
+    </defs>
+
     <!-- Front Wheel & Mudguard -->
-    <rect x="19" y="3" width="6" height="11" rx="3" fill="#18181b" />
-    <path d="M 17 8 L 27 8" stroke="#f59e0b" stroke-width="2" />
+    <rect x="21" y="2" width="6" height="13" rx="3" fill="#18181b" />
+    <rect x="22.5" y="4" width="3" height="9" rx="1.5" fill="#71717a" />
+    <path d="M 18 9 L 30 9" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" />
+
+    <!-- Outer Auto Body Silhouette (Wide cabin, tapered nose) -->
+    <path d="M 14 16 C 18 10, 30 10, 34 16 L 42 30 C 45 42, 45 54, 43 63 C 41 65, 7 65, 5 63 C 3 54, 3 42, 6 30 Z" fill="#ca8a04" stroke="#09090b" stroke-width="1.8" />
     
-    <!-- Auto Body Frame (Tapered front, wide rear) -->
-    <path d="M 13 15 C 16 10, 28 10, 31 15 L 38 27 C 41 37, 41 49, 39 57 C 38 59, 6 59, 5 57 C 3 49, 3 37, 6 27 Z" fill="#f59e0b" stroke="#09090b" stroke-width="1.8" />
-    
-    <!-- Black Front Windshield & Dashboard -->
-    <path d="M 13 15 C 17 12, 27 12, 31 15 L 34 23 C 33 24, 11 24, 10 23 Z" fill="#09090b" />
-    <line x1="16" y1="17" x2="28" y2="19" stroke="#93c5fd" stroke-width="1.5" stroke-linecap="round" opacity="0.85" />
-    
+    <!-- Black Front Windshield & Cowl -->
+    <path d="M 14 16 C 18 13, 30 13, 34 16 L 37 25 C 36 26, 12 26, 11 25 Z" fill="url(#autoGlass)" stroke="#0f172a" stroke-width="1.2" />
+    <!-- Glass Reflection Glare -->
+    <line x1="17" y1="18" x2="31" y2="21" stroke="#93c5fd" stroke-width="1.8" stroke-linecap="round" opacity="0.85" />
+    <!-- Windshield wiper -->
+    <line x1="24" y1="24" x2="28" y2="18" stroke="#cbd5e1" stroke-width="1.2" stroke-linecap="round" />
+
+    <!-- Side Chrome/Black Mirrors -->
+    <rect x="3" y="20" width="5" height="3" rx="1.5" fill="#18181b" stroke="#71717a" stroke-width="0.8" />
+    <rect x="40" y="20" width="5" height="3" rx="1.5" fill="#18181b" stroke="#71717a" stroke-width="0.8" />
+
     <!-- Signature Rapido Bright Yellow Canopy Roof -->
-    <rect x="7" y="23" width="30" height="32" rx="6" fill="#facc15" stroke="#18181b" stroke-width="1.8" />
-    
-    <!-- Signature White Star on Roof (Exact match to Image 3 screenshot!) -->
-    <g transform="translate(22, 37)">
-      <circle cx="0" cy="0" r="7.5" fill="#eab308" fill-opacity="0.45" />
-      <path d="M 0 -5.5 L 1.6 -1.8 L 5.5 -1.8 L 2.4 0.6 L 3.5 4.5 L 0 2.2 L -3.5 4.5 L -2.4 0.6 L -5.5 -1.8 L -1.6 -1.8 Z" fill="#ffffff" />
+    <rect x="8" y="25" width="32" height="35" rx="7" fill="url(#autoCanopy)" stroke="#18181b" stroke-width="1.8" />
+    <!-- Roof Bevel Accent Lines -->
+    <line x1="12" y1="27" x2="12" y2="58" stroke="#fef08a" stroke-width="1.2" stroke-linecap="round" opacity="0.7" />
+    <line x1="36" y1="27" x2="36" y2="58" stroke="#a16207" stroke-width="1.2" stroke-linecap="round" opacity="0.6" />
+
+    <!-- Signature White Star on Roof (Exact match to Rapido Image 3) -->
+    <g transform="translate(24, 42)">
+      <circle cx="0" cy="0" r="8" fill="#eab308" fill-opacity="0.5" />
+      <path d="M 0 -6 L 1.8 -1.9 L 6 -1.9 L 2.6 0.7 L 3.8 5 L 0 2.4 L -3.8 5 L -2.6 0.7 L -6 -1.9 L -1.8 -1.9 Z" fill="#ffffff" />
     </g>
 
-    <!-- Side Mirrors -->
-    <rect x="2" y="19" width="4" height="3" rx="1.5" fill="#18181b" />
-    <rect x="38" y="19" width="4" height="3" rx="1.5" fill="#18181b" />
+    <!-- Rear Cabin Opening & Passenger Seat -->
+    <rect x="10" y="60" width="28" height="3" rx="1.5" fill="#18181b" />
 
-    <!-- Rear Taillights -->
-    <rect x="7" y="56" width="6" height="2.5" rx="1" fill="#ef4444" />
-    <rect x="31" y="56" width="6" height="2.5" rx="1" fill="#ef4444" />
+    <!-- Dual Red LED Taillights -->
+    <rect x="8" y="62" width="7" height="3" rx="1.2" fill="#ef4444" stroke="#7f1d1d" stroke-width="0.6" />
+    <rect x="33" y="62" width="7" height="3" rx="1.2" fill="#ef4444" stroke="#7f1d1d" stroke-width="0.6" />
+    <rect x="9.5" y="62.5" width="4" height="1.5" rx="0.6" fill="#fca5a5" />
+    <rect x="34.5" y="62.5" width="4" height="1.5" rx="0.6" fill="#fca5a5" />
   </svg>
 `;
 
-// 2. Bike: Top-down dark chassis with rider wearing signature vibrant Rapido yellow helmet (Images 1 & 3)
+// 2. Bike: Modeled on reference image 2 (top-down rider) & image 5 (yellow helmet with white racing stripe)
 export const getBikeRawSvg = () => `
-  <svg viewBox="0 0 36 64" width="24" height="42" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <!-- Front Wheel & Disc -->
-    <rect x="15" y="2" width="6" height="15" rx="3" fill="#18181b" />
-    <rect x="16.5" y="4" width="3" height="9" rx="1.5" fill="#71717a" />
+  <svg viewBox="0 0 40 72" width="26" height="46" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="bikeHelmet" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#fef08a" />
+        <stop offset="40%" stop-color="#facc15" />
+        <stop offset="100%" stop-color="#eab308" />
+      </linearGradient>
+      <linearGradient id="scooterBody" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#eab308" />
+        <stop offset="50%" stop-color="#fde047" />
+        <stop offset="100%" stop-color="#ca8a04" />
+      </linearGradient>
+    </defs>
+
+    <!-- Front Wheel with Disc & Tire Tread -->
+    <rect x="17" y="2" width="6" height="16" rx="3" fill="#18181b" />
+    <rect x="18.5" y="4" width="3" height="11" rx="1.5" fill="#71717a" />
     
-    <!-- Front Mudguard & Headlight -->
-    <path d="M 13 13 C 13 9, 23 9, 23 13 L 22 18 L 14 18 Z" fill="#facc15" stroke="#ca8a04" stroke-width="1" />
-    <ellipse cx="18" cy="11" rx="3" ry="1.8" fill="#fef08a" />
+    <!-- Front Mudguard & Headlamp -->
+    <path d="M 14 11 C 14 7, 26 7, 26 11 L 25 18 L 15 18 Z" fill="url(#scooterBody)" stroke="#a16207" stroke-width="0.8" />
+    <ellipse cx="20" cy="9" rx="3.5" ry="2" fill="#ffffff" />
 
-    <!-- Handlebars with Mirrors -->
-    <path d="M 4 20 L 32 20" stroke="#18181b" stroke-width="3.5" stroke-linecap="round" />
-    <rect x="2" y="18.5" width="4" height="3" rx="1" fill="#000000" />
-    <rect x="30" y="18.5" width="4" height="3" rx="1" fill="#000000" />
+    <!-- Chrome Handlebars with Grips & Round Mirrors (Image 2 style) -->
+    <path d="M 5 21 L 35 21" stroke="#334155" stroke-width="3" stroke-linecap="round" />
+    <!-- Rubber grips -->
+    <rect x="3" y="19.5" width="5" height="3" rx="1.5" fill="#0f172a" />
+    <rect x="32" y="19.5" width="5" height="3" rx="1.5" fill="#0f172a" />
+    <!-- Chrome stem mirrors -->
+    <circle cx="3" cy="18" r="2.2" fill="#e2e8f0" stroke="#0f172a" stroke-width="0.8" />
+    <circle cx="37" cy="18" r="2.2" fill="#e2e8f0" stroke="#0f172a" stroke-width="0.8" />
 
-    <!-- Fuel Tank with Yellow Accent -->
-    <path d="M 13 22 C 12 26, 12 30, 14 33 L 22 33 C 24 30, 24 26, 23 22 Z" fill="#facc15" stroke="#eab308" stroke-width="1.2" />
+    <!-- Scooter Floorboard / Cowl -->
+    <path d="M 13 22 L 27 22 L 28 35 L 12 35 Z" fill="url(#scooterBody)" />
 
-    <!-- Rider Body (Dark Jacket) & Arms -->
-    <path d="M 6 22 L 12 29 L 24 29 L 30 22" stroke="#1e293b" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
-    <ellipse cx="18" cy="33" rx="9" ry="7" fill="#0f172a" />
-    
-    <!-- Iconic Rapido Bright Yellow Helmet -->
-    <ellipse cx="18" cy="28" rx="6.5" ry="7" fill="#facc15" stroke="#18181b" stroke-width="1.5" />
-    <!-- Helmet Black Visor Shield -->
-    <path d="M 14.5 26 Q 18 24 21.5 26" stroke="#18181b" stroke-width="3" stroke-linecap="round" />
-    <ellipse cx="18" cy="27" rx="4" ry="1.2" fill="#09090b" opacity="0.9" />
+    <!-- Rider Shoulders & Arms (Reaching to handlebars as in Image 2) -->
+    <path d="M 6 22 L 13 32 L 27 32 L 34 22" stroke="#1e293b" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+    <!-- Rider Torso -->
+    <ellipse cx="20" cy="36" rx="10" ry="7.5" fill="#0f172a" />
 
-    <!-- Bike Seat & Rear Body -->
-    <path d="M 14 38 L 22 38 L 21 50 L 15 50 Z" fill="#18181b" />
-    
-    <!-- Rear Wheel & Taillight -->
-    <rect x="15" y="47" width="6" height="15" rx="3" fill="#18181b" />
-    <rect x="15.5" y="48" width="5" height="2.5" rx="1" fill="#ef4444" />
+    <!-- Signature Rapido Helmet with White Racing Stripe (Image 5 exact match!) -->
+    <circle cx="20" cy="30" r="8" fill="url(#bikeHelmet)" stroke="#18181b" stroke-width="1.2" />
+    <!-- White Racing Stripe in Center -->
+    <path d="M 18.5 22.2 C 18.5 22.2, 19.5 22, 20 22 C 20.5 22, 21.5 22.2, 21.5 22.2 L 21.5 37.8 C 21.5 37.8, 20.5 38, 20 38 C 19.5 38, 18.5 37.8, 18.5 37.8 Z" fill="#ffffff" />
+    <!-- Glossy Visor Slit -->
+    <path d="M 15 27 Q 20 24 25 27" stroke="#09090b" stroke-width="2.8" stroke-linecap="round" />
+    <!-- Specular visor highlight -->
+    <ellipse cx="20" cy="27" rx="3.5" ry="0.8" fill="#93c5fd" opacity="0.8" />
+
+    <!-- Leather Seat (Textured Black) -->
+    <path d="M 14 41 C 14 39, 26 39, 26 41 L 25 54 L 15 54 Z" fill="#18181b" rx="2" />
+    <line x1="16" y1="47" x2="24" y2="47" stroke="#3f3f46" stroke-width="1" />
+
+    <!-- Rear Rack & Taillight -->
+    <rect x="16" y="53" width="8" height="5" rx="1.5" fill="#334155" />
+    <!-- Rear Wheel -->
+    <rect x="17" y="55" width="6" height="15" rx="3" fill="#18181b" />
+    <!-- Bright Red Taillight -->
+    <rect x="16.5" y="54" width="7" height="3" rx="1.5" fill="#ef4444" />
+    <rect x="18" y="54.5" width="4" height="1.5" rx="0.75" fill="#fca5a5" />
   </svg>
 `;
 
-// 3. Cab: Aerodynamic white sedan with yellow taxi bar roof
+// 3. Cab: Modeled directly on reference image 1 (Yellow Taxi & Modern Sedan)
 export const getCabRawSvg = () => `
-  <svg viewBox="0 0 36 68" width="26" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <!-- Aerodynamic Sedan Body -->
-    <rect x="4" y="6" width="28" height="54" rx="9" fill="#ffffff" stroke="#18181b" stroke-width="2" />
-    <path d="M 7 12 C 10 8, 26 8, 29 12" stroke="#e2e8f0" stroke-width="1.5" />
-    <rect x="6" y="7" width="5" height="3" rx="1" fill="#fef08a" />
-    <rect x="25" y="7" width="5" height="3" rx="1" fill="#fef08a" />
-    <!-- Windshield -->
-    <path d="M 7 19 L 29 19 L 26 27 L 10 27 Z" fill="#1e293b" />
-    <!-- Roof with Taxi Bar Sign -->
-    <rect x="8" y="27" width="20" height="20" rx="3" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
-    <rect x="13" y="34" width="10" height="4" rx="2" fill="#f59e0b" stroke="#18181b" stroke-width="1" />
-    <!-- Rear Window -->
-    <path d="M 10 48 L 26 48 L 28 54 L 8 54 Z" fill="#1e293b" />
-    <!-- Side Mirrors & Taillights -->
-    <rect x="1" y="20" width="3" height="4" rx="1" fill="#18181b" />
-    <rect x="32" y="20" width="3" height="4" rx="1" fill="#18181b" />
-    <rect x="6" y="58" width="5" height="2" rx="1" fill="#ef4444" />
-    <rect x="25" y="58" width="5" height="2" rx="1" fill="#ef4444" />
+  <svg viewBox="0 0 42 76" width="28" height="50" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="carBody" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#f8fafc" />
+        <stop offset="50%" stop-color="#ffffff" />
+        <stop offset="100%" stop-color="#e2e8f0" />
+      </linearGradient>
+      <linearGradient id="carGlass" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#0f172a" />
+        <stop offset="50%" stop-color="#1e293b" />
+        <stop offset="100%" stop-color="#0f172a" />
+      </linearGradient>
+    </defs>
+
+    <!-- Aerodynamic Sedan Body (Image 1 style) -->
+    <rect x="5" y="6" width="32" height="64" rx="11" fill="url(#carBody)" stroke="#18181b" stroke-width="2" />
+    
+    <!-- Front Bumper & Headlights (Amber/Yellow LED projector) -->
+    <path d="M 8 13 C 12 8, 30 8, 34 13" stroke="#cbd5e1" stroke-width="1.8" />
+    <rect x="7" y="7" width="6" height="3.5" rx="1.5" fill="#fef08a" stroke="#ca8a04" stroke-width="0.8" />
+    <rect x="29" y="7" width="6" height="3.5" rx="1.5" fill="#fef08a" stroke="#ca8a04" stroke-width="0.8" />
+
+    <!-- Front Curved Windshield with Glass Specular Glare -->
+    <path d="M 8 20 C 13 18, 29 18, 34 20 L 32 30 L 10 30 Z" fill="url(#carGlass)" />
+    <line x1="12" y1="22" x2="30" y2="28" stroke="#93c5fd" stroke-width="2" stroke-linecap="round" opacity="0.75" />
+
+    <!-- Side Mirrors with Reflective Glass -->
+    <rect x="1" y="21" width="4" height="5" rx="2" fill="#18181b" />
+    <rect x="2" y="22" width="2" height="3" rx="1" fill="#93c5fd" />
+    <rect x="37" y="21" width="4" height="5" rx="2" fill="#18181b" />
+    <rect x="38" y="22" width="2" height="3" rx="1" fill="#93c5fd" />
+
+    <!-- Roof with Taxi Bar Sign (Image 1 Yellow Taxi style) -->
+    <rect x="10" y="30" width="22" height="23" rx="4" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1" />
+    <!-- Amber/Yellow Illuminated TAXI bar sign -->
+    <rect x="15" y="38" width="12" height="5" rx="2.5" fill="#f59e0b" stroke="#18181b" stroke-width="1.2" />
+    <rect x="17" y="39.5" width="8" height="2" rx="1" fill="#fef08a" />
+
+    <!-- Rear Window with Defroster Lines -->
+    <path d="M 10 53 L 32 53 L 34 61 C 29 63, 13 63, 8 61 Z" fill="url(#carGlass)" />
+    <line x1="12" y1="57" x2="30" y2="57" stroke="#334155" stroke-width="1" />
+
+    <!-- Rear Trunk & LED Taillights -->
+    <rect x="7" y="67" width="7" height="3" rx="1.2" fill="#ef4444" stroke="#7f1d1d" stroke-width="0.8" />
+    <rect x="28" y="67" width="7" height="3" rx="1.2" fill="#ef4444" stroke="#7f1d1d" stroke-width="0.8" />
+    <rect x="8.5" y="67.5" width="4" height="1.5" rx="0.75" fill="#fca5a5" />
+    <rect x="29.5" y="67.5" width="4" height="1.5" rx="0.75" fill="#fca5a5" />
   </svg>
 `;
 
-// 4. Porter: Mini-truck cabin with strapped cargo bed
+// 4. Porter: Modeled directly on reference image 1 (Pickup truck & mini-truck with cargo bed)
 export const getPorterRawSvg = () => `
-  <svg viewBox="0 0 36 70" width="26" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="5" y="4" width="26" height="4" rx="2" fill="#18181b" />
-    <!-- Driver Cabin -->
-    <path d="M 5 8 C 5 6, 31 6, 31 8 L 31 24 L 5 24 Z" fill="#2563eb" stroke="#18181b" stroke-width="1.8" />
-    <path d="M 8 9 L 28 9 L 27 18 L 9 18 Z" fill="#0f172a" />
-    <rect x="2" y="12" width="3" height="4" rx="1" fill="#18181b" />
-    <rect x="31" y="12" width="3" height="4" rx="1" fill="#18181b" />
-    <!-- Cargo Bed with Strapped Boxes -->
-    <rect x="4" y="25" width="28" height="38" rx="3" fill="#cbd5e1" stroke="#334155" stroke-width="2" />
-    <rect x="7" y="28" width="10" height="15" rx="1" fill="#d97706" stroke="#92400e" stroke-width="1" />
-    <rect x="19" y="28" width="10" height="15" rx="1" fill="#b45309" stroke="#78350f" stroke-width="1" />
-    <rect x="8" y="45" width="20" height="14" rx="1" fill="#92400e" stroke="#451a03" stroke-width="1" />
-    <line x1="4" y1="36" x2="32" y2="36" stroke="#facc15" stroke-width="1.5" />
-    <line x1="4" y1="52" x2="32" y2="52" stroke="#facc15" stroke-width="1.5" />
+  <svg viewBox="0 0 44 78" width="28" height="52" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="truckCabin" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#1d4ed8" />
+        <stop offset="50%" stop-color="#3b82f6" />
+        <stop offset="100%" stop-color="#1e40af" />
+      </linearGradient>
+      <linearGradient id="cargoBed" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#94a3b8" />
+        <stop offset="100%" stop-color="#64748b" />
+      </linearGradient>
+    </defs>
+
+    <!-- Front Bumper & Bullbar -->
+    <rect x="6" y="3" width="32" height="5" rx="2.5" fill="#18181b" />
+    <rect x="8" y="4" width="5" height="2.5" rx="1" fill="#fef08a" />
+    <rect x="31" y="4" width="5" height="2.5" rx="1" fill="#fef08a" />
+
+    <!-- Driver Cabin (Curved aerodynamic front) -->
+    <path d="M 6 8 C 6 6, 38 6, 38 8 L 38 27 L 6 27 Z" fill="url(#truckCabin)" stroke="#09090b" stroke-width="1.8" />
+    <!-- Windshield -->
+    <path d="M 9 9 L 35 9 L 34 20 L 10 20 Z" fill="#0f172a" stroke="#1e293b" stroke-width="1" />
+    <line x1="12" y1="12" x2="32" y2="16" stroke="#93c5fd" stroke-width="2" stroke-linecap="round" opacity="0.8" />
+
+    <!-- Truck Large Side Mirrors -->
+    <rect x="2" y="13" width="4" height="6" rx="2" fill="#18181b" stroke="#64748b" stroke-width="0.8" />
+    <rect x="38" y="13" width="4" height="6" rx="2" fill="#18181b" stroke="#64748b" stroke-width="0.8" />
+
+    <!-- Corrugated Cargo Bed (Image 1 style pickup bed) -->
+    <rect x="5" y="28" width="34" height="44" rx="4" fill="url(#cargoBed)" stroke="#334155" stroke-width="2" />
+    
+    <!-- Wooden Cargo Crates & Parcel Boxes Stacked Inside Bed -->
+    <rect x="8" y="32" width="13" height="18" rx="2" fill="#d97706" stroke="#78350f" stroke-width="1.2" />
+    <line x1="8" y1="32" x2="21" y2="50" stroke="#78350f" stroke-width="1" />
+    
+    <rect x="23" y="32" width="13" height="18" rx="2" fill="#b45309" stroke="#451a03" stroke-width="1.2" />
+    <line x1="23" y1="50" x2="36" y2="32" stroke="#451a03" stroke-width="1" />
+    
+    <rect x="9" y="52" width="26" height="16" rx="2" fill="#92400e" stroke="#451a03" stroke-width="1.2" />
+
+    <!-- Vibrant Yellow Ratchet Straps (Securing cargo) -->
+    <line x1="5" y1="41" x2="39" y2="41" stroke="#facc15" stroke-width="2" stroke-dasharray="4 2" />
+    <line x1="5" y1="60" x2="39" y2="60" stroke="#facc15" stroke-width="2" stroke-dasharray="4 2" />
+
+    <!-- Rear Tailgate & Taillights -->
+    <rect x="5" y="70" width="7" height="3" rx="1" fill="#ef4444" />
+    <rect x="32" y="70" width="7" height="3" rx="1" fill="#ef4444" />
   </svg>
 `;
 
@@ -161,7 +275,7 @@ const dropoffIcon = L.divIcon({
 });
 
 // Unified Rotated Vehicle Marker Generator:
-// Entire vehicle, forward headlight beam cone, and taillights rotate in 100% unison with heading
+// Entire vehicle, forward volumetric headlight beams, and taillights rotate in 100% unison with heading
 export const createRotatedVehicleIcon = ({
   category = 'BIKE',
   heading = 0,
@@ -170,37 +284,37 @@ export const createRotatedVehicleIcon = ({
   showHeadlight = true,
 }) => {
   let rawSvg = '';
-  let size = [28, 44];
-  let anchor = [14, 22];
+  let size = [30, 48];
+  let anchor = [15, 24];
 
   if (category === 'AUTO') {
     rawSvg = getAutoRickshawRawSvg();
-    size = [30, 44];
-    anchor = [15, 22];
+    size = [32, 48];
+    anchor = [16, 24];
   } else if (category === 'CAB' || category === 'SEDAN' || category === 'SUV') {
     rawSvg = getCabRawSvg();
-    size = [26, 48];
-    anchor = [13, 24];
+    size = [28, 52];
+    anchor = [14, 26];
   } else if (category === 'TROLLEY_PORTER') {
     rawSvg = getPorterRawSvg();
-    size = [28, 50];
-    anchor = [14, 25];
+    size = [30, 54];
+    anchor = [15, 27];
   } else {
     // BIKE
     rawSvg = getBikeRawSvg();
-    size = [24, 42];
-    anchor = [12, 21];
+    size = [26, 48];
+    anchor = [13, 24];
   }
 
   if (isArrived) {
     return L.divIcon({
       html: `
         <div style="position: relative; width: ${size[0]}px; height: ${size[1]}px; display: flex; align-items: center; justify-content: center;">
-          <div style="position: absolute; width: 54px; height: 54px; border-radius: 50%; background: rgba(16, 185, 129, 0.3); animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-          <div style="transform: rotate(${heading}deg); transform-origin: center center; width: ${size[0]}px; height: ${size[1]}px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.45));">
+          <div style="position: absolute; width: 62px; height: 62px; border-radius: 50%; background: radial-gradient(circle, rgba(16, 185, 129, 0.4) 0%, rgba(16, 185, 129, 0.08) 70%, transparent 100%); animation: ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+          <div style="transform: rotate(${heading}deg); transform-origin: center center; width: ${size[0]}px; height: ${size[1]}px; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.48));">
             ${rawSvg}
           </div>
-          <div style="position: absolute; top: -14px; left: 50%; transform: translateX(-50%); white-space: nowrap; padding: 2px 7px; border-radius: 9999px; background-color: #059669; color: #ffffff; font-size: 9px; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; box-shadow: 0 2px 6px rgba(0,0,0,0.3); border: 1.5px solid #ffffff; z-index: 10;">
+          <div style="position: absolute; top: -16px; left: 50%; transform: translateX(-50%); white-space: nowrap; padding: 2.5px 8px; border-radius: 9999px; background: linear-gradient(135deg, #059669, #047857); color: #ffffff; font-size: 9px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; box-shadow: 0 4px 10px rgba(0,0,0,0.35); border: 1.5px solid #ffffff; z-index: 10;">
             Arrived
           </div>
         </div>
@@ -214,10 +328,16 @@ export const createRotatedVehicleIcon = ({
   return L.divIcon({
     html: `
       <div style="position: relative; width: ${size[0]}px; height: ${size[1]}px;">
-        <div style="position: absolute; inset: 0; transform: rotate(${heading}deg); transform-origin: center center; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));">
-          <!-- Forward Headlight Light Cone (Attached to front bumper, shines in travel direction) -->
+        <div style="position: absolute; inset: 0; transform: rotate(${heading}deg); transform-origin: center center; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.42));">
+          <!-- Realistic Dual Volumetric Headlight Beams (Attached to front bumper, shines in travel direction) -->
           ${showHeadlight ? `
-            <div style="position: absolute; top: -18px; left: 50%; transform: translateX(-50%); width: 26px; height: 22px; background: radial-gradient(ellipse at bottom, rgba(254, 240, 138, 0.8) 0%, rgba(250, 204, 21, 0.3) 55%, transparent 85%); clip-path: polygon(25% 100%, 75% 100%, 100% 0%, 0% 0%); pointer-events: none; z-index: 1;"></div>
+            <div style="position: absolute; top: -24px; left: 50%; transform: translateX(-50%); width: 34px; height: 26px; pointer-events: none; z-index: 1;">
+              <!-- Volumetric Cone -->
+              <div style="width: 100%; height: 100%; background: radial-gradient(ellipse at bottom, rgba(254, 240, 138, 0.85) 0%, rgba(250, 204, 21, 0.35) 45%, transparent 75%); clip-path: polygon(20% 100%, 80% 100%, 100% 0%, 0% 0%); filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.5));"></div>
+              <!-- Dual Projector Hotspots -->
+              <div style="position: absolute; bottom: 0; left: 22%; width: 5px; height: 5px; border-radius: 50%; background: #ffffff; box-shadow: 0 0 8px #fef08a;"></div>
+              <div style="position: absolute; bottom: 0; right: 22%; width: 5px; height: 5px; border-radius: 50%; background: #ffffff; box-shadow: 0 0 8px #fef08a;"></div>
+            </div>
           ` : ''}
 
           <!-- Centered Top-Down Vector Sprite -->
@@ -225,12 +345,13 @@ export const createRotatedVehicleIcon = ({
             ${rawSvg}
           </div>
 
-          <!-- Rear Taillight Glow -->
-          <div style="position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%); width: 6px; height: 3px; background: #ef4444; border-radius: 1px; box-shadow: 0 0 5px #ef4444; z-index: 3;"></div>
+          <!-- Rear LED Taillight Glow -->
+          <div style="position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%); width: 8px; height: 3.5px; background: #ef4444; border-radius: 1px; box-shadow: 0 0 7px #ef4444; z-index: 3;"></div>
         </div>
 
         ${isLive ? `
-          <!-- Pulsing Radar Dot behind live tracking vehicle -->
+          <!-- Pulsing Radar Ripple beneath live tracking vehicle -->
+          <div style="position: absolute; inset: -6px; border-radius: 50%; border: 2px solid rgba(16, 185, 129, 0.45); animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite; pointer-events: none; z-index: 0;"></div>
           <div style="position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%); width: 8px; height: 8px; border-radius: 50%; background-color: #10b981; border: 1.5px solid #ffffff; box-shadow: 0 0 6px #10b981; z-index: 4;"></div>
         ` : ''}
       </div>
