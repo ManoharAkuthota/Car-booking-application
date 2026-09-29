@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { Layers, Crosshair, Navigation, Compass } from 'lucide-react';
 
-// Custom SVG icons for Pickup, Dropoff, User Live Location, and Vehicles
+// Custom SVG icons for Pickup, Dropoff, and Vehicles
 const createIcon = (svgString, className) => {
   return L.divIcon({
     html: svgString,
@@ -26,36 +26,32 @@ const dropoffIcon = createIcon(`
   </div>
 `);
 
-// Live User GPS Location Radar Dot (Uber/Rapido style blue pulsing dot)
-const userLocationIcon = L.divIcon({
-  html: `
-    <div class="relative flex items-center justify-center w-10 h-10">
-      <div class="absolute w-10 h-10 rounded-full bg-blue-500/30 animate-ping"></div>
-      <div class="w-4 h-4 rounded-full bg-blue-600 border-2 border-white shadow-lg ring-4 ring-blue-500/40"></div>
-    </div>
-  `,
-  className: 'user-live-radar-icon',
-  iconSize: [40, 40],
-  iconAnchor: [20, 20],
-  popupAnchor: [0, -20],
-});
-
-// Nearby patrol moving vehicle icons
+// Nearby vehicle icon generator matching selected vehicle category
 const getNearbyIcon = (type = 'BIKE') => {
   let emoji = '🏍️';
-  let bg = 'bg-amber-400';
-  if (type === 'AUTO') { emoji = '🛺'; bg = 'bg-amber-500'; }
-  if (type === 'CAB') { emoji = '🚗'; bg = 'bg-gray-900'; }
+  let bg = 'bg-amber-400 text-amber-950 border-amber-300 ring-amber-400/40';
+  if (type === 'AUTO') {
+    emoji = '🛺';
+    bg = 'bg-emerald-500 text-white border-emerald-300 ring-emerald-500/40';
+  } else if (type === 'CAB') {
+    emoji = '🚗';
+    bg = 'bg-blue-600 text-white border-blue-400 ring-blue-500/40';
+  } else if (type === 'TROLLEY_PORTER') {
+    emoji = '🛻';
+    bg = 'bg-purple-600 text-white border-purple-300 ring-purple-500/40';
+  }
 
   return L.divIcon({
     html: `
-      <div class="w-7 h-7 rounded-full ${bg} flex items-center justify-center shadow-md border border-white text-xs transform transition-all duration-1000 ease-linear">
-        ${emoji}
+      <div class="relative flex items-center justify-center">
+        <div class="w-8 h-8 rounded-full ${bg} flex items-center justify-center shadow-lg border-2 ring-2 text-sm transform transition-all duration-1000 ease-linear">
+          ${emoji}
+        </div>
       </div>
     `,
     className: 'nearby-fleet-marker',
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
   });
 };
 
@@ -143,11 +139,34 @@ const MAP_LAYERS = {
   },
 };
 
+// Generate realistic nearby drivers around the pickup location
+const generateNearbyDrivers = (centerCoord, type) => {
+  if (!centerCoord || !centerCoord[0]) return [];
+  const baseOffsets = [
+    { dLat: 0.0024, dLng: 0.0018, speedLat: 0.0001, speedLng: -0.00008, eta: 2 },
+    { dLat: -0.0019, dLng: 0.0026, speedLat: -0.00008, speedLng: 0.00012, eta: 3 },
+    { dLat: 0.0016, dLng: -0.0029, speedLat: 0.00012, speedLng: 0.00006, eta: 2 },
+    { dLat: -0.0028, dLng: -0.0016, speedLat: -0.00006, speedLng: -0.0001, eta: 4 },
+    { dLat: 0.0036, dLng: -0.0008, speedLat: 0.00005, speedLng: 0.00011, eta: 3 },
+    { dLat: -0.0011, dLng: 0.0035, speedLat: -0.00011, speedLng: -0.00005, eta: 4 },
+  ];
+
+  return baseOffsets.map((o, idx) => ({
+    id: `${type}-${idx}`,
+    type: type,
+    offsetLat: o.dLat,
+    offsetLng: o.dLng,
+    speedLat: o.speedLat,
+    speedLng: o.speedLng,
+    eta: o.eta,
+  }));
+};
+
 const MapView = ({
   pickup = [12.9716, 77.5946],
   dropoff = [13.0358, 77.5970],
   carPosition = null,
-  category = 'SEDAN',
+  category = 'BIKE',
   isLiveTrip = false,
   className = "h-[340px]",
   onLocateMe = null,
@@ -158,27 +177,60 @@ const MapView = ({
   const [selectedLayer, setSelectedLayer] = useState('google_roadmap');
   const [recenterCount, setRecenterCount] = useState(0);
 
-  // Simulated live nearby moving fleet (bikes, autos, cabs) crawling around pickup point
-  const [nearbyVehicles, setNearbyVehicles] = useState(() => [
-    { id: 1, type: 'BIKE', offsetLat: 0.0035, offsetLng: 0.0020 },
-    { id: 2, type: 'BIKE', offsetLat: -0.0028, offsetLng: 0.0035 },
-    { id: 3, type: 'AUTO', offsetLat: 0.0018, offsetLng: -0.0032 },
-    { id: 4, type: 'AUTO', offsetLat: -0.0031, offsetLng: -0.0021 },
-    { id: 5, type: 'CAB', offsetLat: 0.0042, offsetLng: -0.0015 },
-    { id: 6, type: 'CAB', offsetLat: -0.0015, offsetLng: 0.0048 },
-  ]);
+  // Normalize category to vehicle type
+  const vehicleType = useMemo(() => {
+    if (category === 'BIKE') return 'BIKE';
+    if (category === 'AUTO') return 'AUTO';
+    if (category === 'TROLLEY_PORTER') return 'TROLLEY_PORTER';
+    return 'CAB';
+  }, [category]);
 
-  // Animate nearby vehicles every 2.5 seconds to simulate traffic patrol
+  const vehicleLabel = useMemo(() => {
+    if (vehicleType === 'BIKE') return 'Bike';
+    if (vehicleType === 'AUTO') return 'Auto';
+    if (vehicleType === 'TROLLEY_PORTER') return 'Porter';
+    return 'Cab';
+  }, [vehicleType]);
+
+  const vehicleEmoji = useMemo(() => {
+    if (vehicleType === 'BIKE') return '🏍️';
+    if (vehicleType === 'AUTO') return '🛺';
+    if (vehicleType === 'TROLLEY_PORTER') return '🛻';
+    return '🚗';
+  }, [vehicleType]);
+
+  // Nearby vehicles exclusively matching selected vehicle type around pickup point
+  const [nearbyVehicles, setNearbyVehicles] = useState(() =>
+    generateNearbyDrivers(pickup, vehicleType)
+  );
+
+  // Re-generate nearby drivers whenever pickup point or vehicle category changes
+  useEffect(() => {
+    if (pickup && pickup[0]) {
+      setNearbyVehicles(generateNearbyDrivers(pickup, vehicleType));
+    }
+  }, [pickup?.[0], pickup?.[1], vehicleType]);
+
+  // Animate nearby vehicles every 2 seconds to simulate active city drivers
   useEffect(() => {
     const interval = setInterval(() => {
       setNearbyVehicles((prev) =>
-        prev.map((v) => ({
-          ...v,
-          offsetLat: v.offsetLat + (Math.random() - 0.5) * 0.0006,
-          offsetLng: v.offsetLng + (Math.random() - 0.5) * 0.0006,
-        }))
+        prev.map((v) => {
+          let newOffsetLat = v.offsetLat + v.speedLat + (Math.random() - 0.5) * 0.0002;
+          let newOffsetLng = v.offsetLng + v.speedLng + (Math.random() - 0.5) * 0.0002;
+
+          // Boundary bounce within ~600m
+          if (Math.abs(newOffsetLat) > 0.005) v.speedLat = -v.speedLat;
+          if (Math.abs(newOffsetLng) > 0.005) v.speedLng = -v.speedLng;
+
+          return {
+            ...v,
+            offsetLat: newOffsetLat,
+            offsetLng: newOffsetLng,
+          };
+        })
       );
-    }, 2500);
+    }, 2000);
 
     return () => clearInterval(interval);
   }, []);
@@ -201,7 +253,7 @@ const MapView = ({
     <div className={`relative w-full rounded-2xl overflow-hidden border border-gray-200 shadow-md ${className}`}>
       <MapContainer
         center={pickup || [12.9716, 77.5946]}
-        zoom={13}
+        zoom={14}
         scrollWheelZoom={true}
         className="h-full w-full z-0 cursor-crosshair"
       >
@@ -220,8 +272,8 @@ const MapView = ({
         {pickup && (
           <Marker position={pickup} icon={pickupIcon}>
             <Popup className="text-gray-900 font-bold text-xs">
-              <strong>📍 {pickupAddress}</strong>
-              <p className="text-[10px] text-gray-500 font-normal">Click elsewhere on map to reposition</p>
+              <strong>📍 Pickup: {pickupAddress}</strong>
+              <p className="text-[10px] text-gray-500 font-normal">Drivers will meet you here</p>
             </Popup>
           </Marker>
         )}
@@ -230,12 +282,12 @@ const MapView = ({
         {dropoff && (
           <Marker position={dropoff} icon={dropoffIcon}>
             <Popup className="text-gray-900 font-bold text-xs">
-              <strong>🏁 {dropoffAddress}</strong>
+              <strong>🏁 Destination: {dropoffAddress}</strong>
             </Popup>
           </Marker>
         )}
 
-        {/* Nearby Moving Patrol Vehicles */}
+        {/* ONLY Nearby Drivers of the Selected Vehicle Category around Pickup Point */}
         {!isLiveTrip && pickup && nearbyVehicles.map((v) => (
           <Marker
             key={v.id}
@@ -243,12 +295,18 @@ const MapView = ({
             icon={getNearbyIcon(v.type)}
           >
             <Popup className="text-gray-900 font-bold text-[11px]">
-              Nearby {v.type === 'BIKE' ? 'Rapido Bike' : v.type === 'AUTO' ? 'Auto Rickshaw' : 'Cab'} • 2 min away
+              <div className="space-y-0.5">
+                <p className="font-extrabold text-xs text-gray-950 flex items-center space-x-1">
+                  <span>{vehicleEmoji} Nearby {vehicleLabel} Pilot</span>
+                </p>
+                <p className="text-[10px] text-emerald-700 font-semibold">⚡ ~{v.eta} mins to pickup</p>
+                <p className="text-[10px] text-gray-500 font-normal">⭐ 4.9 Verified Pilot • Ready to ride</p>
+              </div>
             </Popup>
           </Marker>
         ))}
 
-        {/* Active En-Route Driver Marker */}
+        {/* Active En-Route Driver Marker (if trip ongoing) */}
         {carPosition && (
           <Marker position={carPosition} icon={getVehicleMarkerIcon(category)}>
             <Popup className="text-gray-900 font-semibold text-xs">
@@ -264,7 +322,7 @@ const MapView = ({
               positions={points}
               color="#1e293b"
               weight={7}
-              opacity={0.3}
+              opacity={0.25}
             />
             <Polyline
               positions={points}
@@ -321,10 +379,19 @@ const MapView = ({
         </button>
       </div>
 
+      {/* Floating Status Pill: Shows nearby pilots of the currently selected service */}
+      {!isLiveTrip && (
+        <div className="absolute top-3 left-3 z-[1000] bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full border border-gray-200 shadow-md flex items-center space-x-2 text-xs font-extrabold text-gray-950 pointer-events-none">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span>{vehicleEmoji} {nearbyVehicles.length} {vehicleLabel}s near pickup</span>
+          <span className="text-emerald-700 font-semibold text-[11px]">• ~2-3 mins away</span>
+        </div>
+      )}
+
       {/* Floating GPS HUD Pill */}
       <div className="absolute bottom-3 left-3 z-[1000] px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-md text-[11px] font-mono text-gray-700 flex items-center space-x-2 border border-gray-200 shadow-md pointer-events-none">
         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-        <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-700">Google Maps Live GPS • Moving Fleet</span>
+        <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-700">Live GPS Telemetry</span>
       </div>
     </div>
   );
