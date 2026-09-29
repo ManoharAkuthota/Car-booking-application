@@ -1,0 +1,43 @@
+server:
+  port: ${PORT:${SERVER_PORT:8080}}
+  error:
+    include-message: always
+    include-binding-errors: always
+
+spring:
+  application:
+    name: drivepulse-car-booking
+  datasource:
+    url: ${DB_URL:${SPRING_DATASOURCE_URL:jdbc:mysql://gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/car_booking_db?useSSL=true&verifyServerCertificate=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}}
+    username: ${DB_USERNAME:${SPRING_DATASOURCE_USERNAME:3HVUhdVZBhSBCPs.root}}
+    password: ${DB_PASSWORD:${SPRING_DATASOURCE_PASSWORD:6BP74bdgTlFpWzrm}}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: false
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:antigravity_mobile_store_super_secret_jwt_key_2026_production_grade_token_signing_secret}
+    expiration-ms: 86400000 # 24 hours
+  cloudinary:
+    cloud-name: ${CLOUDINARY_CLOUD_NAME:yx3r97ac}
+    api-key: ${CLOUDINARY_API_KEY:665272951174257}
+    api-secret: ${CLOUDINARY_API_SECRET:WBXFMde0defk0rcafmPXPt2lOd0}
+  cors:
+    allowed-origins:
+      - "http://localhost:5173"
+      - "http://127.0.0.1:5173"
+      - "http://localhost:3000"
+      - "https://*.onrender.com"
+      - "https://*.vercel.app"
+      - "https://*.netlify.app"

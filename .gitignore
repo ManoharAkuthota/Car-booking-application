@@ -1,0 +1,17 @@
+# Dependencies & Build Artifacts
+**/node_modules/
+**/dist/
+**/target/
+
+# Logs & Temporary Files
+*.log
+logs/
+temp/
+
+# IDE & Environment Files
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+**/*.local
