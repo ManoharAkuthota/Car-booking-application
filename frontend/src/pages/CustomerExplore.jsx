@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { carApi, bookingApi } from '../api/client';
+import { DEFAULT_PRESET_LOCATIONS, reverseGeocode, searchLocations } from '../api/locationService';
+import LocationSearchInput from '../components/LocationSearchInput';
 import BookingModal from '../components/BookingModal';
 import ActiveTripCard from '../components/ActiveTripCard';
 import DigitalReceiptModal from '../components/DigitalReceiptModal';
@@ -8,7 +10,7 @@ import {
   Car, Shield, Smartphone, Monitor, MapPin, Navigation, Clock, ShieldCheck,
   HardHat, Package, IndianRupee, ArrowRight, ArrowUpDown, CheckCircle2,
   ChevronRight, Star, AlertCircle, PhoneCall, Check, Info, ShieldAlert,
-  Sparkles, RefreshCw, X, Crosshair
+  Sparkles, RefreshCw, X, Crosshair, Plane, Building2, Train
 } from 'lucide-react';
 
 const CATEGORIES = [
@@ -20,17 +22,6 @@ const CATEGORIES = [
   { id: 'ELECTRIC', label: 'Electric EV', emoji: '⚡', badge: 'Eco' },
   { id: 'SUV', label: 'SUV', emoji: '🚙', badge: '6 Seater' },
   { id: 'LUXURY', label: 'Luxury', emoji: '👑', badge: 'Premier' },
-];
-
-const DEFAULT_LOCATIONS = [
-  { name: 'Indiranagar 100ft Rd', area: 'Central Bengaluru', lat: 12.9784, lng: 77.6408 },
-  { name: 'Kempegowda Airport (BLR)', area: 'Devanahalli', lat: 13.1986, lng: 77.7066 },
-  { name: 'MG Road Metro Station', area: 'CBD', lat: 12.9756, lng: 77.6066 },
-  { name: 'Electronic City Phase 1', area: 'South Tech Hub', lat: 12.8452, lng: 77.6602 },
-  { name: 'Whitefield IT Park', area: 'East Tech Hub', lat: 12.9866, lng: 77.7382 },
-  { name: 'Koramangala 5th Block', area: 'Startup Hub', lat: 12.9352, lng: 77.6245 },
-  { name: 'HSR Layout Sector 1', area: 'South-East', lat: 12.9116, lng: 77.6389 },
-  { name: 'Jayanagar 4th Block', area: 'South Bengaluru', lat: 12.9299, lng: 77.5834 },
 ];
 
 const CustomerExplore = ({ onNavigateToTrips }) => {
@@ -45,46 +36,50 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
   // Selected vehicle for instant booking in cockpit
   const [highlightedCarId, setHighlightedCarId] = useState(null);
 
-  // Layout mode switcher for desktop testing: 'auto' (device responsive) or 'mockup' (simulate mobile bezel on desktop)
+  // Device view mode for testing: 'auto' (responsive) or 'mockup' (simulate bezel)
   const [deviceMode, setDeviceMode] = useState('auto');
-
-  // Mobile App active bottom tab
   const [mobileTab, setMobileTab] = useState('rides');
 
-  // Preset & Live Locations
-  const [locations, setLocations] = useState(DEFAULT_LOCATIONS);
-  const [pickupIndex, setPickupIndex] = useState(0);
-  const [dropoffIndex, setDropoffIndex] = useState(1);
-  const [userLiveLocationName, setUserLiveLocationName] = useState(null);
+  // Dynamic Locations State (Pickup and Dropoff)
+  const [pickupLocation, setPickupLocation] = useState(DEFAULT_PRESET_LOCATIONS[0]);
+  const [dropoffLocation, setDropoffLocation] = useState(DEFAULT_PRESET_LOCATIONS[1]);
+  const [isDetectingGPS, setIsDetectingGPS] = useState(false);
 
-  // Automatically request browser live geolocation on mount (Rapido & Uber style)
+  // Which pin to move when clicking on map ('dropoff' or 'pickup')
+  const [mapTargetMode, setMapTargetMode] = useState('dropoff');
+
+  // Automatically request browser live geolocation on mount & reverse-geocode to real street/area
   useEffect(() => {
     if (typeof window !== 'undefined' && 'geolocation' in navigator) {
+      setIsDetectingGPS(true);
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
-          const liveLoc = {
-            name: '📍 My Current Location (Live GPS)',
-            area: 'Real-time GPS',
-            lat: lat,
-            lng: lng,
-            isLive: true,
-          };
-          setUserLiveLocationName('📍 Current Location (GPS)');
-          setLocations((prev) => [liveLoc, ...prev.filter((l) => !l.isLive)]);
-          setPickupIndex(0);
+          try {
+            const resolved = await reverseGeocode(lat, lng);
+            setPickupLocation(resolved);
+          } catch (e) {
+            setPickupLocation({
+              name: '📍 My Current Location (GPS)',
+              area: 'Detected via device GPS',
+              lat: lat,
+              lng: lng,
+              isLive: true,
+            });
+          } finally {
+            setIsDetectingGPS(false);
+          }
         },
         (error) => {
           console.log("GPS Location notice: using standard Bengaluru telemetry default.", error.message);
+          setIsDetectingGPS(false);
         },
-        { enableHighAccuracy: true, timeout: 6000 }
+        { enableHighAccuracy: true, timeout: 7000 }
       );
     }
   }, []);
 
-  const pickupLocation = locations[pickupIndex] || locations[0] || DEFAULT_LOCATIONS[0];
-  const dropoffLocation = locations[dropoffIndex] || locations[1] || DEFAULT_LOCATIONS[1];
   const pickupCoord = [pickupLocation.lat, pickupLocation.lng];
   const dropoffCoord = [dropoffLocation.lat, dropoffLocation.lng];
 
@@ -99,30 +94,64 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
 
   // Swap pickup and dropoff
   const handleSwapLocations = () => {
-    const temp = pickupIndex;
-    setPickupIndex(dropoffIndex);
-    setDropoffIndex(temp);
+    const temp = pickupLocation;
+    setPickupLocation(dropoffLocation);
+    setDropoffLocation(temp);
   };
 
-  // Re-trigger live location detection
+  // Re-trigger live location detection via GPS
   const handleDetectLiveLocation = () => {
     if ('geolocation' in navigator) {
+      setIsDetectingGPS(true);
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
-          const liveLoc = {
-            name: '📍 My Current Location (Live GPS)',
-            area: 'Real-time GPS',
-            lat: lat,
-            lng: lng,
-            isLive: true,
-          };
-          setLocations((prev) => [liveLoc, ...prev.filter((l) => !l.isLive)]);
-          setPickupIndex(0);
+          try {
+            const resolved = await reverseGeocode(lat, lng);
+            setPickupLocation(resolved);
+          } catch (e) {
+            setPickupLocation({
+              name: '📍 My Current Location (GPS)',
+              area: 'Detected via device GPS',
+              lat: lat,
+              lng: lng,
+              isLive: true,
+            });
+          } finally {
+            setIsDetectingGPS(false);
+          }
         },
-        (err) => alert("Could not fetch GPS: " + err.message)
+        (err) => {
+          alert("Could not fetch GPS: " + err.message);
+          setIsDetectingGPS(false);
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
       );
+    }
+  };
+
+  // When user clicks anywhere directly on the Google Map to reposition pin
+  const handleMapClick = async (clickedLat, clickedLng) => {
+    try {
+      const resolved = await reverseGeocode(clickedLat, clickedLng);
+      if (mapTargetMode === 'pickup') {
+        setPickupLocation(resolved);
+      } else {
+        setDropoffLocation(resolved);
+      }
+    } catch (e) {
+      const fallbackLoc = {
+        name: `📍 Pin at ${clickedLat.toFixed(4)}, ${clickedLng.toFixed(4)}`,
+        area: 'Selected on Map',
+        lat: clickedLat,
+        lng: clickedLng,
+      };
+      if (mapTargetMode === 'pickup') {
+        setPickupLocation(fallbackLoc);
+      } else {
+        setDropoffLocation(fallbackLoc);
+      }
     }
   };
 
@@ -215,7 +244,7 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full min-h-screen bg-slate-50 text-gray-900 pb-12">
       {/* Active Trip Telemetry Banner (If ride ongoing) */}
       {activeBooking && (
         <section className="mb-6 space-y-3 px-4 lg:px-0">
@@ -245,7 +274,7 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
         </section>
       )}
 
-      {/* Desktop Top Bar (Hidden on mobile screens) - Clean White Theme */}
+      {/* Desktop Top Bar (Clean White Theme) */}
       <div className="hidden lg:flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 shadow-sm mb-6">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-500 to-amber-400 flex items-center justify-center text-slate-950 font-black shadow-md shadow-brand-500/20 text-lg">
@@ -260,7 +289,7 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
               </span>
             </div>
             <p className="text-xs text-gray-500">
-              Multi-Modal Booking: Rapido Bike Taxi • Auto Rickshaw • Uber Cabs • Porter Cargo
+              Multi-Modal Platform: Rapido Bike Taxi • Auto Rickshaw • Uber Cabs • Porter Cargo
             </p>
           </div>
         </div>
@@ -293,74 +322,92 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
       </div>
 
       {/* ========================================================================= */}
-      {/* 📱 1. CLEAN WHITE MOBILE APP VIEW (Active on mobile viewports OR simulation) */}
+      {/* 📱 1. CLEAN SCROLLABLE MOBILE APP VIEW (Active on mobile viewports OR simulation) */}
       {/* ========================================================================= */}
       <div className={`${deviceMode === 'mockup' ? 'block' : 'lg:hidden'} w-full`}>
-        <div className={`${deviceMode === 'mockup' ? 'max-w-md mx-auto rounded-3xl border border-gray-200 shadow-2xl my-4' : 'min-h-[calc(100vh-64px)]'} bg-white flex flex-col relative overflow-hidden`}>
+        <div className={`${deviceMode === 'mockup' ? 'max-w-md mx-auto rounded-3xl border border-gray-200 shadow-2xl my-4' : 'w-full'} bg-white flex flex-col space-y-4`}>
           
-          {/* Top Floating Search Card & Modalities Header (Clean White Style) */}
-          <div className="p-3 bg-white border-b border-gray-200 shadow-sm space-y-2.5 z-20">
-            {/* Brand & ETA Status */}
+          {/* Top Dynamic Address Search Box (Connected Uber Style) */}
+          <div className="p-4 bg-white border-b border-gray-200 shadow-sm space-y-3">
             <div className="flex items-center justify-between text-xs">
               <span className="font-extrabold text-gray-950 flex items-center space-x-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="tracking-tight">Drive<span className="text-brand-600">Pulse</span> Mobility</span>
               </span>
-              <span className="text-[11px] font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              <span className="text-[11px] font-mono text-emerald-700 font-bold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
                 {estDistanceKm} km • ~{estDurationMins}m
               </span>
             </div>
 
-            {/* Pickup & Destination Interactive Card with Swap Button */}
-            <div className="relative bg-gray-50 p-2.5 rounded-2xl border border-gray-200 text-xs shadow-inner">
-              {/* Pickup Row */}
-              <div className="flex items-center space-x-2.5 pr-8">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-600 ring-4 ring-emerald-500/20 flex-shrink-0" />
-                <select
-                  value={pickupIndex}
-                  onChange={(e) => setPickupIndex(Number(e.target.value))}
-                  className="bg-transparent text-gray-900 font-bold w-full focus:outline-none truncate text-xs cursor-pointer"
-                >
-                  {locations.map((loc, idx) => (
-                    <option key={idx} value={idx} disabled={idx === dropoffIndex} className="bg-white text-gray-900">
-                      {loc.name} {loc.area ? `(${loc.area})` : ''}
-                    </option>
-                  ))}
-                </select>
+            {/* Connected Pickup & Dropoff Inputs with Reverse Route Button */}
+            <div className="relative bg-gray-50 p-3 rounded-2xl border border-gray-200 space-y-2.5 shadow-inner">
+              {/* Pickup Dynamic Search */}
+              <div>
+                <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">
+                  Pickup Location
+                </label>
+                <LocationSearchInput
+                  value={pickupLocation}
+                  onChange={(val) => setPickupLocation((prev) => ({ ...prev, name: val }))}
+                  onSelect={(item) => setPickupLocation(item)}
+                  placeholder="Enter pickup address or landmark"
+                  isPickup={true}
+                  onUseCurrentLocation={handleDetectLiveLocation}
+                  isDetectingGPS={isDetectingGPS}
+                />
               </div>
 
-              {/* Divider */}
-              <div className="w-full h-px bg-gray-200 my-2" />
-
-              {/* Destination Dropoff Row */}
-              <div className="flex items-center space-x-2.5 pr-8">
-                <div className="w-2.5 h-2.5 rounded-sm bg-rose-600 ring-4 ring-rose-500/20 flex-shrink-0" />
-                <select
-                  value={dropoffIndex}
-                  onChange={(e) => setDropoffIndex(Number(e.target.value))}
-                  className="bg-transparent text-gray-900 font-bold w-full focus:outline-none truncate text-xs cursor-pointer"
+              {/* Connecting Line & Route Swap */}
+              <div className="flex items-center justify-between px-1">
+                <div className="h-4 w-0.5 bg-gray-300 ml-4.5" />
+                <button
+                  type="button"
+                  onClick={handleSwapLocations}
+                  className="p-1.5 rounded-xl bg-white border border-gray-200 text-gray-600 hover:text-brand-600 shadow-sm flex items-center space-x-1 text-[11px] font-bold"
+                  title="Reverse Route"
                 >
-                  {locations.map((loc, idx) => (
-                    <option key={idx} value={idx} disabled={idx === pickupIndex} className="bg-white text-gray-900">
-                      {loc.name} {loc.area ? `(${loc.area})` : ''}
-                    </option>
-                  ))}
-                </select>
+                  <ArrowUpDown className="w-3.5 h-3.5" />
+                  <span>Swap</span>
+                </button>
               </div>
 
-              {/* Route Swap Icon Button */}
-              <button
-                type="button"
-                onClick={handleSwapLocations}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:text-brand-600 hover:bg-gray-100 active:scale-90 transition-all shadow-sm"
-                title="Swap pickup and dropoff"
-              >
-                <ArrowUpDown className="w-3.5 h-3.5" />
-              </button>
+              {/* Destination Dynamic Search */}
+              <div>
+                <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">
+                  Destination Drop-off
+                </label>
+                <LocationSearchInput
+                  value={dropoffLocation}
+                  onChange={(val) => setDropoffLocation((prev) => ({ ...prev, name: val }))}
+                  onSelect={(item) => setDropoffLocation(item)}
+                  placeholder="Where are you heading?"
+                  isPickup={false}
+                />
+              </div>
+
+              {/* Quick Destination Chips */}
+              <div className="pt-2 flex items-center space-x-1.5 overflow-x-auto scrollbar-none">
+                <span className="text-[10px] text-gray-400 font-bold uppercase mr-1">Quick:</span>
+                {[
+                  { label: '✈️ Airport', loc: DEFAULT_PRESET_LOCATIONS[1] },
+                  { label: '🏢 ITPL Tech Park', loc: DEFAULT_PRESET_LOCATIONS[5] },
+                  { label: '🚇 MG Road Metro', loc: DEFAULT_PRESET_LOCATIONS[2] },
+                  { label: '🛍️ Koramangala', loc: DEFAULT_PRESET_LOCATIONS[3] },
+                ].map((chip, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setDropoffLocation(chip.loc)}
+                    className="px-2.5 py-1 rounded-full bg-white border border-gray-200 text-[11px] font-bold text-gray-700 hover:text-brand-600 hover:border-brand-300 whitespace-nowrap shadow-xs"
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Horizontal Modalities Filter Strip (Rapido & Uber style) */}
-            <div className="flex items-center space-x-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+            {/* Modalities Filter Pill Strip */}
+            <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-none">
               {CATEGORIES.map((cat) => {
                 const isSelected = selectedCategory === cat.id;
                 return (
@@ -370,7 +417,7 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
                     className={`flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
                       isSelected
                         ? 'bg-amber-400 text-slate-950 border-amber-400 font-extrabold shadow-sm scale-[1.02]'
-                        : 'bg-gray-100 text-gray-600 border-gray-200 hover:text-gray-950 hover:bg-gray-200'
+                        : 'bg-gray-100 text-gray-600 border-gray-200 hover:text-gray-950'
                     }`}
                   >
                     <span>{cat.emoji}</span>
@@ -381,177 +428,186 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
             </div>
           </div>
 
-          {/* Full-Bleed Google Map Container with Moving Nearby Fleet */}
-          <div className="w-full h-64 sm:h-72 relative flex-shrink-0">
-            <MapView
-              pickup={pickupCoord}
-              dropoff={dropoffCoord}
-              category={selectedVehicle?.category || 'SEDAN'}
-              className="h-full w-full rounded-none border-0"
-              onLocateMe={handleDetectLiveLocation}
-            />
+          {/* Interactive Google Map with Click-to-Pin Support */}
+          <div className="px-4">
+            <div className="w-full h-72 sm:h-80 relative rounded-2xl overflow-hidden shadow-sm border border-gray-200">
+              <MapView
+                pickup={pickupCoord}
+                dropoff={dropoffCoord}
+                category={selectedVehicle?.category || 'SEDAN'}
+                className="h-full w-full rounded-2xl"
+                onLocateMe={handleDetectLiveLocation}
+                onMapClick={handleMapClick}
+                pickupAddress={pickupLocation.name}
+                dropoffAddress={dropoffLocation.name}
+              />
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-gray-500 font-semibold pt-1.5 px-1">
+              <span>💡 Tap anywhere on map to reposition {mapTargetMode === 'pickup' ? 'Pickup' : 'Drop-off'}</span>
+              <button
+                onClick={() => setMapTargetMode(mapTargetMode === 'pickup' ? 'dropoff' : 'pickup')}
+                className="text-brand-600 font-bold underline"
+              >
+                Target: {mapTargetMode === 'pickup' ? '📍 Pickup' : '🏁 Destination'}
+              </button>
+            </div>
           </div>
 
-          {/* Authentic Uber & Rapido Bottom Drawer (Zero overflow clipping, clean white theme) */}
-          <div className="flex-1 bg-white border-t border-gray-200 flex flex-col justify-between shadow-xl">
-            {/* Sheet Handle */}
-            <div className="py-2 flex items-center justify-center">
-              <div className="w-10 h-1 bg-gray-300 rounded-full" />
-            </div>
-
-            {/* Sub-header info */}
-            <div className="px-4 pb-2 flex items-center justify-between text-[11px] text-gray-500 font-bold border-b border-gray-100">
+          {/* Vehicle Options List (Natural Scroll Flow, Clean White Cards) */}
+          <div className="px-4 space-y-2.5 pb-24">
+            <div className="flex items-center justify-between text-xs text-gray-500 font-bold border-b border-gray-200 pb-2">
               <span className="flex items-center space-x-1 text-emerald-700">
                 <Clock className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Instant 2-min pickup nearby</span>
+                <span>Available Rides Nearby • Upfront Pricing</span>
               </span>
-              <span className="text-gray-400 font-mono">Guaranteed upfront rate</span>
+              <span className="text-gray-400 font-mono">{cars.length} Options</span>
             </div>
 
-            {/* Vehicle Options List */}
-            <div className="p-3 space-y-2 overflow-y-auto max-h-[240px] sm:max-h-[280px]">
-              {loading ? (
-                <div className="space-y-2">
-                  {[1, 2, 3].map((n) => (
-                    <div key={n} className="h-16 rounded-2xl bg-gray-100 animate-pulse border border-gray-200" />
-                  ))}
-                </div>
-              ) : cars.length === 0 ? (
-                <div className="text-center py-6 text-xs text-gray-500">
-                  <p>No vehicles in this category right now.</p>
-                  <button onClick={() => setSelectedCategory('ALL')} className="text-brand-600 font-bold underline mt-1">
-                    Show All Fleet
-                  </button>
-                </div>
-              ) : (
-                cars.map((car) => {
-                  const isSelected = (selectedVehicle?.id === car.id);
-                  const fare = calculateFare(car);
-                  const { emoji, badgeText, badgeColor, specText } = getVehicleVisuals(car);
-
-                  return (
-                    <div
-                      key={car.id}
-                      onClick={() => setHighlightedCarId(car.id)}
-                      className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
-                        isSelected
-                          ? 'bg-amber-50/60 border-amber-400 ring-2 ring-amber-400/40 shadow-sm'
-                          : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex items-center space-x-3 min-w-0">
-                        {/* Vehicle Image or Category Thumbnail */}
-                        <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
-                          <img
-                            src={car.imageUrl}
-                            alt={car.model}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.target.src = "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400";
-                            }}
-                          />
-                          <div className="absolute top-0 left-0 bg-white/90 px-1 rounded-br text-[10px] shadow-sm">
-                            {emoji}
-                          </div>
-                        </div>
-
-                        {/* Vehicle Details */}
-                        <div className="min-w-0">
-                          <div className="flex items-center space-x-1.5">
-                            <span className="text-xs font-extrabold text-gray-900 truncate">{car.make} {car.model}</span>
-                            <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold border ${badgeColor}`}>
-                              {badgeText}
-                            </span>
-                          </div>
-                          <p className="text-[10px] text-gray-500 truncate mt-0.5 font-medium">
-                            {specText}
-                          </p>
-                          <div className="flex items-center space-x-1 text-[10px] text-amber-600 font-semibold">
-                            <Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" />
-                            <span>{car.rating || 4.9}</span>
-                            <span className="text-gray-400 font-mono font-normal">• 2 min</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Upfront Fare */}
-                      <div className="text-right flex-shrink-0 pl-2">
-                        <div className="text-sm font-black text-gray-950 font-mono leading-none">₹{fare}</div>
-                        <div className="text-[10px] text-gray-400 line-through mt-1">₹{Math.round(fare * 1.15)}</div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            {/* Sticky Native Action Booking Button (Anchored above safe area, zero clipping) */}
-            <div className="sticky bottom-0 p-3 bg-white/95 border-t border-gray-200 backdrop-blur-md z-30 shadow-lg">
-              <button
-                onClick={() => {
-                  if (selectedVehicle) setSelectedCarForBooking(selectedVehicle);
-                }}
-                disabled={!selectedVehicle}
-                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-amber-400 to-brand-500 hover:from-amber-500 hover:to-brand-600 text-slate-950 font-black text-sm shadow-md active:scale-98 transition-all flex items-center justify-between"
-              >
-                <div className="flex items-center space-x-2">
-                  <span className="text-lg">
-                    {selectedVehicle ? getVehicleVisuals(selectedVehicle).emoji : '🚗'}
-                  </span>
-                  <span>Book {selectedVehicle ? `${selectedVehicle.make} ${selectedVehicle.model}` : 'Ride'}</span>
-                </div>
-                <div className="flex items-center space-x-2 font-mono text-base font-extrabold">
-                  <span>₹{selectedVehicle ? calculateFare(selectedVehicle) : '--'}</span>
-                  <ArrowRight className="w-4 h-4" />
-                </div>
-              </button>
-
-              {/* Native Bottom Navigation Tabs */}
-              <div className="pt-2.5 mt-2 border-t border-gray-100 flex items-center justify-around text-gray-500 text-[10px] font-bold">
-                <button
-                  onClick={() => {
-                    setMobileTab('rides');
-                    setSelectedCategory('ALL');
-                  }}
-                  className={`flex flex-col items-center space-y-0.5 ${mobileTab === 'rides' ? 'text-brand-600 font-extrabold' : 'hover:text-gray-900'}`}
-                >
-                  <Car className="w-4 h-4" />
-                  <span>Rides</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setMobileTab('porter');
-                    setSelectedCategory('TROLLEY_PORTER');
-                  }}
-                  className={`flex flex-col items-center space-y-0.5 ${mobileTab === 'porter' ? 'text-brand-600 font-extrabold' : 'hover:text-gray-900'}`}
-                >
-                  <Package className="w-4 h-4" />
-                  <span>Porter</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setMobileTab('activity');
-                    if (onNavigateToTrips) onNavigateToTrips();
-                  }}
-                  className={`flex flex-col items-center space-y-0.5 ${mobileTab === 'activity' ? 'text-brand-600 font-extrabold' : 'hover:text-gray-900'}`}
-                >
-                  <Clock className="w-4 h-4" />
-                  <span>My Trips</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setMobileTab('safety');
-                    setShowSafetyModal(true);
-                  }}
-                  className={`flex flex-col items-center space-y-0.5 ${mobileTab === 'safety' ? 'text-brand-600 font-extrabold' : 'hover:text-gray-900'}`}
-                >
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>Safety</span>
+            {loading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((n) => (
+                  <div key={n} className="h-20 rounded-2xl bg-gray-100 animate-pulse border border-gray-200" />
+                ))}
+              </div>
+            ) : cars.length === 0 ? (
+              <div className="text-center py-10 bg-white rounded-2xl border border-gray-200 space-y-2">
+                <Car className="w-10 h-10 text-gray-400 mx-auto" />
+                <p className="text-xs text-gray-500 font-semibold">No vehicles found in this category.</p>
+                <button onClick={() => setSelectedCategory('ALL')} className="text-brand-600 font-bold underline text-xs">
+                  View All Fleet
                 </button>
               </div>
-            </div>
+            ) : (
+              cars.map((car) => {
+                const isSelected = (selectedVehicle?.id === car.id);
+                const fare = calculateFare(car);
+                const { emoji, badgeText, badgeColor, specText } = getVehicleVisuals(car);
 
+                return (
+                  <div
+                    key={car.id}
+                    onClick={() => setHighlightedCarId(car.id)}
+                    className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                      isSelected
+                        ? 'bg-amber-50/70 border-amber-400 ring-2 ring-amber-400/40 shadow-md'
+                        : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3.5 min-w-0">
+                      <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
+                        <img
+                          src={car.imageUrl}
+                          alt={car.model}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.src = "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400";
+                          }}
+                        />
+                        <div className="absolute top-0 left-0 bg-white/95 px-1 rounded-br text-[10px] shadow-xs">
+                          {emoji}
+                        </div>
+                      </div>
+
+                      <div className="min-w-0">
+                        <div className="flex items-center space-x-1.5">
+                          <span className="text-xs sm:text-sm font-extrabold text-gray-950 truncate">
+                            {car.make} {car.model}
+                          </span>
+                          <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold border ${badgeColor}`}>
+                            {badgeText}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-gray-500 truncate mt-0.5 font-medium">
+                          {specText}
+                        </p>
+                        <div className="flex items-center space-x-1.5 text-[11px] text-amber-600 font-bold mt-1">
+                          <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                          <span>{car.rating || 4.9}</span>
+                          <span className="text-gray-400 font-normal font-mono">• 2 min away</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-right flex-shrink-0 pl-3">
+                      <div className="text-base font-black text-gray-950 font-mono leading-none">
+                        ₹{fare}
+                      </div>
+                      <div className="text-[10px] text-gray-400 line-through mt-1">
+                        ₹{Math.round(fare * 1.15)}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
+
+          {/* Sticky Bottom Booking Bar (Anchored Safely Above Screen Edge, Zero Clipping) */}
+          <div className="fixed bottom-0 left-0 right-0 p-3 bg-white/95 border-t border-gray-200 backdrop-blur-md z-40 shadow-2xl max-w-md mx-auto">
+            <button
+              onClick={() => {
+                if (selectedVehicle) setSelectedCarForBooking(selectedVehicle);
+              }}
+              disabled={!selectedVehicle}
+              className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-amber-400 to-brand-500 hover:from-amber-500 hover:to-brand-600 text-slate-950 font-black text-sm shadow-md active:scale-98 transition-all flex items-center justify-between"
+            >
+              <div className="flex items-center space-x-2">
+                <span className="text-lg">
+                  {selectedVehicle ? getVehicleVisuals(selectedVehicle).emoji : '🚗'}
+                </span>
+                <span>Book {selectedVehicle ? `${selectedVehicle.make} ${selectedVehicle.model}` : 'Ride'}</span>
+              </div>
+              <div className="flex items-center space-x-2 font-mono text-base font-extrabold">
+                <span>₹{selectedVehicle ? calculateFare(selectedVehicle) : '--'}</span>
+                <ArrowRight className="w-4 h-4" />
+              </div>
+            </button>
+
+            {/* Native Mobile Bottom Tabs */}
+            <div className="pt-2 mt-1.5 border-t border-gray-100 flex items-center justify-around text-gray-500 text-[10px] font-bold">
+              <button
+                onClick={() => {
+                  setMobileTab('rides');
+                  setSelectedCategory('ALL');
+                }}
+                className={`flex flex-col items-center space-y-0.5 ${mobileTab === 'rides' ? 'text-brand-600 font-extrabold' : 'hover:text-gray-950'}`}
+              >
+                <Car className="w-4 h-4" />
+                <span>Rides</span>
+              </button>
+              <button
+                onClick={() => {
+                  setMobileTab('porter');
+                  setSelectedCategory('TROLLEY_PORTER');
+                }}
+                className={`flex flex-col items-center space-y-0.5 ${mobileTab === 'porter' ? 'text-brand-600 font-extrabold' : 'hover:text-gray-950'}`}
+              >
+                <Package className="w-4 h-4" />
+                <span>Porter</span>
+              </button>
+              <button
+                onClick={() => {
+                  setMobileTab('activity');
+                  if (onNavigateToTrips) onNavigateToTrips();
+                }}
+                className={`flex flex-col items-center space-y-0.5 ${mobileTab === 'activity' ? 'text-brand-600 font-extrabold' : 'hover:text-gray-950'}`}
+              >
+                <Clock className="w-4 h-4" />
+                <span>My Trips</span>
+              </button>
+              <button
+                onClick={() => {
+                  setMobileTab('safety');
+                  setShowSafetyModal(true);
+                }}
+                className={`flex flex-col items-center space-y-0.5 ${mobileTab === 'safety' ? 'text-brand-600 font-extrabold' : 'hover:text-gray-950'}`}
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>Safety</span>
+              </button>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -561,7 +617,7 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
       <div className={`${deviceMode === 'auto' ? 'hidden lg:grid' : 'hidden'} grid-cols-12 gap-6 items-start`}>
         {/* LEFT COLUMN: Booking Panel & Multi-Modal Tier Selector */}
         <div className="col-span-12 xl:col-span-5 lg:col-span-6 space-y-4">
-          {/* Route Selector Box (Uber Style Clean White) */}
+          {/* Dynamic Route Search Box (Uber Style Clean White) */}
           <div className="bg-white border border-gray-200 rounded-3xl p-5 shadow-sm space-y-4">
             <h2 className="text-sm font-extrabold text-gray-950 flex items-center justify-between">
               <span>Where are you heading?</span>
@@ -570,63 +626,70 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
               </span>
             </h2>
 
-            {/* Connected Pickup & Dropoff Inputs with Route Swap */}
-            <div className="relative pl-6 space-y-3">
-              {/* Connecting Line */}
-              <div className="absolute left-2.5 top-3.5 bottom-3.5 w-0.5 bg-gradient-to-b from-emerald-600 via-gray-300 to-rose-600" />
-
-              {/* Pickup Point */}
-              <div className="relative">
-                <div className="absolute -left-6 top-2.5 w-3 h-3 rounded-full bg-emerald-600 ring-4 ring-emerald-500/20" />
-                <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">Pickup Location</label>
-                <select
-                  value={pickupIndex}
-                  onChange={(e) => setPickupIndex(Number(e.target.value))}
-                  className="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 focus:outline-none focus:border-brand-500 focus:bg-white"
-                >
-                  {locations.map((loc, idx) => (
-                    <option key={idx} value={idx} disabled={idx === dropoffIndex}>
-                      {loc.name} {loc.area ? `(${loc.area})` : ''}
-                    </option>
-                  ))}
-                </select>
+            {/* Connected Pickup & Dropoff Inputs with Reverse Route Button */}
+            <div className="relative bg-gray-50 p-3.5 rounded-2xl border border-gray-200 space-y-3 shadow-inner">
+              {/* Pickup Dynamic Search */}
+              <div>
+                <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">
+                  Pickup Location
+                </label>
+                <LocationSearchInput
+                  value={pickupLocation}
+                  onChange={(val) => setPickupLocation((prev) => ({ ...prev, name: val }))}
+                  onSelect={(item) => setPickupLocation(item)}
+                  placeholder="Enter pickup address or landmark"
+                  isPickup={true}
+                  onUseCurrentLocation={handleDetectLiveLocation}
+                  isDetectingGPS={isDetectingGPS}
+                />
               </div>
 
-              {/* Destination Dropoff */}
-              <div className="relative">
-                <div className="absolute -left-6 top-2.5 w-3 h-3 rounded-sm bg-rose-600 ring-4 ring-rose-500/20" />
-                <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">Destination Drop-off</label>
-                <select
-                  value={dropoffIndex}
-                  onChange={(e) => setDropoffIndex(Number(e.target.value))}
-                  className="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 focus:outline-none focus:border-rose-500 focus:bg-white"
-                >
-                  {locations.map((loc, idx) => (
-                    <option key={idx} value={idx} disabled={idx === pickupIndex}>
-                      {loc.name} {loc.area ? `(${loc.area})` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Swap Button & Live Location Button */}
-              <div className="pt-1 flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={handleDetectLiveLocation}
-                  className="flex items-center space-x-1.5 text-[11px] font-bold text-emerald-600 hover:text-emerald-700"
-                >
-                  <Crosshair className="w-3.5 h-3.5" />
-                  <span>Use Live GPS</span>
-                </button>
+              {/* Connecting Line & Route Swap */}
+              <div className="flex items-center justify-between px-1">
+                <div className="h-4 w-0.5 bg-gray-300 ml-4.5" />
                 <button
                   type="button"
                   onClick={handleSwapLocations}
-                  className="flex items-center space-x-1.5 text-[11px] font-bold text-brand-600 hover:text-brand-700"
+                  className="p-1.5 rounded-xl bg-white border border-gray-200 text-gray-600 hover:text-brand-600 shadow-sm flex items-center space-x-1.5 text-xs font-bold"
+                  title="Reverse Route"
                 >
                   <ArrowUpDown className="w-3.5 h-3.5" />
                   <span>Reverse Route</span>
                 </button>
+              </div>
+
+              {/* Destination Dynamic Search */}
+              <div>
+                <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">
+                  Destination Drop-off
+                </label>
+                <LocationSearchInput
+                  value={dropoffLocation}
+                  onChange={(val) => setDropoffLocation((prev) => ({ ...prev, name: val }))}
+                  onSelect={(item) => setDropoffLocation(item)}
+                  placeholder="Where to?"
+                  isPickup={false}
+                />
+              </div>
+
+              {/* Quick Destination Chips */}
+              <div className="pt-2 flex items-center space-x-1.5 overflow-x-auto scrollbar-none">
+                <span className="text-[10px] text-gray-400 font-bold uppercase mr-1">Top Destinations:</span>
+                {[
+                  { label: '✈️ Airport (BLR)', loc: DEFAULT_PRESET_LOCATIONS[1] },
+                  { label: '🏢 ITPL Tech Park', loc: DEFAULT_PRESET_LOCATIONS[5] },
+                  { label: '🚇 MG Road', loc: DEFAULT_PRESET_LOCATIONS[2] },
+                  { label: '🛍️ Koramangala', loc: DEFAULT_PRESET_LOCATIONS[3] },
+                ].map((chip, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setDropoffLocation(chip.loc)}
+                    className="px-2.5 py-1 rounded-full bg-white border border-gray-200 text-xs font-bold text-gray-700 hover:text-brand-600 hover:border-brand-300 whitespace-nowrap shadow-xs"
+                  >
+                    {chip.label}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -655,7 +718,7 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
           </div>
 
           {/* Ride Options List (Clean White Cards) */}
-          <div className="space-y-2.5 max-h-[480px] overflow-y-auto pr-1">
+          <div className="space-y-2.5">
             {loading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((n) => (
@@ -690,7 +753,6 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
                     }`}
                   >
                     <div className="flex items-center space-x-3.5 min-w-0">
-                      {/* Vehicle Image */}
                       <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
                         <img
                           src={car.imageUrl}
@@ -705,7 +767,6 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
                         </div>
                       </div>
 
-                      {/* Title, Category & Specs */}
                       <div className="min-w-0">
                         <div className="flex items-center space-x-2">
                           <h3 className="text-sm font-extrabold text-gray-950 truncate">
@@ -733,7 +794,6 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
                       </div>
                     </div>
 
-                    {/* Upfront Guaranteed Fare & Quick Select Button */}
                     <div className="text-right flex-shrink-0 pl-3">
                       <div className="text-lg font-black text-gray-950 font-mono leading-none">
                         ₹{fare}
@@ -764,7 +824,7 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
 
           {/* Selected Vehicle Instant Confirmation Sticky Card */}
           {selectedVehicle && (
-            <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-md flex items-center justify-between">
+            <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-md flex items-center justify-between sticky bottom-4 z-30">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Guaranteed Upfront Rate</p>
                 <p className="text-lg font-black text-gray-950">
@@ -806,7 +866,36 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
               category={selectedVehicle?.category || 'SEDAN'}
               className="h-[520px] rounded-2xl"
               onLocateMe={handleDetectLiveLocation}
+              onMapClick={handleMapClick}
+              pickupAddress={pickupLocation.name}
+              dropoffAddress={dropoffLocation.name}
             />
+
+            {/* Map click target mode selector */}
+            <div className="flex items-center justify-between pt-2 px-1 text-xs text-gray-500">
+              <span>💡 Click anywhere on map to reposition route pins</span>
+              <div className="flex items-center space-x-2">
+                <span className="text-[11px]">Pin Mode:</span>
+                <button
+                  type="button"
+                  onClick={() => setMapTargetMode('pickup')}
+                  className={`px-2 py-0.5 rounded-lg font-bold text-[11px] transition-all ${
+                    mapTargetMode === 'pickup' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'
+                  }`}
+                >
+                  📍 Pickup
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMapTargetMode('dropoff')}
+                  className={`px-2 py-0.5 rounded-lg font-bold text-[11px] transition-all ${
+                    mapTargetMode === 'dropoff' ? 'bg-rose-100 text-rose-800' : 'bg-gray-100 text-gray-600'
+                  }`}
+                >
+                  🏁 Drop-off
+                </button>
+              </div>
+            </div>
 
             {/* Safety & Features HUD Footer */}
             <div className="grid grid-cols-3 gap-3 pt-3 mt-3 border-t border-gray-100 text-center text-xs">

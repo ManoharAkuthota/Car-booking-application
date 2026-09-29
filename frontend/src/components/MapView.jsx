@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import React, { useEffect, useState } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { Layers, Crosshair, Navigation, Compass } from 'lucide-react';
 
@@ -91,6 +91,18 @@ const getVehicleMarkerIcon = (category = 'SEDAN') => {
   });
 };
 
+// Map click handler component to place pins dynamically
+const MapClickHandler = ({ onMapClick }) => {
+  useMapEvents({
+    click(e) {
+      if (onMapClick) {
+        onMapClick(e.latlng.lat, e.latlng.lng);
+      }
+    },
+  });
+  return null;
+};
+
 // Auto-center and fit bounds component
 const AutoFitBounds = ({ pickup, dropoff, triggerRecenter }) => {
   const map = useMap();
@@ -139,6 +151,9 @@ const MapView = ({
   isLiveTrip = false,
   className = "h-[340px]",
   onLocateMe = null,
+  onMapClick = null,
+  pickupAddress = "Pickup Point",
+  dropoffAddress = "Destination Drop-off",
 }) => {
   const [selectedLayer, setSelectedLayer] = useState('google_roadmap');
   const [recenterCount, setRecenterCount] = useState(0);
@@ -188,7 +203,7 @@ const MapView = ({
         center={pickup || [12.9716, 77.5946]}
         zoom={13}
         scrollWheelZoom={true}
-        className="h-full w-full z-0"
+        className="h-full w-full z-0 cursor-crosshair"
       >
         <TileLayer
           key={currentTileConfig.id}
@@ -198,27 +213,29 @@ const MapView = ({
           maxZoom={currentTileConfig.maxZoom}
         />
 
+        <MapClickHandler onMapClick={onMapClick} />
         <AutoFitBounds pickup={pickup} dropoff={dropoff} triggerRecenter={recenterCount} />
 
-        {/* User Current Live Location Pin */}
+        {/* Pickup Pin */}
         {pickup && (
           <Marker position={pickup} icon={pickupIcon}>
-            <Popup className="text-gray-900 font-semibold text-xs">
-              <strong>📍 Pickup Location</strong>
+            <Popup className="text-gray-900 font-bold text-xs">
+              <strong>📍 {pickupAddress}</strong>
+              <p className="text-[10px] text-gray-500 font-normal">Click elsewhere on map to reposition</p>
             </Popup>
           </Marker>
         )}
 
-        {/* Destination Dropoff Pin */}
+        {/* Dropoff Pin */}
         {dropoff && (
           <Marker position={dropoff} icon={dropoffIcon}>
-            <Popup className="text-gray-900 font-semibold text-xs">
-              <strong>🏁 Destination Drop-off</strong>
+            <Popup className="text-gray-900 font-bold text-xs">
+              <strong>🏁 {dropoffAddress}</strong>
             </Popup>
           </Marker>
         )}
 
-        {/* Nearby Moving Patrol Vehicles (Rapido & Uber style live street activity) */}
+        {/* Nearby Moving Patrol Vehicles */}
         {!isLiveTrip && pickup && nearbyVehicles.map((v) => (
           <Marker
             key={v.id}
@@ -240,14 +257,14 @@ const MapView = ({
           </Marker>
         )}
 
-        {/* Route Polyline (High-visibility Google Blue with subtle casing) */}
+        {/* Route Polyline (High-visibility Google Blue) */}
         {points.length > 0 && (
           <>
             <Polyline
               positions={points}
               color="#1e293b"
               weight={7}
-              opacity={0.35}
+              opacity={0.3}
             />
             <Polyline
               positions={points}
@@ -269,19 +286,19 @@ const MapView = ({
             onClick={() => setSelectedLayer('google_roadmap')}
             className={`px-2.5 py-1 rounded-lg transition-all ${
               selectedLayer === 'google_roadmap'
-                ? 'bg-brand-500 text-slate-950 font-black shadow-sm'
+                ? 'bg-amber-400 text-slate-950 font-black shadow-sm'
                 : 'hover:text-gray-950 hover:bg-gray-100'
             }`}
             title="Google Maps Standard Roadmap"
           >
-            Google Map
+            Map
           </button>
           <button
             type="button"
             onClick={() => setSelectedLayer('google_satellite')}
             className={`px-2.5 py-1 rounded-lg transition-all ${
               selectedLayer === 'google_satellite'
-                ? 'bg-brand-500 text-slate-950 font-black shadow-sm'
+                ? 'bg-amber-400 text-slate-950 font-black shadow-sm'
                 : 'hover:text-gray-950 hover:bg-gray-100'
             }`}
             title="Google Maps Satellite Hybrid"
@@ -297,14 +314,14 @@ const MapView = ({
             if (onLocateMe) onLocateMe();
             setRecenterCount((c) => c + 1);
           }}
-          className="w-8 h-8 rounded-xl bg-white/95 backdrop-blur-md border border-gray-200 flex items-center justify-center text-brand-600 hover:text-brand-700 shadow-md active:scale-90 transition-all"
+          className="w-8 h-8 rounded-xl bg-white/95 backdrop-blur-md border border-gray-200 flex items-center justify-center text-emerald-600 hover:text-emerald-700 shadow-md active:scale-90 transition-all"
           title="Detect live GPS location & re-center"
         >
           <Crosshair className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Floating GPS HUD Pill (White Theme) */}
+      {/* Floating GPS HUD Pill */}
       <div className="absolute bottom-3 left-3 z-[1000] px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-md text-[11px] font-mono text-gray-700 flex items-center space-x-2 border border-gray-200 shadow-md pointer-events-none">
         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
         <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-700">Google Maps Live GPS • Moving Fleet</span>
