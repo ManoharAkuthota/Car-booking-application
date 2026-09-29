@@ -137,9 +137,9 @@ const CustomerExplore = () => {
           <div>
             <div className="flex items-center space-x-2">
               <h1 className="text-base font-extrabold text-white tracking-tight">DrivePulse On-Demand Mobility</h1>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center space-x-1">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center space-x-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>TiDB Cloud Connected</span>
+                <span>Live City Telemetry Active</span>
               </span>
             </div>
             <p className="text-xs text-slate-400">

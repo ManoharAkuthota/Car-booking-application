@@ -114,18 +114,17 @@ const Navbar = ({ activeTab, setActiveTab }) => {
 
           {/* Quick Demo Role Switcher + User Profile */}
           <div className="flex items-center space-x-2">
-            {/* 1-Click Role Switcher */}
+            {/* Commercial Portal Switcher */}
             <div className="flex items-center bg-slate-900/90 p-0.5 sm:p-1 rounded-xl border border-slate-800 text-[11px] sm:text-xs">
-              <span className="hidden sm:inline-flex px-2 text-slate-500 font-semibold items-center">
-                <Sparkles className="w-3 h-3 mr-1 text-amber-400" />
-                Role:
+              <span className="hidden md:inline-flex px-2 text-slate-500 font-semibold items-center">
+                Portal:
               </span>
               <button
                 onClick={() => {
                   quickSwitchRole('ROLE_CUSTOMER');
                   setActiveTab('explore');
                 }}
-                className={`px-2 sm:px-2.5 py-1 rounded-lg transition-all ${
+                className={`px-2.5 py-1 rounded-lg transition-all ${
                   user?.role === 'ROLE_CUSTOMER'
                     ? 'bg-brand-500 text-slate-950 font-black shadow'
                     : 'text-slate-400 hover:text-white'
@@ -138,7 +137,7 @@ const Navbar = ({ activeTab, setActiveTab }) => {
                   quickSwitchRole('ROLE_DRIVER');
                   setActiveTab('driver-cockpit');
                 }}
-                className={`px-2 sm:px-2.5 py-1 rounded-lg transition-all ${
+                className={`px-2.5 py-1 rounded-lg transition-all ${
                   user?.role === 'ROLE_DRIVER'
                     ? 'bg-accent-cyan text-slate-950 font-black shadow'
                     : 'text-slate-400 hover:text-white'
@@ -151,13 +150,13 @@ const Navbar = ({ activeTab, setActiveTab }) => {
                   quickSwitchRole('ROLE_ADMIN');
                   setActiveTab('admin-stats');
                 }}
-                className={`px-2 sm:px-2.5 py-1 rounded-lg transition-all ${
+                className={`px-2.5 py-1 rounded-lg transition-all ${
                   user?.role === 'ROLE_ADMIN'
                     ? 'bg-purple-500 text-slate-950 font-black shadow'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                Admin
+                Operations
               </button>
             </div>
 
@@ -173,13 +172,13 @@ const Navbar = ({ activeTab, setActiveTab }) => {
                   <p className="font-semibold text-white leading-tight truncate max-w-[120px]">
                     {user.fullName}
                   </p>
-                  <p className="text-[10px] text-slate-400 uppercase tracking-wider font-mono">
-                    {user.role === 'ROLE_CUSTOMER' ? 'Rider' : user.role === 'ROLE_DRIVER' ? 'Partner Driver' : 'Admin'}
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
+                    {user.role === 'ROLE_CUSTOMER' ? 'Verified Passenger' : user.role === 'ROLE_DRIVER' ? 'Certified Pilot' : 'Operations Lead'}
                   </p>
                 </div>
                 <button
                   onClick={logout}
-                  title="Logout"
+                  title="Sign Out"
                   className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
                 >
                   <LogOut className="w-4 h-4" />

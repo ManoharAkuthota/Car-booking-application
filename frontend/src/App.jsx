@@ -17,9 +17,9 @@ const MainLayout = () => {
         <div className="w-12 h-12 rounded-2xl bg-brand-500/20 border border-brand-500/40 flex items-center justify-center text-brand-400">
           <Car className="w-7 h-7 animate-bounce stroke-[2.5]" />
         </div>
-        <div className="flex items-center space-x-2 text-slate-400 text-xs font-mono">
+        <div className="flex items-center space-x-2 text-slate-400 text-xs font-medium">
           <Loader2 className="w-3.5 h-3.5 animate-spin text-brand-400" />
-          <span>Connecting to DrivePulse Telemetry & MySQL...</span>
+          <span>Connecting to DrivePulse Secure Mobility Network...</span>
         </div>
       </div>
     );
@@ -50,26 +50,28 @@ const MainLayout = () => {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950/80 py-6 text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+      {/* Professional Commercial Footer */}
+      <footer className="border-t border-slate-900 bg-slate-950/90 py-6 text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center space-x-2">
-            <span className="font-extrabold text-white">Drive<span className="text-brand-500">Pulse</span></span>
-            <span>• Full-Stack Enterprise Car Booking Platform</span>
+            <span className="font-extrabold text-white text-sm tracking-tight">Drive<span className="text-brand-500">Pulse</span></span>
+            <span>• On-Demand Multi-Modal Mobility Platform</span>
           </div>
 
-          <div className="flex items-center space-x-3 text-[11px] font-mono">
-            <span className="flex items-center text-emerald-400">
-              <Database className="w-3 h-3 mr-1" /> MySQL 8.0 Connected
+          <div className="flex items-center space-x-4 text-[11px] text-slate-400">
+            <span className="flex items-center text-emerald-400 font-medium">
+              <Shield className="w-3.5 h-3.5 mr-1" /> Commercial Ride Insurance
             </span>
             <span>•</span>
-            <span className="flex items-center text-brand-400">
-              <Cpu className="w-3 h-3 mr-1" /> Spring Boot 3.3.4 (Java 21/23)
+            <span className="flex items-center text-brand-400 font-medium">
+              <Car className="w-3.5 h-3.5 mr-1" /> Verified Drivers
             </span>
             <span>•</span>
-            <span className="flex items-center text-cyan-400">
-              React 18 + Vite + Leaflet
-            </span>
+            <span>24/7 Safety & SOS Response</span>
+          </div>
+
+          <div className="text-[11px] text-slate-500 font-medium">
+            © 2026 DrivePulse Mobility Inc. All rights reserved.
           </div>
         </div>
       </footer>
