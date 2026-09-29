@@ -2,135 +2,129 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { Layers, Crosshair, Navigation, Compass, ShieldCheck } from 'lucide-react';
-import { fetchRoadRoute, generateRoadRoute, calculateBearing, getVehicleVisuals } from '../api/routeService';
+import {
+  fetchRoadRoute,
+  generateRoadRoute,
+  calculateBearing,
+  getVehicleVisuals,
+  samplePolylineWithLaneOffset,
+  lerpAngle,
+  getPolylineMetrics,
+} from '../api/routeService';
 
-// Custom SVG icons for Pickup, Dropoff, and Markers
-const createIcon = (svgString, className) => {
-  return L.divIcon({
-    html: svgString,
-    className: className || 'custom-map-marker',
-    iconSize: [36, 36],
-    iconAnchor: [18, 36],
-    popupAnchor: [0, -36],
-  });
-};
+// Raw Top-Down Vehicle SVGs (Pure vector graphics pointing 0 deg North)
 
-// Top-Down Vector Vehicle SVG Sprites (100% Rapido & Uber Top-Down Vector Graphics)
-export const getAutoRickshawSvg = (heading = 0) => `
-  <div style="transform: rotate(${heading}deg); width: 30px; height: 44px; position: relative; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.38)); transition: transform 0.35s ease-out;">
-    <svg viewBox="0 0 44 64" width="30" height="44" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- Front Wheel & Mudguard -->
-      <rect x="19" y="3" width="6" height="11" rx="3" fill="#18181b" />
-      <path d="M 17 8 L 27 8" stroke="#f59e0b" stroke-width="2" />
-      
-      <!-- Auto Body Frame (Tapered front, wide rear) -->
-      <path d="M 13 15 C 16 10, 28 10, 31 15 L 38 27 C 41 37, 41 49, 39 57 C 38 59, 6 59, 5 57 C 3 49, 3 37, 6 27 Z" fill="#f59e0b" stroke="#09090b" stroke-width="1.8" />
-      
-      <!-- Black Front Windshield & Dashboard -->
-      <path d="M 13 15 C 17 12, 27 12, 31 15 L 34 23 C 33 24, 11 24, 10 23 Z" fill="#09090b" />
-      <line x1="16" y1="17" x2="28" y2="19" stroke="#93c5fd" stroke-width="1.5" stroke-linecap="round" opacity="0.85" />
-      
-      <!-- Signature Rapido Bright Yellow Canopy Roof -->
-      <rect x="7" y="23" width="30" height="32" rx="6" fill="#facc15" stroke="#18181b" stroke-width="1.8" />
-      
-      <!-- Signature White Star on Roof (Exact match to Image 3 screenshot!) -->
-      <g transform="translate(22, 37)">
-        <circle cx="0" cy="0" r="7.5" fill="#eab308" fill-opacity="0.45" />
-        <path d="M 0 -5.5 L 1.6 -1.8 L 5.5 -1.8 L 2.4 0.6 L 3.5 4.5 L 0 2.2 L -3.5 4.5 L -2.4 0.6 L -5.5 -1.8 L -1.6 -1.8 Z" fill="#ffffff" />
-      </g>
+// 1. Auto Rickshaw: Yellow canopy roof with white star in center (Image 3 exact match)
+export const getAutoRickshawRawSvg = () => `
+  <svg viewBox="0 0 44 64" width="30" height="44" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Front Wheel & Mudguard -->
+    <rect x="19" y="3" width="6" height="11" rx="3" fill="#18181b" />
+    <path d="M 17 8 L 27 8" stroke="#f59e0b" stroke-width="2" />
+    
+    <!-- Auto Body Frame (Tapered front, wide rear) -->
+    <path d="M 13 15 C 16 10, 28 10, 31 15 L 38 27 C 41 37, 41 49, 39 57 C 38 59, 6 59, 5 57 C 3 49, 3 37, 6 27 Z" fill="#f59e0b" stroke="#09090b" stroke-width="1.8" />
+    
+    <!-- Black Front Windshield & Dashboard -->
+    <path d="M 13 15 C 17 12, 27 12, 31 15 L 34 23 C 33 24, 11 24, 10 23 Z" fill="#09090b" />
+    <line x1="16" y1="17" x2="28" y2="19" stroke="#93c5fd" stroke-width="1.5" stroke-linecap="round" opacity="0.85" />
+    
+    <!-- Signature Rapido Bright Yellow Canopy Roof -->
+    <rect x="7" y="23" width="30" height="32" rx="6" fill="#facc15" stroke="#18181b" stroke-width="1.8" />
+    
+    <!-- Signature White Star on Roof (Exact match to Image 3 screenshot!) -->
+    <g transform="translate(22, 37)">
+      <circle cx="0" cy="0" r="7.5" fill="#eab308" fill-opacity="0.45" />
+      <path d="M 0 -5.5 L 1.6 -1.8 L 5.5 -1.8 L 2.4 0.6 L 3.5 4.5 L 0 2.2 L -3.5 4.5 L -2.4 0.6 L -5.5 -1.8 L -1.6 -1.8 Z" fill="#ffffff" />
+    </g>
 
-      <!-- Side Mirrors -->
-      <rect x="2" y="19" width="4" height="3" rx="1.5" fill="#18181b" />
-      <rect x="38" y="19" width="4" height="3" rx="1.5" fill="#18181b" />
+    <!-- Side Mirrors -->
+    <rect x="2" y="19" width="4" height="3" rx="1.5" fill="#18181b" />
+    <rect x="38" y="19" width="4" height="3" rx="1.5" fill="#18181b" />
 
-      <!-- Rear Taillights -->
-      <rect x="7" y="56" width="6" height="2.5" rx="1" fill="#ef4444" />
-      <rect x="31" y="56" width="6" height="2.5" rx="1" fill="#ef4444" />
-    </svg>
-  </div>
+    <!-- Rear Taillights -->
+    <rect x="7" y="56" width="6" height="2.5" rx="1" fill="#ef4444" />
+    <rect x="31" y="56" width="6" height="2.5" rx="1" fill="#ef4444" />
+  </svg>
 `;
 
-export const getBikeSvg = (heading = 0) => `
-  <div style="transform: rotate(${heading}deg); width: 24px; height: 42px; position: relative; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.4)); transition: transform 0.35s ease-out;">
-    <svg viewBox="0 0 36 64" width="24" height="42" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- Front Wheel & Disc -->
-      <rect x="15" y="2" width="6" height="15" rx="3" fill="#18181b" />
-      <rect x="16.5" y="4" width="3" height="9" rx="1.5" fill="#71717a" />
-      
-      <!-- Front Mudguard & Headlight -->
-      <path d="M 13 13 C 13 9, 23 9, 23 13 L 22 18 L 14 18 Z" fill="#facc15" stroke="#ca8a04" stroke-width="1" />
-      <ellipse cx="18" cy="11" rx="3" ry="1.8" fill="#fef08a" />
+// 2. Bike: Top-down dark chassis with rider wearing signature vibrant Rapido yellow helmet (Images 1 & 3)
+export const getBikeRawSvg = () => `
+  <svg viewBox="0 0 36 64" width="24" height="42" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Front Wheel & Disc -->
+    <rect x="15" y="2" width="6" height="15" rx="3" fill="#18181b" />
+    <rect x="16.5" y="4" width="3" height="9" rx="1.5" fill="#71717a" />
+    
+    <!-- Front Mudguard & Headlight -->
+    <path d="M 13 13 C 13 9, 23 9, 23 13 L 22 18 L 14 18 Z" fill="#facc15" stroke="#ca8a04" stroke-width="1" />
+    <ellipse cx="18" cy="11" rx="3" ry="1.8" fill="#fef08a" />
 
-      <!-- Handlebars with Mirrors -->
-      <path d="M 4 20 L 32 20" stroke="#18181b" stroke-width="3.5" stroke-linecap="round" />
-      <rect x="2" y="18.5" width="4" height="3" rx="1" fill="#000000" />
-      <rect x="30" y="18.5" width="4" height="3" rx="1" fill="#000000" />
+    <!-- Handlebars with Mirrors -->
+    <path d="M 4 20 L 32 20" stroke="#18181b" stroke-width="3.5" stroke-linecap="round" />
+    <rect x="2" y="18.5" width="4" height="3" rx="1" fill="#000000" />
+    <rect x="30" y="18.5" width="4" height="3" rx="1" fill="#000000" />
 
-      <!-- Fuel Tank with Yellow Accent -->
-      <path d="M 13 22 C 12 26, 12 30, 14 33 L 22 33 C 24 30, 24 26, 23 22 Z" fill="#facc15" stroke="#eab308" stroke-width="1.2" />
+    <!-- Fuel Tank with Yellow Accent -->
+    <path d="M 13 22 C 12 26, 12 30, 14 33 L 22 33 C 24 30, 24 26, 23 22 Z" fill="#facc15" stroke="#eab308" stroke-width="1.2" />
 
-      <!-- Rider Body (Dark Jacket) & Arms -->
-      <path d="M 6 22 L 12 29 L 24 29 L 30 22" stroke="#1e293b" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
-      <ellipse cx="18" cy="33" rx="9" ry="7" fill="#0f172a" />
-      
-      <!-- Iconic Rapido Bright Yellow Helmet -->
-      <ellipse cx="18" cy="28" rx="6.5" ry="7" fill="#facc15" stroke="#18181b" stroke-width="1.5" />
-      <!-- Helmet Black Visor Shield -->
-      <path d="M 14.5 26 Q 18 24 21.5 26" stroke="#18181b" stroke-width="3" stroke-linecap="round" />
-      <ellipse cx="18" cy="27" rx="4" ry="1.2" fill="#09090b" opacity="0.9" />
+    <!-- Rider Body (Dark Jacket) & Arms -->
+    <path d="M 6 22 L 12 29 L 24 29 L 30 22" stroke="#1e293b" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+    <ellipse cx="18" cy="33" rx="9" ry="7" fill="#0f172a" />
+    
+    <!-- Iconic Rapido Bright Yellow Helmet -->
+    <ellipse cx="18" cy="28" rx="6.5" ry="7" fill="#facc15" stroke="#18181b" stroke-width="1.5" />
+    <!-- Helmet Black Visor Shield -->
+    <path d="M 14.5 26 Q 18 24 21.5 26" stroke="#18181b" stroke-width="3" stroke-linecap="round" />
+    <ellipse cx="18" cy="27" rx="4" ry="1.2" fill="#09090b" opacity="0.9" />
 
-      <!-- Bike Seat & Rear Body -->
-      <path d="M 14 38 L 22 38 L 21 50 L 15 50 Z" fill="#18181b" />
-      
-      <!-- Rear Wheel & Taillight -->
-      <rect x="15" y="47" width="6" height="15" rx="3" fill="#18181b" />
-      <rect x="15.5" y="48" width="5" height="2.5" rx="1" fill="#ef4444" />
-    </svg>
-  </div>
+    <!-- Bike Seat & Rear Body -->
+    <path d="M 14 38 L 22 38 L 21 50 L 15 50 Z" fill="#18181b" />
+    
+    <!-- Rear Wheel & Taillight -->
+    <rect x="15" y="47" width="6" height="15" rx="3" fill="#18181b" />
+    <rect x="15.5" y="48" width="5" height="2.5" rx="1" fill="#ef4444" />
+  </svg>
 `;
 
-export const getCabSvg = (heading = 0) => `
-  <div style="transform: rotate(${heading}deg); width: 26px; height: 48px; position: relative; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.35)); transition: transform 0.35s ease-out;">
-    <svg viewBox="0 0 36 68" width="26" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- Aerodynamic White Sedan Body -->
-      <rect x="4" y="6" width="28" height="54" rx="9" fill="#ffffff" stroke="#18181b" stroke-width="2" />
-      <path d="M 7 12 C 10 8, 26 8, 29 12" stroke="#e2e8f0" stroke-width="1.5" />
-      <rect x="6" y="7" width="5" height="3" rx="1" fill="#fef08a" />
-      <rect x="25" y="7" width="5" height="3" rx="1" fill="#fef08a" />
-      <!-- Windshield -->
-      <path d="M 7 19 L 29 19 L 26 27 L 10 27 Z" fill="#1e293b" />
-      <!-- Roof with Taxi Bar Sign -->
-      <rect x="8" y="27" width="20" height="20" rx="3" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
-      <rect x="13" y="34" width="10" height="4" rx="2" fill="#f59e0b" stroke="#18181b" stroke-width="1" />
-      <!-- Rear Window -->
-      <path d="M 10 48 L 26 48 L 28 54 L 8 54 Z" fill="#1e293b" />
-      <!-- Side Mirrors & Taillights -->
-      <rect x="1" y="20" width="3" height="4" rx="1" fill="#18181b" />
-      <rect x="32" y="20" width="3" height="4" rx="1" fill="#18181b" />
-      <rect x="6" y="58" width="5" height="2" rx="1" fill="#ef4444" />
-      <rect x="25" y="58" width="5" height="2" rx="1" fill="#ef4444" />
-    </svg>
-  </div>
+// 3. Cab: Aerodynamic white sedan with yellow taxi bar roof
+export const getCabRawSvg = () => `
+  <svg viewBox="0 0 36 68" width="26" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Aerodynamic Sedan Body -->
+    <rect x="4" y="6" width="28" height="54" rx="9" fill="#ffffff" stroke="#18181b" stroke-width="2" />
+    <path d="M 7 12 C 10 8, 26 8, 29 12" stroke="#e2e8f0" stroke-width="1.5" />
+    <rect x="6" y="7" width="5" height="3" rx="1" fill="#fef08a" />
+    <rect x="25" y="7" width="5" height="3" rx="1" fill="#fef08a" />
+    <!-- Windshield -->
+    <path d="M 7 19 L 29 19 L 26 27 L 10 27 Z" fill="#1e293b" />
+    <!-- Roof with Taxi Bar Sign -->
+    <rect x="8" y="27" width="20" height="20" rx="3" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+    <rect x="13" y="34" width="10" height="4" rx="2" fill="#f59e0b" stroke="#18181b" stroke-width="1" />
+    <!-- Rear Window -->
+    <path d="M 10 48 L 26 48 L 28 54 L 8 54 Z" fill="#1e293b" />
+    <!-- Side Mirrors & Taillights -->
+    <rect x="1" y="20" width="3" height="4" rx="1" fill="#18181b" />
+    <rect x="32" y="20" width="3" height="4" rx="1" fill="#18181b" />
+    <rect x="6" y="58" width="5" height="2" rx="1" fill="#ef4444" />
+    <rect x="25" y="58" width="5" height="2" rx="1" fill="#ef4444" />
+  </svg>
 `;
 
-export const getPorterSvg = (heading = 0) => `
-  <div style="transform: rotate(${heading}deg); width: 26px; height: 48px; position: relative; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.35)); transition: transform 0.35s ease-out;">
-    <svg viewBox="0 0 36 70" width="26" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="5" y="4" width="26" height="4" rx="2" fill="#18181b" />
-      <!-- Driver Cabin -->
-      <path d="M 5 8 C 5 6, 31 6, 31 8 L 31 24 L 5 24 Z" fill="#2563eb" stroke="#18181b" stroke-width="1.8" />
-      <path d="M 8 9 L 28 9 L 27 18 L 9 18 Z" fill="#0f172a" />
-      <rect x="2" y="12" width="3" height="4" rx="1" fill="#18181b" />
-      <rect x="31" y="12" width="3" height="4" rx="1" fill="#18181b" />
-      <!-- Cargo Bed with Strapped Boxes -->
-      <rect x="4" y="25" width="28" height="38" rx="3" fill="#cbd5e1" stroke="#334155" stroke-width="2" />
-      <rect x="7" y="28" width="10" height="15" rx="1" fill="#d97706" stroke="#92400e" stroke-width="1" />
-      <rect x="19" y="28" width="10" height="15" rx="1" fill="#b45309" stroke="#78350f" stroke-width="1" />
-      <rect x="8" y="45" width="20" height="14" rx="1" fill="#92400e" stroke="#451a03" stroke-width="1" />
-      <line x1="4" y1="36" x2="32" y2="36" stroke="#facc15" stroke-width="1.5" />
-      <line x1="4" y1="52" x2="32" y2="52" stroke="#facc15" stroke-width="1.5" />
-    </svg>
-  </div>
+// 4. Porter: Mini-truck cabin with strapped cargo bed
+export const getPorterRawSvg = () => `
+  <svg viewBox="0 0 36 70" width="26" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="5" y="4" width="26" height="4" rx="2" fill="#18181b" />
+    <!-- Driver Cabin -->
+    <path d="M 5 8 C 5 6, 31 6, 31 8 L 31 24 L 5 24 Z" fill="#2563eb" stroke="#18181b" stroke-width="1.8" />
+    <path d="M 8 9 L 28 9 L 27 18 L 9 18 Z" fill="#0f172a" />
+    <rect x="2" y="12" width="3" height="4" rx="1" fill="#18181b" />
+    <rect x="31" y="12" width="3" height="4" rx="1" fill="#18181b" />
+    <!-- Cargo Bed with Strapped Boxes -->
+    <rect x="4" y="25" width="28" height="38" rx="3" fill="#cbd5e1" stroke="#334155" stroke-width="2" />
+    <rect x="7" y="28" width="10" height="15" rx="1" fill="#d97706" stroke="#92400e" stroke-width="1" />
+    <rect x="19" y="28" width="10" height="15" rx="1" fill="#b45309" stroke="#78350f" stroke-width="1" />
+    <rect x="8" y="45" width="20" height="14" rx="1" fill="#92400e" stroke="#451a03" stroke-width="1" />
+    <line x1="4" y1="36" x2="32" y2="36" stroke="#facc15" stroke-width="1.5" />
+    <line x1="4" y1="52" x2="32" y2="52" stroke="#facc15" stroke-width="1.5" />
+  </svg>
 `;
 
 // Exact Rapido Pickup Marker (Green Circle with Ring)
@@ -166,75 +160,52 @@ const dropoffIcon = L.divIcon({
   iconAnchor: [16, 38],
 });
 
-// Nearby vehicle icon generator matching selected vehicle category with compass heading
-const getNearbyIcon = (type = 'BIKE', heading = 0) => {
-  let svg = '';
-  let size = [28, 40];
-  let anchor = [14, 20];
-
-  if (type === 'AUTO') {
-    svg = getAutoRickshawSvg(heading);
-    size = [28, 40];
-    anchor = [14, 20];
-  } else if (type === 'CAB') {
-    svg = getCabSvg(heading);
-    size = [26, 48];
-    anchor = [13, 24];
-  } else if (type === 'TROLLEY_PORTER') {
-    svg = getPorterSvg(heading);
-    size = [26, 48];
-    anchor = [13, 24];
-  } else {
-    // BIKE
-    svg = getBikeSvg(heading);
-    size = [22, 40];
-    anchor = [11, 20];
-  }
-
-  return L.divIcon({
-    html: svg,
-    className: 'rapido-nearby-vehicle-marker',
-    iconSize: size,
-    iconAnchor: anchor,
-  });
-};
-
-// Live animated moving vehicle with heading rotation & forward motion beam
-const createLiveVehicleIcon = (category = 'BIKE', heading = 0, isArrived = false) => {
-  let vehicleSvg = '';
-  let size = [28, 40];
-  let anchor = [14, 20];
+// Unified Rotated Vehicle Marker Generator:
+// Entire vehicle, forward headlight beam cone, and taillights rotate in 100% unison with heading
+export const createRotatedVehicleIcon = ({
+  category = 'BIKE',
+  heading = 0,
+  isArrived = false,
+  isLive = false,
+  showHeadlight = true,
+}) => {
+  let rawSvg = '';
+  let size = [28, 44];
+  let anchor = [14, 22];
 
   if (category === 'AUTO') {
-    vehicleSvg = getAutoRickshawSvg(heading);
-    size = [28, 40];
-    anchor = [14, 20];
+    rawSvg = getAutoRickshawRawSvg();
+    size = [30, 44];
+    anchor = [15, 22];
   } else if (category === 'CAB' || category === 'SEDAN' || category === 'SUV') {
-    vehicleSvg = getCabSvg(heading);
+    rawSvg = getCabRawSvg();
     size = [26, 48];
     anchor = [13, 24];
   } else if (category === 'TROLLEY_PORTER') {
-    vehicleSvg = getPorterSvg(heading);
-    size = [26, 48];
-    anchor = [13, 24];
+    rawSvg = getPorterRawSvg();
+    size = [28, 50];
+    anchor = [14, 25];
   } else {
-    vehicleSvg = getBikeSvg(heading);
-    size = [22, 40];
-    anchor = [11, 20];
+    // BIKE
+    rawSvg = getBikeRawSvg();
+    size = [24, 42];
+    anchor = [12, 21];
   }
 
   if (isArrived) {
     return L.divIcon({
       html: `
-        <div class="relative flex items-center justify-center">
-          <div class="absolute w-14 h-14 rounded-full bg-emerald-500/30 animate-ping"></div>
-          ${vehicleSvg}
-          <div class="absolute -top-3 px-2 py-0.5 rounded-full bg-emerald-600 text-white font-extrabold text-[9px] uppercase tracking-wider shadow-md border border-white">
+        <div style="position: relative; width: ${size[0]}px; height: ${size[1]}px; display: flex; align-items: center; justify-content: center;">
+          <div style="position: absolute; width: 54px; height: 54px; border-radius: 50%; background: rgba(16, 185, 129, 0.3); animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+          <div style="transform: rotate(${heading}deg); transform-origin: center center; width: ${size[0]}px; height: ${size[1]}px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.45));">
+            ${rawSvg}
+          </div>
+          <div style="position: absolute; top: -14px; left: 50%; transform: translateX(-50%); white-space: nowrap; padding: 2px 7px; border-radius: 9999px; background-color: #059669; color: #ffffff; font-size: 9px; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; box-shadow: 0 2px 6px rgba(0,0,0,0.3); border: 1.5px solid #ffffff; z-index: 10;">
             Arrived
           </div>
         </div>
       `,
-      className: 'rapido-live-vehicle-arrived',
+      className: 'rapido-vehicle-arrived',
       iconSize: size,
       iconAnchor: anchor,
     });
@@ -242,17 +213,52 @@ const createLiveVehicleIcon = (category = 'BIKE', heading = 0, isArrived = false
 
   return L.divIcon({
     html: `
-      <div class="relative flex items-center justify-center">
-        <!-- Forward motion headlight beam -->
-        <div class="absolute -top-4 w-6 h-8 bg-gradient-to-t from-yellow-300/40 to-transparent rounded-t-full pointer-events-none transform -rotate-12"></div>
-        ${vehicleSvg}
-        <!-- Pulsing radar dot behind vehicle -->
-        <div class="absolute -bottom-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border border-white animate-pulse"></div>
+      <div style="position: relative; width: ${size[0]}px; height: ${size[1]}px;">
+        <div style="position: absolute; inset: 0; transform: rotate(${heading}deg); transform-origin: center center; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));">
+          <!-- Forward Headlight Light Cone (Attached to front bumper, shines in travel direction) -->
+          ${showHeadlight ? `
+            <div style="position: absolute; top: -18px; left: 50%; transform: translateX(-50%); width: 26px; height: 22px; background: radial-gradient(ellipse at bottom, rgba(254, 240, 138, 0.8) 0%, rgba(250, 204, 21, 0.3) 55%, transparent 85%); clip-path: polygon(25% 100%, 75% 100%, 100% 0%, 0% 0%); pointer-events: none; z-index: 1;"></div>
+          ` : ''}
+
+          <!-- Centered Top-Down Vector Sprite -->
+          <div style="width: ${size[0]}px; height: ${size[1]}px; position: relative; z-index: 2;">
+            ${rawSvg}
+          </div>
+
+          <!-- Rear Taillight Glow -->
+          <div style="position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%); width: 6px; height: 3px; background: #ef4444; border-radius: 1px; box-shadow: 0 0 5px #ef4444; z-index: 3;"></div>
+        </div>
+
+        ${isLive ? `
+          <!-- Pulsing Radar Dot behind live tracking vehicle -->
+          <div style="position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%); width: 8px; height: 8px; border-radius: 50%; background-color: #10b981; border: 1.5px solid #ffffff; box-shadow: 0 0 6px #10b981; z-index: 4;"></div>
+        ` : ''}
       </div>
     `,
-    className: 'rapido-live-vehicle-moving',
+    className: isLive ? 'rapido-vehicle-live' : 'rapido-vehicle-nearby',
     iconSize: size,
     iconAnchor: anchor,
+  });
+};
+
+// Convenient wrappers for Explore & Live Trip markers
+export const getNearbyIcon = (type = 'BIKE', heading = 0) => {
+  return createRotatedVehicleIcon({
+    category: type,
+    heading,
+    isArrived: false,
+    isLive: false,
+    showHeadlight: false,
+  });
+};
+
+export const createLiveVehicleIcon = (category = 'BIKE', heading = 0, isArrived = false) => {
+  return createRotatedVehicleIcon({
+    category,
+    heading,
+    isArrived,
+    isLive: true,
+    showHeadlight: !isArrived,
   });
 };
 
@@ -349,6 +355,8 @@ const MapView = ({
   onMapClick = null,
   pickupAddress = "Pickup Point",
   dropoffAddress = "Destination Drop-off",
+  onDriverArrived = null,
+  onTripCompleted = null,
 }) => {
   const [selectedLayer, setSelectedLayer] = useState('google_roadmap');
   const [recenterCount, setRecenterCount] = useState(0);
@@ -372,9 +380,9 @@ const MapView = ({
   const [tripRoadPoints, setTripRoadPoints] = useState(() => initialTripRoute.points);
   const [tripDistanceKm, setTripDistanceKm] = useState(() => initialTripRoute.distanceKm);
 
-  // Approach Route (Driver -> Pickup when ACCEPTED)
+  // Approach Route (Driver -> Pickup when ACCEPTED) dynamically relative to pickup
   const driverStartPos = useMemo(
-    () => [pickup[0] + 0.0085, pickup[1] - 0.0075],
+    () => [pickup[0] + 0.0078, pickup[1] - 0.0068],
     [pickup?.[0], pickup?.[1]]
   );
 
@@ -394,12 +402,17 @@ const MapView = ({
     return pickup;
   });
 
-  const [liveHeading, setLiveHeading] = useState(45);
+  const [liveHeading, setLiveHeading] = useState(() => {
+    if (initialApproachRoute.points.length >= 2) {
+      return calculateBearing(
+        initialApproachRoute.points[0][0], initialApproachRoute.points[0][1],
+        initialApproachRoute.points[1][0], initialApproachRoute.points[1][1]
+      );
+    }
+    return 45;
+  });
   const [liveEtaMins, setLiveEtaMins] = useState(3);
   const [liveRemainingKm, setLiveRemainingKm] = useState(1.2);
-
-  // Animation step tracker
-  const animIndexRef = useRef(0);
 
   // Non-blocking background route upgrade from OSRM
   useEffect(() => {
@@ -427,89 +440,128 @@ const MapView = ({
     };
   }, [pickup?.[0], pickup?.[1], dropoff?.[0], dropoff?.[1], isLiveTrip, tripStatus, driverStartPos]);
 
-  // Live Vehicle Smooth Auto-Movement Animation Engine (500ms intervals)
+  // High-performance 60 FPS requestAnimationFrame vehicle animation engine
   useEffect(() => {
     if (!isLiveTrip) return;
 
-    animIndexRef.current = 0;
+    let animFrameId = null;
+    let startTime = null;
 
-    // Phase 1: ACCEPTED -> Moving from driver start toward Pickup
+    // Phase 1: ACCEPTED -> Smoothly driving along approach road towards Pickup
     if (tripStatus === 'ACCEPTED') {
       const route = approachRoadPoints.length > 0 ? approachRoadPoints : initialApproachRoute.points;
-      const total = route.length;
-      if (total === 0) return;
+      if (!route || route.length < 2) return;
 
+      const metrics = getPolylineMetrics(route);
+      const totalDist = metrics.totalDistance || 1200;
+      // Duration scaled realistically: ~12-14 seconds
+      const durationMs = Math.max(10000, Math.min(18000, (totalDist / 1000) * 9000));
+
+      let headingTracker = calculateBearing(route[0][0], route[0][1], route[1][0], route[1][1]);
       setLiveVehiclePos(route[0]);
+      setLiveHeading(headingTracker);
 
-      const interval = setInterval(() => {
-        animIndexRef.current = (animIndexRef.current + 1) % total;
-        const curIdx = animIndexRef.current;
-        const currentCoord = route[curIdx];
-        const nextCoord = route[Math.min(curIdx + 1, total - 1)];
+      const step = (timestamp) => {
+        if (!startTime) startTime = timestamp;
+        const elapsed = timestamp - startTime;
+        const progress = Math.min(1.0, elapsed / durationMs);
 
-        const heading = calculateBearing(
-          currentCoord[0], currentCoord[1],
-          nextCoord[0], nextCoord[1]
-        );
+        // Left-hand traffic lane offset for India (2.5 meters in left lane)
+        const sampled = samplePolylineWithLaneOffset(route, progress, metrics, 2.5);
+        if (sampled) {
+          headingTracker = lerpAngle(headingTracker, sampled.heading, 0.25);
+          setLiveVehiclePos([sampled.lat, sampled.lng]);
+          setLiveHeading(headingTracker);
 
-        const remainingFraction = (total - curIdx) / total;
-        const remKm = Math.round(1.5 * remainingFraction * 10) / 10;
-        const eta = Math.max(1, Math.round(remKm * 2.2));
+          const remFraction = 1.0 - progress;
+          const remKm = Math.round((totalDist / 1000) * remFraction * 10) / 10;
+          const eta = Math.max(1, Math.round(remKm * 2.2));
+          setLiveRemainingKm(remKm);
+          setLiveEtaMins(eta);
+        }
 
-        setLiveVehiclePos(currentCoord);
-        setLiveHeading(heading);
-        setLiveRemainingKm(remKm);
-        setLiveEtaMins(eta);
-      }, 500);
+        if (progress < 1.0) {
+          animFrameId = requestAnimationFrame(step);
+        } else {
+          // Reached Pickup cleanly! Stop moving, do not loop
+          setLiveVehiclePos(pickup);
+          setLiveRemainingKm(0);
+          setLiveEtaMins(0);
+          if (onDriverArrived) {
+            onDriverArrived();
+          }
+        }
+      };
 
-      return () => clearInterval(interval);
+      animFrameId = requestAnimationFrame(step);
+      return () => {
+        if (animFrameId) cancelAnimationFrame(animFrameId);
+      };
     }
 
     // Phase 2: DRIVER_ARRIVING -> At Pickup
     if (tripStatus === 'DRIVER_ARRIVING') {
       setLiveVehiclePos(pickup);
-      setLiveHeading(0);
       setLiveRemainingKm(0);
       setLiveEtaMins(0);
       return;
     }
 
-    // Phase 3: IN_PROGRESS -> Moving from Pickup to Dropoff
+    // Phase 3: IN_PROGRESS -> Smoothly driving along main road towards Dropoff
     if (tripStatus === 'IN_PROGRESS') {
       const route = tripRoadPoints.length > 0 ? tripRoadPoints : initialTripRoute.points;
-      const total = route.length;
-      if (total === 0) return;
+      if (!route || route.length < 2) return;
 
+      const metrics = getPolylineMetrics(route);
+      const totalDist = metrics.totalDistance || (tripDistanceKm * 1000);
+      // Duration scaled realistically: ~18-24 seconds
+      const durationMs = Math.max(14000, Math.min(26000, (totalDist / 1000) * 4500));
+
+      let headingTracker = calculateBearing(route[0][0], route[0][1], route[1][0], route[1][1]);
       setLiveVehiclePos(route[0]);
+      setLiveHeading(headingTracker);
 
-      const interval = setInterval(() => {
-        animIndexRef.current = (animIndexRef.current + 1) % total;
-        const curIdx = animIndexRef.current;
-        const currentCoord = route[curIdx];
-        const nextCoord = route[Math.min(curIdx + 1, total - 1)];
+      const step = (timestamp) => {
+        if (!startTime) startTime = timestamp;
+        const elapsed = timestamp - startTime;
+        const progress = Math.min(1.0, elapsed / durationMs);
 
-        const heading = calculateBearing(
-          currentCoord[0], currentCoord[1],
-          nextCoord[0], nextCoord[1]
-        );
+        // Left-hand traffic lane offset for India (2.5 meters in left lane)
+        const sampled = samplePolylineWithLaneOffset(route, progress, metrics, 2.5);
+        if (sampled) {
+          headingTracker = lerpAngle(headingTracker, sampled.heading, 0.25);
+          setLiveVehiclePos([sampled.lat, sampled.lng]);
+          setLiveHeading(headingTracker);
 
-        const remainingFraction = (total - curIdx) / total;
-        const remKm = Math.round(tripDistanceKm * remainingFraction * 10) / 10;
-        const eta = Math.max(1, Math.round(remKm * 2.1));
+          const remFraction = 1.0 - progress;
+          const remKm = Math.round(tripDistanceKm * remFraction * 10) / 10;
+          const eta = Math.max(1, Math.round(remKm * 2.1));
+          setLiveRemainingKm(remKm);
+          setLiveEtaMins(eta);
+        }
 
-        setLiveVehiclePos(currentCoord);
-        setLiveHeading(heading);
-        setLiveRemainingKm(remKm);
-        setLiveEtaMins(eta);
-      }, 500);
+        if (progress < 1.0) {
+          animFrameId = requestAnimationFrame(step);
+        } else {
+          // Reached Dropoff cleanly! Stop moving, do not loop
+          setLiveVehiclePos(dropoff);
+          setLiveRemainingKm(0);
+          setLiveEtaMins(0);
+          if (onTripCompleted) {
+            onTripCompleted();
+          }
+        }
+      };
 
-      return () => clearInterval(interval);
+      animFrameId = requestAnimationFrame(step);
+      return () => {
+        if (animFrameId) cancelAnimationFrame(animFrameId);
+      };
     }
 
     // Phase 4: COMPLETED -> At Destination
     if (tripStatus === 'COMPLETED') {
       setLiveVehiclePos(dropoff);
-      setLiveHeading(0);
       setLiveRemainingKm(0);
       setLiveEtaMins(0);
     }
@@ -523,9 +575,11 @@ const MapView = ({
     tripDistanceKm,
     pickup,
     dropoff,
+    onDriverArrived,
+    onTripCompleted,
   ]);
 
-  // Explore Mode: Nearby simulated active patrolling vehicles (700ms smooth updates)
+  // Explore Mode: Nearby active patrolling vehicles cruising around Pickup
   const [nearbyVehicles, setNearbyVehicles] = useState(() =>
     generateNearbyDrivers(pickup, vehicleType)
   );
@@ -539,15 +593,22 @@ const MapView = ({
   useEffect(() => {
     if (isLiveTrip) return;
 
-    const interval = setInterval(() => {
+    let animId = null;
+    let lastTime = performance.now();
+
+    const cruise = (now) => {
+      const dt = (now - lastTime) / 1000;
+      lastTime = now;
+
       setNearbyVehicles((prev) =>
         prev.map((v) => {
-          const newStep = v.step + 0.12;
-          const drift = Math.sin(newStep) * 0.0006;
+          const newStep = v.step + dt * 0.4;
+          const drift = Math.sin(newStep) * 0.00045;
           const currentHeading = Math.cos(newStep) >= 0 ? v.heading : (v.heading + 180) % 360;
 
-          const lat = v.baseLat + Math.sin((v.heading * Math.PI) / 180) * drift;
-          const lng = v.baseLng + Math.cos((v.heading * Math.PI) / 180) * drift;
+          const rad = (currentHeading * Math.PI) / 180;
+          const lat = v.baseLat + Math.cos(rad) * drift;
+          const lng = v.baseLng + Math.sin(rad) * drift;
 
           return {
             ...v,
@@ -558,9 +619,14 @@ const MapView = ({
           };
         })
       );
-    }, 600);
 
-    return () => clearInterval(interval);
+      animId = requestAnimationFrame(cruise);
+    };
+
+    animId = requestAnimationFrame(cruise);
+    return () => {
+      if (animId) cancelAnimationFrame(animId);
+    };
   }, [isLiveTrip]);
 
   // Determine bounds points for map auto-center

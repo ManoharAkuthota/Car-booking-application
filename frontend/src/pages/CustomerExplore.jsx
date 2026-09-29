@@ -136,8 +136,7 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
           const lng = position.coords.longitude;
           try {
             const resolved = await reverseGeocode(lat, lng);
-            // Optionally update pickup to user's real street
-            setPickupLocation(resolved);
+            setPickupLocation({ ...resolved, isLive: true });
           } catch (e) {}
         },
         () => {},
@@ -424,9 +423,16 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
           >
             <div className="w-3 h-3 rounded-full bg-emerald-500 border-2 border-white shadow-xs flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider block leading-none">
-                Your Pick Up
-              </span>
+              <div className="flex items-center space-x-1.5">
+                <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider block leading-none">
+                  Your Pick Up
+                </span>
+                {pickupLocation.isLive && (
+                  <span className="inline-flex items-center px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 rounded-full border border-emerald-300">
+                    Live GPS
+                  </span>
+                )}
+              </div>
               <span className="text-xs sm:text-sm font-extrabold text-gray-950 truncate block mt-0.5">
                 {pickupLocation.name}
               </span>
@@ -483,6 +489,8 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
           onMapClick={handleMapClick}
           pickupAddress={pickupLocation.name}
           dropoffAddress={dropoffLocation.name}
+          onDriverArrived={handleDriverArrived}
+          onTripCompleted={handleCompleteTrip}
         />
 
         {/* Floating Blue GPS Crosshair Target Button (Matching Image 1 & Image 3) */}
