@@ -48,6 +48,7 @@ public class CarDto {
     private String imageUrl;
     private CarStatus status;
     private String features;
+    private Integer maxWeightKg;
     private Double rating;
     private Integer totalTrips;
 }

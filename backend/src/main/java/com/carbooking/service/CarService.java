@@ -48,6 +48,7 @@ public class CarService {
                 .imageUrl(dto.getImageUrl())
                 .status(dto.getStatus() != null ? dto.getStatus() : CarStatus.AVAILABLE)
                 .features(dto.getFeatures())
+                .maxWeightKg(dto.getMaxWeightKg())
                 .rating(dto.getRating() != null ? dto.getRating() : 4.8)
                 .totalTrips(0)
                 .build();
@@ -76,6 +77,7 @@ public class CarService {
             car.setStatus(dto.getStatus());
         }
         car.setFeatures(dto.getFeatures());
+        car.setMaxWeightKg(dto.getMaxWeightKg());
 
         return mapToDto(carRepository.save(car));
     }
@@ -106,6 +108,7 @@ public class CarService {
                 .imageUrl(car.getImageUrl())
                 .status(car.getStatus())
                 .features(car.getFeatures())
+                .maxWeightKg(car.getMaxWeightKg())
                 .rating(car.getRating())
                 .totalTrips(car.getTotalTrips())
                 .build();

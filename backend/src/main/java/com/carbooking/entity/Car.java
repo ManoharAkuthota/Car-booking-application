@@ -65,6 +65,8 @@ public class Car {
     @Column(length = 2000)
     private String features; // JSON string or comma-delimited: "Sunroof,GPS,Autopilot,AC"
 
+    private Integer maxWeightKg; // For Trolley / Porter cargo capacity (e.g. 500kg, 750kg)
+
     @Builder.Default
     private Double rating = 4.8;
 

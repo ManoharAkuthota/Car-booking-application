@@ -21,6 +21,7 @@ const AdminDashboard = () => {
     licensePlate: '',
     category: 'SEDAN',
     seats: 5,
+    maxWeightKg: 750,
     fuelType: 'Petrol',
     transmission: 'Automatic',
     pricePerKm: 25,
@@ -67,6 +68,7 @@ const AdminDashboard = () => {
         hourlyRate: Number(newCar.hourlyRate),
         year: Number(newCar.year),
         seats: Number(newCar.seats),
+        maxWeightKg: newCar.category === 'TROLLEY_PORTER' ? Number(newCar.maxWeightKg) : null,
       });
       setShowAddCarModal(false);
       setNewCar({
@@ -76,6 +78,7 @@ const AdminDashboard = () => {
         licensePlate: '',
         category: 'SEDAN',
         seats: 5,
+        maxWeightKg: 750,
         fuelType: 'Petrol',
         transmission: 'Automatic',
         pricePerKm: 25,
@@ -437,11 +440,14 @@ const AdminDashboard = () => {
                     onChange={(e) => setNewCar({ ...newCar, category: e.target.value })}
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white"
                   >
-                    <option value="SEDAN">SEDAN</option>
-                    <option value="SUV">SUV</option>
-                    <option value="LUXURY">LUXURY</option>
-                    <option value="ELECTRIC">ELECTRIC</option>
-                    <option value="HATCHBACK">HATCHBACK</option>
+                    <option value="BIKE">🏍️ BIKE (Rapido)</option>
+                    <option value="AUTO">🛺 AUTO (Rickshaw)</option>
+                    <option value="TROLLEY_PORTER">🛻 TROLLEY / PORTER</option>
+                    <option value="SEDAN">🚗 SEDAN</option>
+                    <option value="SUV">🚙 SUV</option>
+                    <option value="LUXURY">✨ LUXURY</option>
+                    <option value="ELECTRIC">⚡ ELECTRIC</option>
+                    <option value="HATCHBACK">🚗 HATCHBACK</option>
                   </select>
                 </div>
                 <div>
@@ -465,6 +471,19 @@ const AdminDashboard = () => {
                   />
                 </div>
               </div>
+
+              {newCar.category === 'TROLLEY_PORTER' && (
+                <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl">
+                  <label className="text-purple-300 mb-1 block font-semibold">Max Payload Capacity (kg)</label>
+                  <input
+                    type="number"
+                    value={newCar.maxWeightKg}
+                    onChange={(e) => setNewCar({ ...newCar, maxWeightKg: e.target.value })}
+                    className="w-full bg-slate-950 border border-purple-500/40 rounded-xl px-3 py-2 text-white"
+                    placeholder="e.g. 750"
+                  />
+                </div>
+              )}
 
               <div className="grid grid-cols-3 gap-4">
                 <div>

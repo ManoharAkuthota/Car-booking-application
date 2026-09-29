@@ -31,15 +31,41 @@ const dropoffIcon = createIcon(`
   </div>
 `);
 
-const carMarkerIcon = createIcon(`
-  <div class="flex items-center justify-center w-10 h-10 bg-slate-900 rounded-full shadow-xl shadow-cyan-500/50 border-2 border-accent-cyan ring-4 ring-accent-cyan/30 animate-pulse">
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 3c-.1.2-.1.5-.1.8V16c0 .6.4 1 1 1h2"></path>
-      <circle cx="7" cy="17" r="2"></circle>
-      <circle cx="17" cy="17" r="2"></circle>
-    </svg>
-  </div>
-`);
+const getVehicleMarkerIcon = (category = 'SEDAN') => {
+  let emoji = '🚗';
+  let color = 'bg-cyan-500';
+  let ring = 'ring-cyan-500/30';
+  let shadow = 'shadow-cyan-500/50';
+
+  if (category === 'BIKE') {
+    emoji = '🏍️';
+    color = 'bg-emerald-500';
+    ring = 'ring-emerald-500/30';
+    shadow = 'shadow-emerald-500/50';
+  } else if (category === 'AUTO') {
+    emoji = '🛺';
+    color = 'bg-amber-500';
+    ring = 'ring-amber-500/30';
+    shadow = 'shadow-amber-500/50';
+  } else if (category === 'TROLLEY_PORTER') {
+    emoji = '🛻';
+    color = 'bg-purple-500';
+    ring = 'ring-purple-500/30';
+    shadow = 'shadow-purple-500/50';
+  }
+
+  return L.divIcon({
+    html: `
+      <div class="flex items-center justify-center w-10 h-10 ${color} rounded-full shadow-xl ${shadow} border-2 border-white ring-4 ${ring} text-lg animate-bounce">
+        ${emoji}
+      </div>
+    `,
+    className: 'custom-vehicle-marker',
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -40],
+  });
+};
 
 // Auto-center and fit bounds component
 const AutoFitBounds = ({ pickup, dropoff }) => {
@@ -61,6 +87,7 @@ const MapView = ({
   pickup = [12.9716, 77.5946], // Default Bengaluru coordinates
   dropoff = [13.0358, 77.5970],
   carPosition = null,
+  category = 'SEDAN',
   isLiveTrip = false,
   className = "h-[340px]",
 }) => {
@@ -110,9 +137,9 @@ const MapView = ({
           </Marker>
         )}
 
-        {/* Active Car Marker */}
+        {/* Active Vehicle Marker */}
         {carPosition && (
-          <Marker position={carPosition} icon={carMarkerIcon}>
+          <Marker position={carPosition} icon={getVehicleMarkerIcon(category)}>
             <Popup className="text-slate-900 font-semibold">
               Driver En Route
             </Popup>

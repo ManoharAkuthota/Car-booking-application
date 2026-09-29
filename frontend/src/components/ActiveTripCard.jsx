@@ -147,6 +147,7 @@ const ActiveTripCard = ({ booking, onStatusChanged, onViewReceipt }) => {
         pickup={pickupCoord}
         dropoff={dropoffCoord}
         carPosition={getCarPos()}
+        category={booking.car?.category}
         isLiveTrip={true}
         className="h-[240px]"
       />
