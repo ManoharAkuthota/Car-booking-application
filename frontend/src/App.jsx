@@ -5,7 +5,7 @@ import CustomerExplore from './pages/CustomerExplore';
 import CustomerRides from './pages/CustomerRides';
 import DriverDashboard from './pages/DriverDashboard';
 import AdminDashboard from './pages/AdminDashboard';
-import { Loader2, Car, Shield, Database, Cpu } from 'lucide-react';
+import { Loader2, Car, Shield } from 'lucide-react';
 
 const MainLayout = () => {
   const { user, loading } = useAuth();
@@ -25,18 +25,24 @@ const MainLayout = () => {
     );
   }
 
+  const isExploreMode = user?.role === 'ROLE_CUSTOMER' && activeTab === 'explore';
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-brand-500 selection:text-slate-950">
       <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className={`flex-1 w-full mx-auto ${
+        isExploreMode
+          ? 'p-0 lg:max-w-7xl lg:px-6 lg:py-6'
+          : 'max-w-7xl px-4 sm:px-6 lg:px-8 py-8'
+      }`}>
         {/* Render view according to user role and selected navigation */}
         {user?.role === 'ROLE_CUSTOMER' && (
           <>
             {activeTab === 'my-trips' ? (
               <CustomerRides onSelectActiveTrip={() => setActiveTab('explore')} />
             ) : (
-              <CustomerExplore />
+              <CustomerExplore onNavigateToTrips={() => setActiveTab('my-trips')} />
             )}
           </>
         )}
@@ -50,8 +56,8 @@ const MainLayout = () => {
         )}
       </main>
 
-      {/* Professional Commercial Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950/90 py-6 text-xs text-slate-500">
+      {/* Professional Commercial Footer - Desktop only for Explore, always for other tabs */}
+      <footer className={`${isExploreMode ? 'hidden lg:block' : 'block'} border-t border-slate-900 bg-slate-950/90 py-5 text-xs text-slate-500`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center space-x-2">
             <span className="font-extrabold text-white text-sm tracking-tight">Drive<span className="text-brand-500">Pulse</span></span>
@@ -64,7 +70,7 @@ const MainLayout = () => {
             </span>
             <span>•</span>
             <span className="flex items-center text-brand-400 font-medium">
-              <Car className="w-3.5 h-3.5 mr-1" /> Verified Drivers
+              <Car className="w-3.5 h-3.5 mr-1" /> Verified Drivers & Pilots
             </span>
             <span>•</span>
             <span>24/7 Safety & SOS Response</span>
