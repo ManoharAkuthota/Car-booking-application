@@ -122,11 +122,9 @@ const CustomerRides = ({ onSelectActiveTrip }) => {
             >
               {/* Left Info */}
               <div className="flex items-start space-x-4">
-                <img
-                  src={b.car?.imageUrl || "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=200"}
-                  alt={b.car?.model}
-                  className="w-20 h-20 rounded-xl object-cover border border-gray-200 flex-shrink-0"
-                />
+                <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-2xl flex-shrink-0 shadow-xs">
+                  {b.car?.category === 'BIKE' ? '🏍️' : b.car?.category === 'AUTO' ? '🛺' : b.car?.category === 'TROLLEY_PORTER' ? '🛻' : '🚗'}
+                </div>
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
                     <span className="font-mono text-sm font-black text-gray-950">{b.bookingCode}</span>

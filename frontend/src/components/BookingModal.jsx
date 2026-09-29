@@ -13,11 +13,17 @@ const PRESET_LOCATIONS = [
   { name: 'Koramangala 5th Block', lat: 12.9352, lng: 77.6245 },
 ];
 
-const BookingModal = ({ car, onClose, onBookingSuccess }) => {
+const BookingModal = ({ car, serviceMeta, initialPickup, initialDropoff, onClose, onBookingSuccess }) => {
   const [pickupIndex, setPickupIndex] = useState(0);
   const [dropoffIndex, setDropoffIndex] = useState(1);
-  const [customPickup, setCustomPickup] = useState(PRESET_LOCATIONS[0].name);
-  const [customDropoff, setCustomDropoff] = useState(PRESET_LOCATIONS[1].name);
+  const [customPickup, setCustomPickup] = useState(initialPickup?.name || PRESET_LOCATIONS[0].name);
+  const [customDropoff, setCustomDropoff] = useState(initialDropoff?.name || PRESET_LOCATIONS[1].name);
+  const [pickupCoord, setPickupCoord] = useState(
+    initialPickup ? [initialPickup.lat, initialPickup.lng] : [PRESET_LOCATIONS[0].lat, PRESET_LOCATIONS[0].lng]
+  );
+  const [dropoffCoord, setDropoffCoord] = useState(
+    initialDropoff ? [initialDropoff.lat, initialDropoff.lng] : [PRESET_LOCATIONS[1].lat, PRESET_LOCATIONS[1].lng]
+  );
   const [paymentMethod, setPaymentMethod] = useState('UPI');
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [cargoType, setCargoType] = useState('Boxes & Cartons');
@@ -27,10 +33,14 @@ const BookingModal = ({ car, onClose, onBookingSuccess }) => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  const pickupCoord = [PRESET_LOCATIONS[pickupIndex].lat, PRESET_LOCATIONS[pickupIndex].lng];
-  const dropoffCoord = [PRESET_LOCATIONS[dropoffIndex].lat, PRESET_LOCATIONS[dropoffIndex].lng];
-
   const getCategoryMeta = () => {
+    if (serviceMeta) {
+      return {
+        emoji: serviceMeta.symbol,
+        label: serviceMeta.name,
+        badgeColor: serviceMeta.tagClass || 'bg-amber-100 text-amber-900 border-amber-300'
+      };
+    }
     switch (car.category) {
       case 'BIKE':
         return { emoji: '🏍️', label: 'Rapido Bike Taxi', badgeColor: 'bg-amber-100 text-amber-800 border-amber-300' };
@@ -121,12 +131,16 @@ const BookingModal = ({ car, onClose, onBookingSuccess }) => {
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h2 className="text-lg font-extrabold text-gray-950">Book {car.make} {car.model}</h2>
+                <h2 className="text-lg font-extrabold text-gray-950">
+                  Book {serviceMeta?.name || `${car.make} ${car.model}`}
+                </h2>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${meta.badgeColor}`}>
                   {meta.label}
                 </span>
               </div>
-              <p className="text-xs text-gray-500 font-mono font-medium">{car.licensePlate} • ₹{car.pricePerKm}/km</p>
+              <p className="text-xs text-gray-500 font-medium">
+                Pilot Vehicle: {car.make} {car.model} • {car.licensePlate} • ₹{car.pricePerKm}/km
+              </p>
             </div>
           </div>
           <button

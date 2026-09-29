@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { carApi, bookingApi } from '../api/client';
-import { DEFAULT_PRESET_LOCATIONS, reverseGeocode, searchLocations } from '../api/locationService';
+import { DEFAULT_PRESET_LOCATIONS, reverseGeocode } from '../api/locationService';
 import LocationSearchInput from '../components/LocationSearchInput';
 import BookingModal from '../components/BookingModal';
 import ActiveTripCard from '../components/ActiveTripCard';
@@ -10,33 +10,126 @@ import {
   Car, Shield, Smartphone, Monitor, MapPin, Navigation, Clock, ShieldCheck,
   HardHat, Package, IndianRupee, ArrowRight, ArrowUpDown, CheckCircle2,
   ChevronRight, Star, AlertCircle, PhoneCall, Check, Info, ShieldAlert,
-  Sparkles, RefreshCw, X, Crosshair, Plane, Building2, Train
+  Sparkles, RefreshCw, X, Crosshair, Users, Zap
 } from 'lucide-react';
 
-const CATEGORIES = [
-  { id: 'ALL', label: 'All Fleet', emoji: '🌟', badge: 'All' },
-  { id: 'BIKE', label: 'Bike Taxi', emoji: '🏍️', badge: 'Rapido' },
-  { id: 'AUTO', label: 'Auto', emoji: '🛺', badge: '3-Seater' },
-  { id: 'SEDAN', label: 'Cabs', emoji: '🚗', badge: 'Uber Go' },
-  { id: 'TROLLEY_PORTER', label: 'Porter Cargo', emoji: '🛻', badge: 'Tata Ace' },
-  { id: 'ELECTRIC', label: 'Electric EV', emoji: '⚡', badge: 'Eco' },
-  { id: 'SUV', label: 'SUV', emoji: '🚙', badge: '6 Seater' },
-  { id: 'LUXURY', label: 'Luxury', emoji: '👑', badge: 'Premier' },
+// Rapido Service Filters
+const SERVICE_FILTERS = [
+  { id: 'ALL', label: 'All Rides', emoji: '⚡' },
+  { id: 'BIKE', label: 'Bike', emoji: '🏍️' },
+  { id: 'AUTO', label: 'Auto', emoji: '🛺' },
+  { id: 'CAB', label: 'Cabs', emoji: '🚗' },
+  { id: 'TROLLEY_PORTER', label: 'Porter Cargo', emoji: '🛻' },
+];
+
+// 5 Dedicated Rapido Service Tiers with Vehicle Symbols (No individual car/bike photos)
+const RAPIDO_SERVICES = [
+  {
+    id: 'BIKE',
+    category: 'BIKE',
+    filterGroup: 'BIKE',
+    name: 'Bike',
+    symbol: '🏍️',
+    tag: 'Fastest',
+    tagClass: 'bg-amber-100 text-amber-900 border-amber-300',
+    symbolBg: 'bg-amber-100 border-amber-300 text-amber-950',
+    activeStyle: 'border-amber-400 bg-amber-50/70 ring-2 ring-amber-400/40 shadow-sm',
+    subtitle: 'Beat city traffic • Sanitized helmet provided',
+    seats: '1 Person',
+    eta: '2 mins',
+    baseFare: 25,
+    perKm: 7.5,
+    discountPercent: 15,
+    rating: '4.9',
+  },
+  {
+    id: 'AUTO',
+    category: 'AUTO',
+    filterGroup: 'AUTO',
+    name: 'Auto',
+    symbol: '🛺',
+    tag: 'Popular',
+    tagClass: 'bg-emerald-100 text-emerald-900 border-emerald-300',
+    symbolBg: 'bg-emerald-100 border-emerald-300 text-emerald-950',
+    activeStyle: 'border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-500/40 shadow-sm',
+    subtitle: 'Doorstep pickup • Upfront meter • Rain proof',
+    seats: '3 Seats',
+    eta: '3 mins',
+    baseFare: 35,
+    perKm: 11,
+    discountPercent: 10,
+    rating: '4.8',
+  },
+  {
+    id: 'CAB_ECONOMY',
+    category: 'SEDAN',
+    filterGroup: 'CAB',
+    name: 'Cab Economy',
+    symbol: '🚗',
+    tag: 'Affordable AC',
+    tagClass: 'bg-blue-100 text-blue-900 border-blue-300',
+    symbolBg: 'bg-blue-100 border-blue-300 text-blue-950',
+    activeStyle: 'border-blue-500 bg-blue-50/70 ring-2 ring-blue-500/40 shadow-sm',
+    subtitle: 'Comfy AC hatchback • Pocket friendly daily commute',
+    seats: '4 Seats',
+    eta: '4 mins',
+    baseFare: 65,
+    perKm: 15,
+    discountPercent: 12,
+    rating: '4.9',
+  },
+  {
+    id: 'CAB_PREMIUM',
+    category: 'SUV',
+    filterGroup: 'CAB',
+    name: 'Cab Premium',
+    symbol: '✨🚗',
+    tag: 'Top Comfort',
+    tagClass: 'bg-purple-100 text-purple-900 border-purple-300',
+    symbolBg: 'bg-purple-100 border-purple-300 text-purple-950',
+    activeStyle: 'border-purple-500 bg-purple-50/70 ring-2 ring-purple-500/40 shadow-sm',
+    subtitle: 'Spacious sedan • Top rated pilots • Extra legroom',
+    seats: '4-6 Seats',
+    eta: '5 mins',
+    baseFare: 110,
+    perKm: 21,
+    discountPercent: 10,
+    rating: '4.95',
+  },
+  {
+    id: 'TROLLEY_PORTER',
+    category: 'TROLLEY_PORTER',
+    filterGroup: 'TROLLEY_PORTER',
+    name: 'Trolley / Porter',
+    symbol: '🛻',
+    tag: 'Cargo & Shifting',
+    tagClass: 'bg-orange-100 text-orange-900 border-orange-300',
+    symbolBg: 'bg-orange-100 border-orange-300 text-orange-950',
+    activeStyle: 'border-orange-500 bg-orange-50/70 ring-2 ring-orange-500/40 shadow-sm',
+    subtitle: 'Luggage, packages & commercial goods up to 750kg',
+    seats: 'Max 750 kg',
+    eta: '5 mins',
+    baseFare: 150,
+    perKm: 25,
+    discountPercent: 10,
+    rating: '4.9',
+  },
 ];
 
 const CustomerExplore = ({ onNavigateToTrips }) => {
   const [cars, setCars] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [loading, setLoading] = useState(true);
   const [activeBooking, setActiveBooking] = useState(null);
+  const [selectedServiceId, setSelectedServiceId] = useState('BIKE');
+  const [selectedFilter, setSelectedFilter] = useState('ALL');
+
+  // Booking and modal states
   const [selectedCarForBooking, setSelectedCarForBooking] = useState(null);
+  const [selectedServiceForModal, setSelectedServiceForModal] = useState(null);
   const [receiptBooking, setReceiptBooking] = useState(null);
   const [showSafetyModal, setShowSafetyModal] = useState(false);
 
-  // Selected vehicle for instant booking in cockpit
-  const [highlightedCarId, setHighlightedCarId] = useState(null);
-
-  // Device view mode for testing: 'auto' (responsive) or 'mockup' (simulate bezel)
+  // Device view mode: 'auto' (responsive) or 'mockup' (simulate bezel)
   const [deviceMode, setDeviceMode] = useState('auto');
   const [mobileTab, setMobileTab] = useState('rides');
 
@@ -44,8 +137,6 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
   const [pickupLocation, setPickupLocation] = useState(DEFAULT_PRESET_LOCATIONS[0]);
   const [dropoffLocation, setDropoffLocation] = useState(DEFAULT_PRESET_LOCATIONS[1]);
   const [isDetectingGPS, setIsDetectingGPS] = useState(false);
-
-  // Which pin to move when clicking on map ('dropoff' or 'pickup')
   const [mapTargetMode, setMapTargetMode] = useState('dropoff');
 
   // Automatically request browser live geolocation on mount & reverse-geocode to real street/area
@@ -155,26 +246,16 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
     }
   };
 
-  // Load cars and check for active booking
+  // Load cars and check for active ongoing booking
   const loadData = async () => {
     setLoading(true);
     try {
-      const params = {};
-      if (selectedCategory !== 'ALL') params.category = selectedCategory;
-
       const [carsRes, bookingsRes] = await Promise.all([
-        carApi.getAll(params),
+        carApi.getAll(),
         bookingApi.getMyBookings(),
       ]);
 
-      setCars(carsRes.data);
-
-      if (carsRes.data.length > 0) {
-        const exists = carsRes.data.some((c) => c.id === highlightedCarId);
-        if (!exists) {
-          setHighlightedCarId(carsRes.data[0].id);
-        }
-      }
+      setCars(carsRes.data || []);
 
       // Check if user has an active ongoing ride
       const ongoing = bookingsRes.data.find(
@@ -192,55 +273,43 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
 
   useEffect(() => {
     loadData();
-  }, [selectedCategory]);
+  }, []);
 
   const handleBookingSuccess = (newBooking) => {
     setSelectedCarForBooking(null);
+    setSelectedServiceForModal(null);
     setActiveBooking(newBooking);
     loadData();
   };
 
-  const selectedVehicle = cars.find((c) => c.id === highlightedCarId) || cars[0] || null;
+  // Currently selected Rapido service
+  const selectedService = useMemo(() => {
+    return RAPIDO_SERVICES.find((s) => s.id === selectedServiceId) || RAPIDO_SERVICES[0];
+  }, [selectedServiceId]);
 
-  // Calculate upfront fare for selected vehicle
-  const calculateFare = (car) => {
-    if (!car) return 0;
-    const base = car.baseFare || 25;
-    const dist = estDistanceKm * car.pricePerKm;
-    const tax = (base + dist) * 0.05;
-    return Math.round(base + dist + tax);
+  // Filtered service tiers based on the top filter strip
+  const visibleServices = useMemo(() => {
+    if (selectedFilter === 'ALL') return RAPIDO_SERVICES;
+    return RAPIDO_SERVICES.filter((s) => s.filterGroup === selectedFilter || s.id === selectedFilter);
+  }, [selectedFilter]);
+
+  // Calculate upfront fare for a service tier based on route distance
+  const calculateServiceFare = (service) => {
+    const matched = cars.find((c) => c.category === service.category);
+    const base = matched?.baseFare || service.baseFare;
+    const perKm = matched?.pricePerKm || service.perKm;
+    const dist = estDistanceKm * perKm;
+    const total = (base + dist) * 1.05; // 5% tax
+    return Math.round(total);
   };
 
-  // Helper for vehicle category visual representation in White Theme
-  const getVehicleVisuals = (car) => {
-    let emoji = '🚗';
-    let badgeText = 'Cab';
-    let badgeColor = 'text-brand-700 bg-brand-50 border-brand-200';
-    let specText = `${car.seats} Seats • AC`;
-
-    if (car.category === 'BIKE') {
-      emoji = '🏍️';
-      badgeText = 'Rapido Bike';
-      badgeColor = 'text-amber-800 bg-amber-50 border-amber-300';
-      specText = '1 Rider • Sanitized Helmet';
-    } else if (car.category === 'AUTO') {
-      emoji = '🛺';
-      badgeText = 'Auto';
-      badgeColor = 'text-amber-900 bg-amber-100 border-amber-300';
-      specText = '3 Seats • Metered Upfront';
-    } else if (car.category === 'TROLLEY_PORTER') {
-      emoji = '🛻';
-      badgeText = 'Porter';
-      badgeColor = 'text-purple-700 bg-purple-50 border-purple-200';
-      specText = `Max ${car.maxWeightKg || 750} kg • Cargo`;
-    } else if (car.category === 'ELECTRIC') {
-      emoji = '⚡';
-      badgeText = 'Uber Green';
-      badgeColor = 'text-emerald-700 bg-emerald-50 border-emerald-200';
-      specText = '4 Seats • Zero Emission';
+  // Handler to initiate booking for a service tier
+  const handleSelectAndBook = (service) => {
+    const matched = cars.find((c) => c.category === service.category) || cars[0];
+    if (matched) {
+      setSelectedServiceForModal(service);
+      setSelectedCarForBooking(matched);
     }
-
-    return { emoji, badgeText, badgeColor, specText };
   };
 
   return (
@@ -277,7 +346,7 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
       {/* Desktop Top Bar (Clean White Theme) */}
       <div className="hidden lg:flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 shadow-sm mb-6">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-500 to-amber-400 flex items-center justify-center text-slate-950 font-black shadow-md shadow-brand-500/20 text-lg">
+          <div className="w-10 h-10 rounded-xl bg-amber-400 flex items-center justify-center text-slate-950 font-black shadow-md shadow-amber-400/20 text-xl">
             ⚡
           </div>
           <div>
@@ -285,11 +354,11 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
               <h1 className="text-base font-extrabold text-gray-950 tracking-tight">DrivePulse On-Demand Mobility</h1>
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center space-x-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Live Google Maps Telemetry Active</span>
+                <span>Live Google Maps Active</span>
               </span>
             </div>
             <p className="text-xs text-gray-500">
-              Multi-Modal Platform: Rapido Bike Taxi • Auto Rickshaw • Uber Cabs • Porter Cargo
+              Rapido Multi-Modal Services: Bike • Auto • Cab Economy • Cab Premium • Trolley Cargo
             </p>
           </div>
         </div>
@@ -406,22 +475,28 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
               </div>
             </div>
 
-            {/* Modalities Filter Pill Strip */}
+            {/* Service Filters Pill Strip */}
             <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-none">
-              {CATEGORIES.map((cat) => {
-                const isSelected = selectedCategory === cat.id;
+              {SERVICE_FILTERS.map((filter) => {
+                const isSelected = selectedFilter === filter.id;
                 return (
                   <button
-                    key={cat.id}
-                    onClick={() => setSelectedCategory(cat.id)}
+                    key={filter.id}
+                    onClick={() => {
+                      setSelectedFilter(filter.id);
+                      if (filter.id !== 'ALL') {
+                        const target = RAPIDO_SERVICES.find((s) => s.filterGroup === filter.id || s.id === filter.id);
+                        if (target) setSelectedServiceId(target.id);
+                      }
+                    }}
                     className={`flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
                       isSelected
                         ? 'bg-amber-400 text-slate-950 border-amber-400 font-extrabold shadow-sm scale-[1.02]'
                         : 'bg-gray-100 text-gray-600 border-gray-200 hover:text-gray-950'
                     }`}
                   >
-                    <span>{cat.emoji}</span>
-                    <span>{cat.badge || cat.label.split(' ')[0]}</span>
+                    <span>{filter.emoji}</span>
+                    <span>{filter.label}</span>
                   </button>
                 );
               })}
@@ -434,7 +509,7 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
               <MapView
                 pickup={pickupCoord}
                 dropoff={dropoffCoord}
-                category={selectedVehicle?.category || 'SEDAN'}
+                category={selectedService.category}
                 className="h-full w-full rounded-2xl"
                 onLocateMe={handleDetectLiveLocation}
                 onMapClick={handleMapClick}
@@ -453,14 +528,14 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
             </div>
           </div>
 
-          {/* Vehicle Options List (Natural Scroll Flow, Clean White Cards) */}
+          {/* Rapido Service Options List with Vehicle Symbols (No individual car/bike photos) */}
           <div className="px-4 space-y-2.5 pb-24">
             <div className="flex items-center justify-between text-xs text-gray-500 font-bold border-b border-gray-200 pb-2">
               <span className="flex items-center space-x-1 text-emerald-700">
                 <Clock className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Available Rides Nearby • Upfront Pricing</span>
+                <span>Available Services Nearby • Upfront Pricing</span>
               </span>
-              <span className="text-gray-400 font-mono">{cars.length} Options</span>
+              <span className="text-gray-400 font-mono">{visibleServices.length} Services</span>
             </div>
 
             {loading ? (
@@ -469,71 +544,80 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
                   <div key={n} className="h-20 rounded-2xl bg-gray-100 animate-pulse border border-gray-200" />
                 ))}
               </div>
-            ) : cars.length === 0 ? (
+            ) : visibleServices.length === 0 ? (
               <div className="text-center py-10 bg-white rounded-2xl border border-gray-200 space-y-2">
                 <Car className="w-10 h-10 text-gray-400 mx-auto" />
-                <p className="text-xs text-gray-500 font-semibold">No vehicles found in this category.</p>
-                <button onClick={() => setSelectedCategory('ALL')} className="text-brand-600 font-bold underline text-xs">
-                  View All Fleet
+                <p className="text-xs text-gray-500 font-semibold">No services found in this category.</p>
+                <button onClick={() => setSelectedFilter('ALL')} className="text-brand-600 font-bold underline text-xs">
+                  View All Services
                 </button>
               </div>
             ) : (
-              cars.map((car) => {
-                const isSelected = (selectedVehicle?.id === car.id);
-                const fare = calculateFare(car);
-                const { emoji, badgeText, badgeColor, specText } = getVehicleVisuals(car);
+              visibleServices.map((service) => {
+                const isSelected = selectedServiceId === service.id;
+                const fare = calculateServiceFare(service);
+                const originalFare = Math.round(fare * (1 + service.discountPercent / 100));
 
                 return (
                   <div
-                    key={car.id}
-                    onClick={() => setHighlightedCarId(car.id)}
+                    key={service.id}
+                    onClick={() => setSelectedServiceId(service.id)}
                     className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
                       isSelected
-                        ? 'bg-amber-50/70 border-amber-400 ring-2 ring-amber-400/40 shadow-md'
+                        ? 'bg-amber-50/80 border-amber-400 ring-2 ring-amber-400/40 shadow-md'
                         : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                     }`}
                   >
+                    {/* Left: Vehicle Symbol & Service Details */}
                     <div className="flex items-center space-x-3.5 min-w-0">
-                      <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
-                        <img
-                          src={car.imageUrl}
-                          alt={car.model}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.src = "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400";
-                          }}
-                        />
-                        <div className="absolute top-0 left-0 bg-white/95 px-1 rounded-br text-[10px] shadow-xs">
-                          {emoji}
-                        </div>
+                      {/* Clean Rapido Vehicle Symbol Badge */}
+                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0 shadow-sm border ${service.symbolBg}`}>
+                        {service.symbol}
                       </div>
 
                       <div className="min-w-0">
-                        <div className="flex items-center space-x-1.5">
-                          <span className="text-xs sm:text-sm font-extrabold text-gray-950 truncate">
-                            {car.make} {car.model}
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm font-extrabold text-gray-950 truncate">
+                            {service.name}
                           </span>
-                          <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold border ${badgeColor}`}>
-                            {badgeText}
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${service.tagClass}`}>
+                            {service.tag}
                           </span>
+                          <span className="text-[11px] text-gray-400 font-semibold">• {service.seats}</span>
                         </div>
-                        <p className="text-[11px] text-gray-500 truncate mt-0.5 font-medium">
-                          {specText}
+                        <p className="text-xs text-gray-500 font-medium truncate mt-0.5">
+                          {service.subtitle}
                         </p>
-                        <div className="flex items-center space-x-1.5 text-[11px] text-amber-600 font-bold mt-1">
-                          <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
-                          <span>{car.rating || 4.9}</span>
-                          <span className="text-gray-400 font-normal font-mono">• 2 min away</span>
+                        <div className="flex items-center space-x-2 text-[11px] text-emerald-700 font-bold mt-1">
+                          <span className="flex items-center">
+                            <Clock className="w-3 h-3 mr-1 text-emerald-600" />
+                            {service.eta} away
+                          </span>
+                          <span className="text-gray-300">•</span>
+                          <span className="text-amber-600 flex items-center">
+                            <Star className="w-3 h-3 fill-amber-500 mr-0.5" />
+                            {service.rating}
+                          </span>
+                          {isSelected && (
+                            <span className="text-amber-800 bg-amber-100/90 text-[10px] px-1.5 py-0.2 rounded font-bold flex items-center space-x-0.5">
+                              <CheckCircle2 className="w-3 h-3" />
+                              <span>Selected</span>
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
 
+                    {/* Right: Upfront Guaranteed Fare */}
                     <div className="text-right flex-shrink-0 pl-3">
                       <div className="text-base font-black text-gray-950 font-mono leading-none">
                         ₹{fare}
                       </div>
-                      <div className="text-[10px] text-gray-400 line-through mt-1">
-                        ₹{Math.round(fare * 1.15)}
+                      <div className="text-[10px] text-gray-400 line-through mt-1 font-mono">
+                        ₹{originalFare}
+                      </div>
+                      <div className="text-[9px] font-bold text-emerald-700 uppercase tracking-wide mt-0.5">
+                        Save {service.discountPercent}%
                       </div>
                     </div>
                   </div>
@@ -542,23 +626,18 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
             )}
           </div>
 
-          {/* Sticky Bottom Booking Bar (Anchored Safely Above Screen Edge, Zero Clipping) */}
+          {/* Sticky Bottom Booking Bar */}
           <div className="fixed bottom-0 left-0 right-0 p-3 bg-white/95 border-t border-gray-200 backdrop-blur-md z-40 shadow-2xl max-w-md mx-auto">
             <button
-              onClick={() => {
-                if (selectedVehicle) setSelectedCarForBooking(selectedVehicle);
-              }}
-              disabled={!selectedVehicle}
+              onClick={() => handleSelectAndBook(selectedService)}
               className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-amber-400 to-brand-500 hover:from-amber-500 hover:to-brand-600 text-slate-950 font-black text-sm shadow-md active:scale-98 transition-all flex items-center justify-between"
             >
               <div className="flex items-center space-x-2">
-                <span className="text-lg">
-                  {selectedVehicle ? getVehicleVisuals(selectedVehicle).emoji : '🚗'}
-                </span>
-                <span>Book {selectedVehicle ? `${selectedVehicle.make} ${selectedVehicle.model}` : 'Ride'}</span>
+                <span className="text-xl">{selectedService.symbol}</span>
+                <span>Book {selectedService.name}</span>
               </div>
               <div className="flex items-center space-x-2 font-mono text-base font-extrabold">
-                <span>₹{selectedVehicle ? calculateFare(selectedVehicle) : '--'}</span>
+                <span>₹{calculateServiceFare(selectedService)}</span>
                 <ArrowRight className="w-4 h-4" />
               </div>
             </button>
@@ -568,7 +647,8 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
               <button
                 onClick={() => {
                   setMobileTab('rides');
-                  setSelectedCategory('ALL');
+                  setSelectedFilter('ALL');
+                  setSelectedServiceId('BIKE');
                 }}
                 className={`flex flex-col items-center space-y-0.5 ${mobileTab === 'rides' ? 'text-brand-600 font-extrabold' : 'hover:text-gray-950'}`}
               >
@@ -578,7 +658,8 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
               <button
                 onClick={() => {
                   setMobileTab('porter');
-                  setSelectedCategory('TROLLEY_PORTER');
+                  setSelectedFilter('TROLLEY_PORTER');
+                  setSelectedServiceId('TROLLEY_PORTER');
                 }}
                 className={`flex flex-col items-center space-y-0.5 ${mobileTab === 'porter' ? 'text-brand-600 font-extrabold' : 'hover:text-gray-950'}`}
               >
@@ -615,7 +696,7 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
       {/* 💻 2. LAPTOP / DESKTOP COCKPIT (Clean White Theme on screens >= 1024px)     */}
       {/* ========================================================================= */}
       <div className={`${deviceMode === 'auto' ? 'hidden lg:grid' : 'hidden'} grid-cols-12 gap-6 items-start`}>
-        {/* LEFT COLUMN: Booking Panel & Multi-Modal Tier Selector */}
+        {/* LEFT COLUMN: Booking Panel & Rapido Service Tier Selector */}
         <div className="col-span-12 xl:col-span-5 lg:col-span-6 space-y-4">
           {/* Dynamic Route Search Box (Uber Style Clean White) */}
           <div className="bg-white border border-gray-200 rounded-3xl p-5 shadow-sm space-y-4">
@@ -693,23 +774,29 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
               </div>
             </div>
 
-            {/* Multi-Modal Category Filter Horizontal Scroll */}
+            {/* Service Filters Horizontal Strip */}
             <div className="pt-2 border-t border-gray-100">
               <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-none">
-                {CATEGORIES.map((cat) => {
-                  const isSelected = selectedCategory === cat.id;
+                {SERVICE_FILTERS.map((filter) => {
+                  const isSelected = selectedFilter === filter.id;
                   return (
                     <button
-                      key={cat.id}
-                      onClick={() => setSelectedCategory(cat.id)}
+                      key={filter.id}
+                      onClick={() => {
+                        setSelectedFilter(filter.id);
+                        if (filter.id !== 'ALL') {
+                          const target = RAPIDO_SERVICES.find((s) => s.filterGroup === filter.id || s.id === filter.id);
+                          if (target) setSelectedServiceId(target.id);
+                        }
+                      }}
                       className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${
                         isSelected
                           ? 'bg-amber-400 text-slate-950 border-amber-400 shadow-sm'
                           : 'bg-gray-50 text-gray-600 border-gray-200 hover:text-gray-950 hover:bg-gray-100'
                       }`}
                     >
-                      <span>{cat.emoji}</span>
-                      <span>{cat.label}</span>
+                      <span>{filter.emoji}</span>
+                      <span>{filter.label}</span>
                     </button>
                   );
                 })}
@@ -717,7 +804,7 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
             </div>
           </div>
 
-          {/* Ride Options List (Clean White Cards) */}
+          {/* Rapido Service Tier Options List (Clean Symbol Cards, No Individual Vehicle Photos) */}
           <div className="space-y-2.5">
             {loading ? (
               <div className="space-y-3">
@@ -725,87 +812,85 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
                   <div key={n} className="h-24 rounded-2xl bg-gray-100 animate-pulse border border-gray-200" />
                 ))}
               </div>
-            ) : cars.length === 0 ? (
+            ) : visibleServices.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-2xl border border-gray-200 space-y-2">
                 <Car className="w-10 h-10 text-gray-400 mx-auto" />
-                <p className="text-xs text-gray-500 font-semibold">No vehicles found in this category.</p>
+                <p className="text-xs text-gray-500 font-semibold">No services found in this category.</p>
                 <button
-                  onClick={() => setSelectedCategory('ALL')}
+                  onClick={() => setSelectedFilter('ALL')}
                   className="text-xs text-brand-600 font-bold underline"
                 >
-                  View All Fleet
+                  View All Services
                 </button>
               </div>
             ) : (
-              cars.map((car) => {
-                const isSelected = (selectedVehicle?.id === car.id);
-                const fare = calculateFare(car);
-                const { emoji, badgeText, badgeColor, specText } = getVehicleVisuals(car);
+              visibleServices.map((service) => {
+                const isSelected = selectedServiceId === service.id;
+                const fare = calculateServiceFare(service);
+                const originalFare = Math.round(fare * (1 + service.discountPercent / 100));
 
                 return (
                   <div
-                    key={car.id}
-                    onClick={() => setHighlightedCarId(car.id)}
+                    key={service.id}
+                    onClick={() => setSelectedServiceId(service.id)}
                     className={`group relative rounded-2xl p-3.5 border transition-all duration-200 cursor-pointer flex items-center justify-between ${
                       isSelected
-                        ? 'bg-amber-50/60 border-amber-400 ring-2 ring-amber-400/40 shadow-md'
+                        ? 'bg-amber-50/70 border-amber-400 ring-2 ring-amber-400/40 shadow-md'
                         : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                     }`}
                   >
+                    {/* Left: Vehicle Symbol & Details */}
                     <div className="flex items-center space-x-3.5 min-w-0">
-                      <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
-                        <img
-                          src={car.imageUrl}
-                          alt={car.model}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                          onError={(e) => {
-                            e.target.src = "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=400";
-                          }}
-                        />
-                        <div className="absolute top-0.5 left-0.5 bg-white/90 px-1 rounded-br text-xs shadow-sm">
-                          {emoji}
-                        </div>
+                      {/* Clean Rapido Vehicle Symbol Badge */}
+                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0 shadow-sm border ${service.symbolBg}`}>
+                        {service.symbol}
                       </div>
 
                       <div className="min-w-0">
                         <div className="flex items-center space-x-2">
                           <h3 className="text-sm font-extrabold text-gray-950 truncate">
-                            {car.make} {car.model}
+                            {service.name}
                           </h3>
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border uppercase tracking-wider ${badgeColor}`}>
-                            {badgeText}
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border uppercase tracking-wider ${service.tagClass}`}>
+                            {service.tag}
                           </span>
+                          <span className="text-xs text-gray-400 font-semibold">• {service.seats}</span>
                         </div>
 
                         <div className="flex items-center space-x-2 text-xs text-gray-500 mt-0.5">
                           <span className="text-emerald-700 font-bold flex items-center">
                             <Clock className="w-3 h-3 mr-1 text-emerald-600" />
-                            2 mins
+                            {service.eta}
                           </span>
                           <span>•</span>
-                          <span className="truncate font-medium">{specText}</span>
+                          <span className="truncate font-medium">{service.subtitle}</span>
                         </div>
 
                         <div className="flex items-center space-x-1 text-[11px] text-amber-600 font-bold mt-1">
                           <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
-                          <span>{car.rating || 4.9}</span>
-                          <span className="text-gray-400 font-mono font-normal">({car.totalTrips || 120}+ trips)</span>
+                          <span>{service.rating}</span>
+                          {isSelected && (
+                            <span className="text-amber-800 bg-amber-100 text-[10px] px-1.5 py-0.2 rounded font-bold ml-2">
+                              ✓ Ready to Book
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
 
+                    {/* Right: Pricing & 1-Tap Booking Button */}
                     <div className="text-right flex-shrink-0 pl-3">
                       <div className="text-lg font-black text-gray-950 font-mono leading-none">
                         ₹{fare}
                       </div>
-                      <div className="text-[10px] text-gray-400 font-mono mt-1">
-                        ₹{car.pricePerKm}/km
+                      <div className="text-[10px] text-gray-400 font-mono line-through mt-1">
+                        ₹{originalFare}
                       </div>
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setSelectedCarForBooking(car);
+                          handleSelectAndBook(service);
                         }}
                         className={`mt-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm ${
                           isSelected
@@ -813,7 +898,7 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
                             : 'bg-gray-100 text-gray-700 hover:text-gray-950 hover:bg-gray-200'
                         }`}
                       >
-                        Book Now
+                        Book {service.name}
                       </button>
                     </div>
                   </div>
@@ -822,26 +907,25 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
             )}
           </div>
 
-          {/* Selected Vehicle Instant Confirmation Sticky Card */}
-          {selectedVehicle && (
-            <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-md flex items-center justify-between sticky bottom-4 z-30">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Guaranteed Upfront Rate</p>
-                <p className="text-lg font-black text-gray-950">
-                  ₹{calculateFare(selectedVehicle)}
-                  <span className="text-xs text-gray-500 font-normal ml-2">All inclusive</span>
-                </p>
-              </div>
-
-              <button
-                onClick={() => setSelectedCarForBooking(selectedVehicle)}
-                className="py-3 px-6 rounded-xl bg-gradient-to-r from-amber-400 to-brand-500 hover:from-amber-500 hover:to-brand-600 text-slate-950 font-black text-xs shadow-md active:scale-98 transition-all flex items-center space-x-2"
-              >
-                <span>Confirm {selectedVehicle.category === 'TROLLEY_PORTER' ? 'Porter' : selectedVehicle.category === 'BIKE' ? 'Bike Taxi' : 'Ride'}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+          {/* Selected Service Instant Confirmation Sticky Card */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-md flex items-center justify-between sticky bottom-4 z-30">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Guaranteed Upfront Fare</p>
+              <p className="text-lg font-black text-gray-950">
+                ₹{calculateServiceFare(selectedService)}
+                <span className="text-xs text-gray-500 font-normal ml-2">All inclusive • Fixed rate</span>
+              </p>
             </div>
-          )}
+
+            <button
+              onClick={() => handleSelectAndBook(selectedService)}
+              className="py-3 px-6 rounded-xl bg-gradient-to-r from-amber-400 to-brand-500 hover:from-amber-500 hover:to-brand-600 text-slate-950 font-black text-xs shadow-md active:scale-98 transition-all flex items-center space-x-2"
+            >
+              <span className="text-base">{selectedService.symbol}</span>
+              <span>Confirm {selectedService.name}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* RIGHT COLUMN: Full-Height Interactive Google Maps Cockpit */}
@@ -863,7 +947,7 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
             <MapView
               pickup={pickupCoord}
               dropoff={dropoffCoord}
-              category={selectedVehicle?.category || 'SEDAN'}
+              category={selectedService.category}
               className="h-[520px] rounded-2xl"
               onLocateMe={handleDetectLiveLocation}
               onMapClick={handleMapClick}
@@ -969,11 +1053,17 @@ const CustomerExplore = ({ onNavigateToTrips }) => {
         </div>
       )}
 
-      {/* Booking Modal */}
+      {/* Booking Modal with Dynamic Route & Service Metadata */}
       {selectedCarForBooking && (
         <BookingModal
           car={selectedCarForBooking}
-          onClose={() => setSelectedCarForBooking(null)}
+          serviceMeta={selectedServiceForModal || selectedService}
+          initialPickup={pickupLocation}
+          initialDropoff={dropoffLocation}
+          onClose={() => {
+            setSelectedCarForBooking(null);
+            setSelectedServiceForModal(null);
+          }}
           onBookingSuccess={handleBookingSuccess}
         />
       )}
