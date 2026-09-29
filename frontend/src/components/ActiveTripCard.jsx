@@ -142,14 +142,16 @@ const ActiveTripCard = ({ booking, onStatusChanged, onViewReceipt }) => {
         })}
       </div>
 
-      {/* Live Google Map Preview with Animated Simulated Car */}
+      {/* Live Google Map Preview with Animated Moving Vehicle */}
       <MapView
         pickup={pickupCoord}
         dropoff={dropoffCoord}
-        carPosition={getCarPos()}
-        category={booking.car?.category}
+        category={booking.car?.category || 'BIKE'}
         isLiveTrip={true}
-        className="h-[240px]"
+        tripStatus={booking.status}
+        className="h-[280px]"
+        pickupAddress={booking.pickupAddress}
+        dropoffAddress={booking.dropoffAddress}
       />
 
       {/* Route & Driver Details Grid */}

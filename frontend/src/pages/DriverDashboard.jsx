@@ -172,12 +172,16 @@ const DriverDashboard = () => {
             <span className="text-xl font-black text-emerald-700 font-mono">₹{activeTrip.totalFare}</span>
           </div>
 
-          {/* Map Preview */}
+          {/* Map Preview with Live Navigation and Animated Moving Vehicle */}
           <MapView
             pickup={[activeTrip.pickupLat || 12.9716, activeTrip.pickupLng || 77.5946]}
             dropoff={[activeTrip.dropoffLat || 13.0358, activeTrip.dropoffLng || 77.5970]}
+            category={activeTrip.car?.category || 'AUTO'}
             isLiveTrip={true}
-            className="h-[220px]"
+            tripStatus={activeTrip.status}
+            className="h-[280px]"
+            pickupAddress={activeTrip.pickupAddress}
+            dropoffAddress={activeTrip.dropoffAddress}
           />
 
           {/* Trip Details */}
