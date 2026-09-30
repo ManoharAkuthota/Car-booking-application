@@ -135,7 +135,19 @@ const LocationSearchScreen = ({
           </div>
         </div>
 
-        {/* 3. POPULAR & RECENT LOCATIONS LIST (Down the location inputs) */}
+        {/* 3. PRIMARY SEARCH ACTION BUTTON (Immediately Visible & Accessible) */}
+        <div>
+          <button
+            type="button"
+            onClick={onProceedToRides}
+            className="w-full py-3.5 sm:py-4 px-6 rounded-2xl bg-[#FFCC00] hover:bg-[#FFD633] text-gray-950 font-black text-sm sm:text-base shadow-lg hover:shadow-xl active:scale-98 transition-all flex items-center justify-center space-x-2.5"
+          >
+            <Search className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
+            <span>Search Rides & Nearest Drivers</span>
+          </button>
+        </div>
+
+        {/* 4. POPULAR & RECENT LOCATIONS LIST (1-Tap Fast Selection) */}
         <div className="bg-white rounded-3xl p-4 sm:p-5 border border-gray-200 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-xs sm:text-sm font-black text-gray-950 uppercase tracking-wider">
@@ -189,18 +201,6 @@ const LocationSearchScreen = ({
               );
             })}
           </div>
-        </div>
-
-        {/* 4. PRIMARY SEARCH OPTION ACTION BUTTON */}
-        <div className="pt-2">
-          <button
-            type="button"
-            onClick={onProceedToRides}
-            className="w-full py-4 px-6 rounded-2xl bg-[#FFCC00] hover:bg-[#FFD633] text-gray-950 font-black text-base sm:text-lg shadow-xl hover:shadow-2xl active:scale-98 transition-all flex items-center justify-center space-x-2.5"
-          >
-            <Search className="w-5 h-5 stroke-[2.5]" />
-            <span>Search Rides & Nearest Drivers</span>
-          </button>
         </div>
 
       </div>

@@ -95,7 +95,9 @@ export const authApi = {
 export const carApi = {
   getAll: async (params = {}) => {
     try {
-      return await api.get('/cars', { params });
+      const res = await api.get('/cars', { params });
+      if (!res.data || typeof res.data === 'string') throw new Error('Invalid JSON response');
+      return res;
     } catch (err) {
       console.warn("Backend unavailable, loading local fleet vehicles:", err.message);
       let list = getStoredCars();
@@ -200,7 +202,9 @@ export const bookingApi = {
   },
   createBooking: async (data) => {
     try {
-      return await api.post('/bookings', data);
+      const res = await api.post('/bookings', data);
+      if (!res.data || typeof res.data === 'string') throw new Error('Invalid JSON response');
+      return res;
     } catch (err) {
       const cars = getStoredCars();
       const car = cars.find((c) => c.id === Number(data.carId)) || cars[0];
@@ -238,7 +242,9 @@ export const bookingApi = {
   },
   getMyBookings: async () => {
     try {
-      return await api.get('/bookings/my-bookings');
+      const res = await api.get('/bookings/my-bookings');
+      if (!res.data || typeof res.data === 'string') throw new Error('Invalid JSON response');
+      return res;
     } catch (err) {
       return { data: getStoredBookings() };
     }

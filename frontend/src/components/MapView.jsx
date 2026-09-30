@@ -422,27 +422,28 @@ const MapResizer = () => {
 
 // Map Tile Providers (100% Free & Open-Access - ZERO API Keys Required)
 const MAP_LAYERS = {
-  carto_voyager: {
-    id: 'carto_voyager',
-    name: 'Map',
-    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    subdomains: ['a', 'b', 'c', 'd'],
-    attribution: '&copy; CARTO &copy; OpenStreetMap',
-    maxZoom: 20,
+  esri_streets: {
+    id: 'esri_streets',
+    name: 'City Streets',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+    subdomains: ['a', 'b', 'c'],
+    attribution: '&copy; Esri & OpenStreetMap (Zero API Key Required)',
+    maxZoom: 19,
+  },
+  osm: {
+    id: 'osm',
+    name: 'OpenStreetMap',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    subdomains: ['a', 'b', 'c'],
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 19,
   },
   satellite: {
     id: 'satellite',
     name: 'Satellite',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attribution: '&copy; Esri World Imagery (No API key required)',
-    maxZoom: 19,
-  },
-  osm: {
-    id: 'osm',
-    name: 'OSM',
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     subdomains: ['a', 'b', 'c'],
-    attribution: '&copy; OpenStreetMap',
+    attribution: '&copy; Esri World Imagery (Zero API Key Required)',
     maxZoom: 19,
   },
 };
@@ -491,7 +492,7 @@ const MapView = ({
   onDriverArrived = null,
   onTripCompleted = null,
 }) => {
-  const [selectedLayer, setSelectedLayer] = useState('carto_voyager');
+  const [selectedLayer, setSelectedLayer] = useState('esri_streets');
   const [recenterCount, setRecenterCount] = useState(0);
 
   // Normalize category to vehicle type
@@ -560,14 +561,14 @@ const MapView = ({
       if (!pickup || !dropoff) return;
 
       const tripRes = await fetchRoadRoute(pickup, dropoff);
-      if (!isCancelled && tripRes.points.length > 0) {
+      if (!isCancelled && tripRes?.points?.length > 0) {
         setTripRoadPoints(tripRes.points);
         setTripDistanceKm(tripRes.distanceKm);
       }
 
       if (isLiveTrip && (tripStatus === 'ACCEPTED' || tripStatus === 'DRIVER_ARRIVING')) {
         const approachRes = await fetchRoadRoute(driverStartPos, pickup);
-        if (!isCancelled && approachRes.points.length > 0) {
+        if (!isCancelled && approachRes?.points?.length > 0) {
           setApproachRoadPoints(approachRes.points);
         }
       }
@@ -872,7 +873,7 @@ const MapView = ({
     driverStartPos?.[1],
   ]);
 
-  const currentTileConfig = MAP_LAYERS[selectedLayer] || MAP_LAYERS.carto_voyager;
+  const currentTileConfig = MAP_LAYERS[selectedLayer] || MAP_LAYERS.esri_streets;
 
   return (
     <div className={`relative w-full rounded-2xl overflow-hidden border border-gray-200 shadow-md ${className}`}>

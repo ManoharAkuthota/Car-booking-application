@@ -309,10 +309,25 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
         bookingApi.getMyBookings(),
       ]);
 
-      setCars(carsRes.data || []);
+      const carList = Array.isArray(carsRes?.data)
+        ? carsRes.data
+        : Array.isArray(carsRes?.data?.content)
+          ? carsRes.data.content
+          : Array.isArray(carsRes?.data?.cars)
+            ? carsRes.data.cars
+            : [];
+      setCars(carList);
 
-      const ongoing = bookingsRes.data.find(
-        (b) => b.status === 'REQUESTED' || b.status === 'ACCEPTED' || b.status === 'DRIVER_ARRIVING' || b.status === 'IN_PROGRESS'
+      const bookingList = Array.isArray(bookingsRes?.data)
+        ? bookingsRes.data
+        : Array.isArray(bookingsRes?.data?.content)
+          ? bookingsRes.data.content
+          : Array.isArray(bookingsRes?.data?.bookings)
+            ? bookingsRes.data.bookings
+            : [];
+
+      const ongoing = bookingList.find(
+        (b) => b && (b.status === 'REQUESTED' || b.status === 'ACCEPTED' || b.status === 'DRIVER_ARRIVING' || b.status === 'IN_PROGRESS')
       );
       if (ongoing) {
         setActiveBooking(ongoing);
@@ -321,6 +336,7 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
       }
     } catch (err) {
       console.error("Failed to load fleet data:", err);
+      setCars([]);
     } finally {
       setLoading(false);
     }
@@ -337,7 +353,7 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
 
   // Calculate upfront fare for a service tier based on route distance
   const calculateServiceFare = (service) => {
-    const matched = cars.find((c) => c.category === service.category);
+    const matched = Array.isArray(cars) ? cars.find((c) => c && c.category === service.category) : null;
     const base = matched?.baseFare || service.baseFare;
     const perKm = matched?.pricePerKm || service.perKm;
     const dist = estDistanceKm * perKm;
@@ -347,7 +363,8 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
 
   // Instant 1-Tap Booking Trigger (Rapido Style)
   const handleBookNow = async () => {
-    const matchedCar = cars.find((c) => c.category === selectedService.category) || cars[0] || {
+    const matchedCar = (Array.isArray(cars) ? cars.find((c) => c && c.category === selectedService.category) : null) ||
+      (Array.isArray(cars) && cars[0]) || {
       id: 1,
       make: 'Honda',
       model: 'Activa 6G (Rapido Bike)',
@@ -744,6 +761,7 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
                 <button
                   type="button"
                   onClick={handleBookNow}
+                  data-testid="book-service-btn"
                   className="flex-1 py-3 px-4 rounded-xl bg-[#FFCC00] hover:bg-[#FFD633] text-gray-950 font-black text-sm sm:text-base shadow-md active:scale-98 transition-all flex items-center justify-center space-x-2"
                 >
                   <span>Book {selectedService.name} • ₹{calculateServiceFare(selectedService)}</span>
