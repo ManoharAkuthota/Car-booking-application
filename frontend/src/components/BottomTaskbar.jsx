@@ -12,7 +12,7 @@ const BottomTaskbar = ({ currentTab, onSelectTab, onOpenAccountModal }) => {
       icon: Home,
     },
     {
-      id: 'explore',
+      id: 'rides',
       label: 'Rides',
       icon: Navigation,
     },
@@ -45,13 +45,8 @@ const BottomTaskbar = ({ currentTab, onSelectTab, onOpenAccountModal }) => {
             <button
               key={tab.id}
               type="button"
-              onClick={() => {
-                if (tab.id === 'account') {
-                  if (onOpenAccountModal) onOpenAccountModal();
-                } else {
-                  onSelectTab(tab.id);
-                }
-              }}
+              data-testid={`taskbar-tab-${tab.id}`}
+              onClick={() => onSelectTab(tab.id)}
               className={`relative flex-1 flex flex-col items-center justify-center py-1 transition-all duration-150 select-none active:scale-95 ${
                 isActive
                   ? 'text-gray-950 font-black'

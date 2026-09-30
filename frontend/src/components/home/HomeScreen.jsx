@@ -12,6 +12,7 @@ const HomeScreen = ({
   onRefreshGPS,
   isDetectingGPS = false,
   user,
+  activeRideBanner = null,
 }) => {
   // Service Options Grid directly addressing "option like ride and parcel some other"
   const services = [
@@ -203,6 +204,35 @@ const HomeScreen = ({
             <RefreshCw className={`w-4 h-4 ${isDetectingGPS ? 'animate-spin text-blue-600' : ''}`} />
           </button>
         </div>
+
+        {/* Ongoing Active Ride Floating Alert */}
+        {activeRideBanner && (
+          <div
+            onClick={activeRideBanner.onTrack}
+            className="rounded-2xl bg-slate-900 border-2 border-emerald-400 p-3 sm:p-4 text-white shadow-xl flex items-center justify-between cursor-pointer hover:bg-slate-850 active:scale-98 transition-all animate-pulse"
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center font-black flex-shrink-0">
+                <Navigation className="w-5 h-5 stroke-[2.5]" />
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs font-black text-white">Ride in Progress</span>
+                  <span className="text-[10px] bg-emerald-400/20 text-emerald-300 font-bold px-2 py-0.5 rounded-full border border-emerald-400/30 font-mono">
+                    PIN: {activeRideBanner.otpPin}
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-300 font-medium mt-0.5">
+                  {activeRideBanner.service?.name || 'Driver'} is on the way • Tap to view Live Map
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center text-xs font-black text-emerald-400 space-x-1 flex-shrink-0">
+              <span>Track</span>
+              <ArrowRight className="w-4 h-4 stroke-[3]" />
+            </div>
+          </div>
+        )}
 
         {/* 2. PROMO BANNER: PAY 25% LESS */}
         <div className="rounded-2xl bg-gradient-to-r from-amber-400 via-[#FFCC00] to-yellow-400 p-3.5 sm:p-4 text-slate-950 shadow-sm flex items-center justify-between">

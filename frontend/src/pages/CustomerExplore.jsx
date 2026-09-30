@@ -146,7 +146,13 @@ const RAPIDO_SERVICES = [
   },
 ];
 
-const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
+const CustomerExplore = ({
+  initialStep = 'HOME',
+  onNavigateToTrips,
+  onNavigateToArrivalSim,
+  onNavigateToAccount,
+  onStepChange,
+}) => {
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -166,7 +172,19 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
   const [addressPickerMode, setAddressPickerMode] = useState('pickup'); // 'pickup' | 'dropoff'
 
   // Multi-step navigation flow: 'HOME' | 'SEARCH' | 'MAP_TIERS'
-  const [flowStep, setFlowStep] = useState('HOME');
+  const [flowStep, setFlowStep] = useState(initialStep);
+
+  // Synchronize when initialStep changes from outside (e.g. taskbar tabs)
+  useEffect(() => {
+    if (initialStep) {
+      setFlowStep(initialStep);
+    }
+  }, [initialStep]);
+
+  const updateFlowStep = (newStep) => {
+    setFlowStep(newStep);
+    if (onStepChange) onStepChange(newStep);
+  };
 
   // Booking lifecycle state for animation
   const [bookingState, setBookingState] = useState('IDLE'); // 'IDLE' | 'SEARCHING' | 'ACCEPTED' | 'DRIVER_ARRIVING' | 'IN_PROGRESS'
@@ -332,7 +350,7 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
       if (ongoing) {
         setActiveBooking(ongoing);
         setBookingState(ongoing.status);
-        setFlowStep('MAP_TIERS');
+        updateFlowStep('MAP_TIERS');
       }
     } catch (err) {
       console.error("Failed to load fleet data:", err);
@@ -498,32 +516,42 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
     } catch (e) {}
     setActiveBooking(null);
     setBookingState('IDLE');
-    setFlowStep('HOME');
+    updateFlowStep('HOME');
     setAssignedDriver(null);
   };
 
   // Step 1: NATIVE HOME SCREEN (Ride, Auto, Cab, Parcel, Porter Services Launcher)
-  if (flowStep === 'HOME' && bookingState === 'IDLE') {
+  if (flowStep === 'HOME') {
     return (
       <HomeScreen
         pickupLocation={pickupLocation}
-        onOpenSearch={() => setFlowStep('SEARCH')}
+        onOpenSearch={() => updateFlowStep('SEARCH')}
         onSelectService={(serviceId) => {
           setSelectedServiceId(serviceId);
-          setFlowStep('SEARCH');
+          updateFlowStep('SEARCH');
         }}
         onSelectQuickDestination={(dest) => {
           setDropoffLocation(dest);
-          setFlowStep('MAP_TIERS');
+          updateFlowStep('MAP_TIERS');
         }}
         onRefreshGPS={handleDetectLiveLocation}
         isDetectingGPS={isDetectingGPS}
+        activeRideBanner={
+          bookingState !== 'IDLE'
+            ? {
+                service: selectedService,
+                state: bookingState,
+                otpPin,
+                onTrack: () => updateFlowStep('MAP_TIERS'),
+              }
+            : null
+        }
       />
     );
   }
 
   // Step 2: DEDICATED LOCATION SEARCH SCREEN (Pickup & Drop-off selection with popular destinations)
-  if (flowStep === 'SEARCH' && bookingState === 'IDLE') {
+  if (flowStep === 'SEARCH') {
     return (
       <LocationSearchScreen
         pickupLocation={pickupLocation}
@@ -534,8 +562,8 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
         onDetectLiveGPS={handleDetectLiveLocation}
         isDetectingGPS={isDetectingGPS}
         selectedServiceName={selectedService.name}
-        onBack={() => setFlowStep('HOME')}
-        onProceedToRides={() => setFlowStep('MAP_TIERS')}
+        onBack={() => updateFlowStep('HOME')}
+        onProceedToRides={() => updateFlowStep('MAP_TIERS')}
       />
     );
   }
@@ -556,7 +584,7 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
               type="button"
               onClick={() => {
                 if (bookingState === 'IDLE') {
-                  setFlowStep('SEARCH');
+                  updateFlowStep('SEARCH');
                 } else {
                   handleCancelBooking();
                 }
@@ -575,7 +603,7 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
 
           {/* Pickup Row */}
           <div
-            onClick={() => setFlowStep('SEARCH')}
+            onClick={() => updateFlowStep('SEARCH')}
             className="flex items-center space-x-2.5 px-2 py-1.5 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors"
           >
             <div className="w-3 h-3 rounded-full bg-emerald-500 border-2 border-white shadow-xs flex-shrink-0" />
@@ -610,7 +638,7 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
 
           {/* Dropoff Row */}
           <div
-            onClick={() => setFlowStep('SEARCH')}
+            onClick={() => updateFlowStep('SEARCH')}
             className="flex items-center space-x-2.5 px-2 py-1.5 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors"
           >
             <div className="w-3 h-3 rounded-full bg-rose-500 border-2 border-white shadow-xs flex-shrink-0" />
@@ -973,7 +1001,7 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
             setReceiptBooking(null);
             setBookingState('IDLE');
             setActiveBooking(null);
-            setFlowStep('HOME');
+            updateFlowStep('HOME');
           }}
         />
       )}

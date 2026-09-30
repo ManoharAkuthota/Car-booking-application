@@ -8,11 +8,12 @@ import CustomerRides from './pages/CustomerRides';
 import DriverDashboard from './pages/DriverDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import RideBooking from './pages/RideBooking';
+import AccountScreen from './components/account/AccountScreen';
 import { Loader2, Car, Shield } from 'lucide-react';
 
 const MainLayout = () => {
   const { user, loading, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState('explore');
+  const [activeTab, setActiveTab] = useState('home');
 
   if (loading) {
     return (
@@ -33,7 +34,7 @@ const MainLayout = () => {
     return <LoginPage />;
   }
 
-  const isExploreMode = user?.role === 'ROLE_CUSTOMER' && activeTab === 'explore';
+  const isExploreMode = user?.role === 'ROLE_CUSTOMER' && (activeTab === 'home' || activeTab === 'rides' || activeTab === 'explore');
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col selection:bg-brand-500 selection:text-slate-950">
@@ -49,14 +50,28 @@ const MainLayout = () => {
         {/* Render view strictly according to user role and selected navigation */}
         {user?.role === 'ROLE_CUSTOMER' && (
           <>
-            {activeTab === 'my-trips' ? (
-              <CustomerRides onSelectActiveTrip={() => setActiveTab('explore')} />
+            {activeTab === 'account' ? (
+              <AccountScreen
+                onBack={() => setActiveTab('home')}
+                onNavigateToTrips={() => setActiveTab('my-trips')}
+              />
+            ) : activeTab === 'my-trips' ? (
+              <CustomerRides onSelectActiveTrip={() => setActiveTab('rides')} />
             ) : activeTab === 'arrival-sim' ? (
-              <RideBooking onBackToExplore={() => setActiveTab('explore')} />
+              <RideBooking onBackToExplore={() => setActiveTab('rides')} />
             ) : (
               <CustomerExplore
+                initialStep={activeTab === 'rides' ? 'MAP_TIERS' : 'HOME'}
+                onStepChange={(step) => {
+                  if (step === 'MAP_TIERS' && activeTab !== 'rides') {
+                    setActiveTab('rides');
+                  } else if (step === 'HOME' && activeTab !== 'home') {
+                    setActiveTab('home');
+                  }
+                }}
                 onNavigateToTrips={() => setActiveTab('my-trips')}
                 onNavigateToArrivalSim={() => setActiveTab('arrival-sim')}
+                onNavigateToAccount={() => setActiveTab('account')}
               />
             )}
           </>
@@ -100,17 +115,9 @@ const MainLayout = () => {
       {/* Mobile Persistent Taskbar (Native app feel) */}
       {user?.role === 'ROLE_CUSTOMER' && (
         <BottomTaskbar
-          currentTab={activeTab === 'explore' ? 'home' : activeTab}
+          currentTab={activeTab === 'explore' ? 'rides' : activeTab}
           onSelectTab={(tabId) => {
-            if (tabId === 'home') setActiveTab('explore');
-            else if (tabId === 'explore') setActiveTab('explore');
-            else if (tabId === 'arrival-sim') setActiveTab('arrival-sim');
-            else if (tabId === 'my-trips') setActiveTab('my-trips');
-          }}
-          onOpenAccountModal={() => {
-            if (window.confirm(`Logged in as ${user.fullName} (${user.email}). Do you want to sign out?`)) {
-              logout();
-            }
+            setActiveTab(tabId);
           }}
         />
       )}

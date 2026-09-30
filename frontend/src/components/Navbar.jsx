@@ -14,7 +14,7 @@ const Navbar = ({ activeTab, setActiveTab }) => {
           <div
             className="flex items-center space-x-2 cursor-pointer flex-shrink-0"
             onClick={() => {
-              if (user?.role === 'ROLE_CUSTOMER') setActiveTab('explore');
+              if (user?.role === 'ROLE_CUSTOMER') setActiveTab('home');
               else if (user?.role === 'ROLE_DRIVER') setActiveTab('driver-cockpit');
               else if (user?.role === 'ROLE_ADMIN') setActiveTab('admin-stats');
             }}
@@ -37,9 +37,9 @@ const Navbar = ({ activeTab, setActiveTab }) => {
             {user?.role === 'ROLE_CUSTOMER' && (
               <>
                 <button
-                  onClick={() => setActiveTab('explore')}
+                  onClick={() => setActiveTab('home')}
                   className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                    activeTab === 'explore'
+                    activeTab === 'home' || activeTab === 'rides' || activeTab === 'explore'
                       ? 'bg-brand-50 text-brand-700 border border-brand-200 shadow-xs'
                       : 'text-gray-600 hover:text-gray-950 hover:bg-gray-100'
                   }`}
@@ -134,18 +134,26 @@ const Navbar = ({ activeTab, setActiveTab }) => {
           <div className="flex items-center space-x-2 flex-shrink-0">
             {user ? (
               <div className="flex items-center space-x-1.5 sm:space-x-2 pl-2 border-l border-gray-200">
-                <img
-                  src={user.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100"}
-                  alt={user.fullName}
-                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-gray-300 object-cover shadow-xs flex-shrink-0"
-                />
-                <div className="hidden sm:block text-left text-xs">
-                  <p className="font-extrabold text-gray-900 leading-tight truncate max-w-[110px]">
-                    {user.fullName}
-                  </p>
-                  <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">
-                    {user.role === 'ROLE_CUSTOMER' ? 'Passenger' : user.role === 'ROLE_DRIVER' ? 'Pilot' : 'Admin'}
-                  </p>
+                <div
+                  onClick={() => {
+                    if (user.role === 'ROLE_CUSTOMER') setActiveTab('account');
+                  }}
+                  className="flex items-center space-x-1.5 sm:space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
+                  title="View Account Profile"
+                >
+                  <img
+                    src={user.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100"}
+                    alt={user.fullName}
+                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-gray-300 object-cover shadow-xs flex-shrink-0"
+                  />
+                  <div className="hidden sm:block text-left text-xs">
+                    <p className="font-extrabold text-gray-900 leading-tight truncate max-w-[110px]">
+                      {user.fullName}
+                    </p>
+                    <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">
+                      {user.role === 'ROLE_CUSTOMER' ? 'Passenger' : user.role === 'ROLE_DRIVER' ? 'Pilot' : 'Admin'}
+                    </p>
+                  </div>
                 </div>
                 <button
                   onClick={logout}

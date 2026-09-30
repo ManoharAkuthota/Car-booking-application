@@ -256,6 +256,79 @@ async function runEndToEndTests() {
     await mobilePage.screenshot({ path: mobileActivityShot });
     console.log('📸 Screenshot captured:', mobileActivityShot);
 
+    // Step M7: Test Bottom Taskbar -> Account Tab
+    console.log('Testing Mobile Step 7: Bottom Taskbar -> Account Tab...');
+    const debugInfo = await mobilePage.evaluate(() => {
+      const btn = document.querySelector('[data-testid="taskbar-tab-account"]');
+      const allNavBtns = Array.from(document.querySelectorAll('nav button')).map((b) => ({
+        testId: b.getAttribute('data-testid'),
+        text: b.textContent.trim(),
+      }));
+      if (btn) {
+        btn.click();
+        return { clicked: true, buttons: allNavBtns };
+      }
+      // Fallback: find button by text 'Account'
+      const accountByText = allNavBtns.find((b) => b.text.includes('Account'));
+      const textBtn = Array.from(document.querySelectorAll('nav button')).find((b) => b.textContent.includes('Account'));
+      if (textBtn) {
+        textBtn.click();
+        return { clicked: true, clickedFallback: true, buttons: allNavBtns };
+      }
+      return { clicked: false, buttons: allNavBtns };
+    });
+    console.log('Step M7 button click info:', JSON.stringify(debugInfo));
+
+    await new Promise((r) => setTimeout(r, 1000));
+    const textAfterClick = await mobilePage.evaluate(() => document.body.innerText.slice(0, 300));
+    console.log('Step M7 Body text preview after click:', JSON.stringify(textAfterClick));
+
+    await mobilePage.waitForFunction(
+      () =>
+        document.body.innerText.includes('Account & Profile') &&
+        document.body.innerText.toUpperCase().includes('DRIVEPULSE CASH & WALLET'),
+      { timeout: 6000 }
+    );
+    console.log('✓ Mobile Account Screen opened with profile & wallet info');
+    passedTests.push('Mobile Taskbar: Account Screen Navigation');
+
+    const mobileAccountShot = path.join(SCREENSHOT_DIR, 'mobile_07_account.png');
+    await mobilePage.screenshot({ path: mobileAccountShot });
+    console.log('📸 Screenshot captured:', mobileAccountShot);
+
+    // Step M8: Test Bottom Taskbar -> Rides Tab (Direct Map & Tiers Access)
+    console.log('Testing Mobile Step 8: Bottom Taskbar -> Rides Tab...');
+    await mobilePage.evaluate(() => {
+      const btn = document.querySelector('[data-testid="taskbar-tab-rides"]');
+      if (btn) btn.click();
+    });
+
+    await mobilePage.waitForSelector('.leaflet-container', { timeout: 8000 });
+    console.log('✓ Mobile Rides Tab opened directly into Live Vector Map');
+    passedTests.push('Mobile Taskbar: Rides Tab Direct Map Navigation');
+
+    const mobileRidesDirectShot = path.join(SCREENSHOT_DIR, 'mobile_08_rides_direct.png');
+    await mobilePage.screenshot({ path: mobileRidesDirectShot });
+    console.log('📸 Screenshot captured:', mobileRidesDirectShot);
+
+    // Step M9: Test Bottom Taskbar -> Home Tab (Direct Return to Home)
+    console.log('Testing Mobile Step 9: Bottom Taskbar -> Home Tab...');
+    await mobilePage.evaluate(() => {
+      const btn = document.querySelector('[data-testid="taskbar-tab-home"]');
+      if (btn) btn.click();
+    });
+
+    await mobilePage.waitForFunction(
+      () => document.body.innerText.includes('Where are you heading?') && document.body.innerText.includes('Ride'),
+      { timeout: 6000 }
+    );
+    console.log('✓ Mobile Home Tab opened back to main services view');
+    passedTests.push('Mobile Taskbar: Home Tab Direct Services Navigation');
+
+    const mobileHomeDirectShot = path.join(SCREENSHOT_DIR, 'mobile_09_home_direct.png');
+    await mobilePage.screenshot({ path: mobileHomeDirectShot });
+    console.log('📸 Screenshot captured:', mobileHomeDirectShot);
+
     await mobilePage.close();
     await mobileContext.close();
 
@@ -392,6 +465,26 @@ async function runEndToEndTests() {
     const laptopRidesShot = path.join(SCREENSHOT_DIR, 'laptop_06_my_rides.png');
     await laptopPage.screenshot({ path: laptopRidesShot });
     console.log('📸 Screenshot captured:', laptopRidesShot);
+
+    // Step L7: Test Desktop Profile Click -> Account Screen
+    console.log('Testing Laptop Step 7: Desktop Navigation -> Account Profile...');
+    await laptopPage.evaluate(() => {
+      const profile = document.querySelector('div[title="View Account Profile"]');
+      if (profile) profile.click();
+    });
+
+    await laptopPage.waitForFunction(
+      () =>
+        document.body.innerText.includes('Account & Profile') &&
+        document.body.innerText.toUpperCase().includes('DRIVEPULSE CASH & WALLET'),
+      { timeout: 6000 }
+    );
+    console.log('✓ Desktop Account Profile Screen loaded');
+    passedTests.push('Laptop Step 7: Desktop Account Profile Navigation');
+
+    const laptopAccountShot = path.join(SCREENSHOT_DIR, 'laptop_07_account.png');
+    await laptopPage.screenshot({ path: laptopAccountShot });
+    console.log('📸 Screenshot captured:', laptopAccountShot);
 
     await laptopPage.close();
     await laptopContext.close();
