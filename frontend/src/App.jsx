@@ -32,7 +32,7 @@ const MainLayout = () => {
     return <LoginPage />;
   }
 
-  const isExploreMode = user?.role === 'ROLE_CUSTOMER' && (activeTab === 'explore' || activeTab === 'arrival-sim');
+  const isExploreMode = user?.role === 'ROLE_CUSTOMER' && activeTab === 'explore';
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col selection:bg-brand-500 selection:text-slate-950">
@@ -40,8 +40,10 @@ const MainLayout = () => {
 
       <main className={`flex-1 w-full mx-auto ${
         isExploreMode
-          ? 'p-0 lg:max-w-7xl lg:px-6 lg:py-6'
-          : 'max-w-7xl px-4 sm:px-6 lg:px-8 py-8'
+          ? 'p-0 w-full overflow-hidden'
+          : activeTab === 'arrival-sim'
+            ? 'p-0 sm:py-4 max-w-7xl px-2 sm:px-6'
+            : 'max-w-7xl px-4 sm:px-6 lg:px-8 py-8'
       }`}>
         {/* Render view strictly according to user role and selected navigation */}
         {user?.role === 'ROLE_CUSTOMER' && (
@@ -69,7 +71,7 @@ const MainLayout = () => {
       </main>
 
       {/* Professional Commercial White Footer */}
-      <footer className={`${isExploreMode ? 'hidden lg:block' : 'block'} border-t border-gray-200 bg-white py-5 text-xs text-gray-500`}>
+      <footer className={`${isExploreMode ? 'hidden' : 'block'} border-t border-gray-200 bg-white py-5 text-xs text-gray-500`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center space-x-2">
             <span className="font-extrabold text-gray-900 text-sm tracking-tight">Drive<span className="text-brand-600">Pulse</span></span>

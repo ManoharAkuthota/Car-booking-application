@@ -14,33 +14,31 @@ import {
 import confetti from 'canvas-confetti';
 
 // 5 Dedicated Rapido Services Enhanced from Reference Images
+// 5 Dedicated Rapido Services Enhanced from Reference Images (Crisp High-Contrast Vector Models)
 const RAPIDO_SERVICES = [
   {
     id: 'BIKE',
     category: 'BIKE',
     name: 'Bike',
     symbolSvg: (
-      <svg viewBox="0 0 48 48" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="12" cy="34" r="5.5" fill="#18181b" stroke="#71717a" strokeWidth="1.2" />
-        <circle cx="12" cy="34" r="2.2" fill="#e2e8f0" />
-        <circle cx="36" cy="34" r="5.5" fill="#18181b" stroke="#71717a" strokeWidth="1.2" />
-        <circle cx="36" cy="34" r="2.2" fill="#e2e8f0" />
-        <path d="M 12 34 L 18 24 L 27 24 L 32 30 L 36 34" stroke="#ca8a04" strokeWidth="2.5" strokeLinecap="round" />
-        <path d="M 17 25 C 19 18, 25 18, 29 23 L 34 29 C 36 31, 30 36, 25 35 L 18 35 Z" fill="#facc15" stroke="#09090b" strokeWidth="1.2" />
-        <path d="M 18 24 L 14 13 L 11 14" stroke="#09090b" strokeWidth="2.5" strokeLinecap="round" />
-        <ellipse cx="14" cy="13" rx="2" ry="1.5" fill="#ffffff" stroke="#09090b" strokeWidth="0.8" />
-        <path d="M 18 19 C 16 16, 12 16, 13 22 Z" fill="#facc15" stroke="#09090b" strokeWidth="1" />
-        <path d="M 22 22 C 24 20, 31 21, 32 24 L 23 24 Z" fill="#18181b" />
-        <circle cx="34" cy="14" r="5.5" fill="#facc15" stroke="#09090b" strokeWidth="1" />
-        <path d="M 33 8.7 C 33.5 8.5, 34.5 8.5, 35 8.7 L 35 19.3 C 34.5 19.5, 33.5 19.5, 33 19.3 Z" fill="#ffffff" />
-        <path d="M 30.5 13 Q 34 11 37.5 13" stroke="#09090b" strokeWidth="2" strokeLinecap="round" />
+      <svg viewBox="0 0 54 36" width="38" height="26" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="10" cy="26" r="6.5" fill="#18181b" stroke="#52525b" strokeWidth="1.5" />
+        <circle cx="10" cy="26" r="2.8" fill="#e2e8f0" />
+        <circle cx="44" cy="26" r="6.5" fill="#18181b" stroke="#52525b" strokeWidth="1.5" />
+        <circle cx="44" cy="26" r="2.8" fill="#e2e8f0" />
+        <path d="M 10 26 L 18 16 L 28 16 L 36 22 L 44 26" stroke="#ca8a04" strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M 16 16 C 18 10, 24 9, 29 14 L 35 20 C 37 22, 33 26, 27 25 L 18 25 Z" fill="#facc15" stroke="#09090b" strokeWidth="1.2" />
+        <path d="M 17 16 L 14 7 L 11 8" stroke="#09090b" strokeWidth="2" strokeLinecap="round" />
+        <circle cx="34" cy="9" r="5.5" fill="#facc15" stroke="#09090b" strokeWidth="1.2" />
+        <path d="M 33 4 C 33.5 3.8, 34.5 3.8, 35 4 L 35 14 C 34.5 14.2, 33.5 14.2, 33 14 Z" fill="#ffffff" />
+        <path d="M 31 8 Q 34 6 37 8" stroke="#09090b" strokeWidth="1.8" strokeLinecap="round" />
       </svg>
     ),
     tag: 'Fastest',
-    subtitle: 'Beat city traffic • Sanitized helmet provided',
+    subtitle: 'Beat city traffic • Helmet provided',
     seats: '1 Person',
-    eta: '5 mins',
-    defaultFare: 86,
+    eta: '2 mins',
+    defaultFare: 45,
     baseFare: 25,
     perKm: 7.5,
   },
@@ -49,25 +47,24 @@ const RAPIDO_SERVICES = [
     category: 'AUTO',
     name: 'Auto',
     symbolSvg: (
-      <svg viewBox="0 0 48 48" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="11" cy="34" r="5.5" fill="#18181b" stroke="#52525b" strokeWidth="1.2" />
-        <circle cx="11" cy="34" r="2.2" fill="#e2e8f0" />
-        <circle cx="37" cy="34" r="5.5" fill="#18181b" stroke="#52525b" strokeWidth="1.2" />
-        <circle cx="37" cy="34" r="2.2" fill="#e2e8f0" />
-        <path d="M 8 26 C 8 22, 12 20, 16 20 L 35 20 C 39 20, 41 23, 41 28 L 41 33 C 41 35, 36 35, 34 35 L 14 35 C 10 35, 8 32, 8 26 Z" fill="#18181b" stroke="#09090b" strokeWidth="1.2" />
-        <path d="M 8 26 L 11 16 C 12 14, 15 13, 17 13 L 23 13 L 23 20 L 8 20 Z" fill="#93c5fd" fillOpacity="0.45" stroke="#09090b" strokeWidth="1" />
-        <line x1="12" y1="17" x2="20" y2="15" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" />
-        <path d="M 12 13 C 14 9, 37 9, 41 13 L 41 20 L 12 20 Z" fill="#facc15" stroke="#09090b" strokeWidth="1.2" />
-        <rect x="23" y="17" width="14" height="13" rx="2" fill="#fef08a" fillOpacity="0.3" stroke="#ca8a04" strokeWidth="0.8" />
-        <rect x="30" y="24" width="7" height="6" rx="1" fill="#eab308" />
+      <svg viewBox="0 0 54 36" width="38" height="26" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="11" cy="27" r="6" fill="#18181b" stroke="#52525b" strokeWidth="1.2" />
+        <circle cx="11" cy="27" r="2.5" fill="#cbd5e1" />
+        <circle cx="43" cy="27" r="6" fill="#18181b" stroke="#52525b" strokeWidth="1.2" />
+        <circle cx="43" cy="27" r="2.5" fill="#cbd5e1" />
+        <path d="M 7 20 C 7 17, 11 15, 15 15 L 39 15 C 44 15, 47 18, 47 23 L 47 26 C 47 28, 43 28, 41 28 L 13 28 C 9 28, 7 25, 7 20 Z" fill="#18181b" stroke="#09090b" strokeWidth="1.2" />
+        <path d="M 7 20 L 11 9 C 12 7, 15 6, 17 6 L 24 6 L 24 15 L 7 15 Z" fill="#93c5fd" fillOpacity="0.6" stroke="#09090b" strokeWidth="1" />
+        <line x1="12" y1="10" x2="20" y2="8" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" />
+        <path d="M 11 6 C 14 3, 41 3, 46 6 L 47 15 L 11 15 Z" fill="#facc15" stroke="#09090b" strokeWidth="1.2" />
+        <rect x="25" y="11" width="16" height="11" rx="2" fill="#3f3f46" stroke="#18181b" strokeWidth="0.8" />
       </svg>
     ),
     tag: 'Popular',
-    subtitle: 'Hassle-free Auto rides • Upfront meter',
+    subtitle: 'Hassle-free Auto • Upfront meter',
     seats: '3 Seats',
-    eta: '1 mins',
-    defaultFare: 156,
-    baseFare: 40,
+    eta: '3 mins',
+    defaultFare: 75,
+    baseFare: 35,
     perKm: 11,
   },
   {
@@ -75,76 +72,75 @@ const RAPIDO_SERVICES = [
     category: 'SEDAN',
     name: 'Car',
     symbolSvg: (
-      <svg viewBox="0 0 48 48" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="11" cy="34" r="5" fill="#18181b" stroke="#52525b" strokeWidth="1.2" />
-        <circle cx="11" cy="34" r="2" fill="#cbd5e1" />
-        <circle cx="37" cy="34" r="5" fill="#18181b" stroke="#52525b" strokeWidth="1.2" />
-        <circle cx="37" cy="34" r="2" fill="#cbd5e1" />
-        <path d="M 4 28 C 4 26, 7 24, 11 24 L 14 18 C 16 14, 32 14, 34 18 L 38 24 C 42 24, 44 26, 44 29 L 43 33 C 43 35, 40 35, 37 35 L 11 35 C 7 35, 4 33, 4 28 Z" fill="#ffffff" stroke="#09090b" strokeWidth="1.2" />
-        <path d="M 15 23 L 17 17 C 18 15, 24 15, 25 15 L 25 23 Z" fill="#0f172a" />
-        <path d="M 27 15 C 28 15, 32 15, 33 17 L 35 23 L 27 23 Z" fill="#0f172a" />
-        <line x1="18" y1="18" x2="23" y2="16" stroke="#93c5fd" strokeWidth="1" strokeLinecap="round" />
-        <rect x="22" y="11.5" width="7" height="3.5" rx="1.5" fill="#f59e0b" stroke="#09090b" strokeWidth="0.8" />
+      <svg viewBox="0 0 56 34" width="40" height="25" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="25" r="5.5" fill="#18181b" stroke="#52525b" strokeWidth="1.2" />
+        <circle cx="12" cy="25" r="2" fill="#cbd5e1" />
+        <circle cx="44" cy="25" r="5.5" fill="#18181b" stroke="#52525b" strokeWidth="1.2" />
+        <circle cx="44" cy="25" r="2" fill="#cbd5e1" />
+        <path d="M 4 20 C 4 17, 8 16, 12 16 L 16 10 C 18 6, 36 6, 38 10 L 44 16 C 48 16, 52 18, 52 22 L 51 25 C 51 26, 48 26, 45 26 L 11 26 C 7 26, 4 24, 4 20 Z" fill="#f8fafc" stroke="#09090b" strokeWidth="1.2" />
+        <path d="M 17 15 L 19 9 C 20 8, 26 8, 27 8 L 27 15 Z" fill="#0f172a" />
+        <path d="M 29 8 C 30 8, 35 8, 36 9 L 38 15 L 29 15 Z" fill="#0f172a" />
+        <rect x="24" y="4" width="8" height="3" rx="1.5" fill="#f59e0b" stroke="#09090b" strokeWidth="0.8" />
       </svg>
     ),
     tag: 'Comfort AC',
     subtitle: 'Comfy AC daily rides • Pocket friendly',
     seats: '4 Seats',
-    eta: '1 mins',
-    defaultFare: 225,
-    baseFare: 70,
-    perKm: 15,
+    eta: '4 mins',
+    defaultFare: 110,
+    baseFare: 60,
+    perKm: 14,
   },
   {
     id: 'AUTO_PLUS',
     category: 'SUV',
     name: 'Auto Plus',
     symbolSvg: (
-      <svg viewBox="0 0 48 48" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="11" cy="34" r="5.5" fill="#18181b" stroke="#ca8a04" strokeWidth="1.5" />
-        <circle cx="11" cy="34" r="2.2" fill="#facc15" />
-        <circle cx="37" cy="34" r="5.5" fill="#18181b" stroke="#ca8a04" strokeWidth="1.5" />
-        <circle cx="37" cy="34" r="2.2" fill="#facc15" />
-        <path d="M 8 26 C 8 22, 12 20, 16 20 L 35 20 C 39 20, 41 23, 41 28 L 41 33 C 41 35, 36 35, 34 35 L 14 35 C 10 35, 8 32, 8 26 Z" fill="#eab308" stroke="#09090b" strokeWidth="1.2" />
-        <path d="M 12 13 C 14 9, 37 9, 41 13 L 41 20 L 12 20 Z" fill="#1d4ed8" stroke="#09090b" strokeWidth="1.2" />
-        <path d="M 8 26 L 11 16 C 12 14, 15 13, 17 13 L 23 13 L 23 20 L 8 20 Z" fill="#93c5fd" fillOpacity="0.5" stroke="#09090b" strokeWidth="1" />
-        <circle cx="36" cy="11" r="4.5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1" />
-        <path d="M 36 8 L 37 10 L 39 10 L 37.5 11.5 L 38 13.5 L 36 12.2 L 34 13.5 L 34.5 11.5 L 33 10 L 35 10 Z" fill="#ffffff" />
+      <svg viewBox="0 0 54 36" width="38" height="26" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="11" cy="27" r="6" fill="#18181b" stroke="#ca8a04" strokeWidth="1.5" />
+        <circle cx="11" cy="27" r="2.5" fill="#facc15" />
+        <circle cx="43" cy="27" r="6" fill="#18181b" stroke="#ca8a04" strokeWidth="1.5" />
+        <circle cx="43" cy="27" r="2.5" fill="#facc15" />
+        <path d="M 7 20 C 7 17, 11 15, 15 15 L 39 15 C 44 15, 47 18, 47 23 L 47 26 C 47 28, 43 28, 41 28 L 13 28 C 9 28, 7 25, 7 20 Z" fill="#eab308" stroke="#09090b" strokeWidth="1.2" />
+        <path d="M 11 6 C 14 3, 41 3, 46 6 L 47 15 L 11 15 Z" fill="#1d4ed8" stroke="#09090b" strokeWidth="1.2" />
+        <path d="M 7 20 L 11 9 C 12 7, 15 6, 17 6 L 24 6 L 24 15 L 7 15 Z" fill="#93c5fd" fillOpacity="0.5" stroke="#09090b" strokeWidth="1" />
+        <circle cx="41" cy="5" r="4" fill="#f59e0b" stroke="#ffffff" strokeWidth="1" />
+        <path d="M 41 2.5 L 42 4.2 L 43.8 4.2 L 42.4 5.3 L 42.9 7 L 41 5.9 L 39.1 7 L 39.6 5.3 L 38.2 4.2 L 40 4.2 Z" fill="#ffffff" />
       </svg>
     ),
     tag: 'Top Rated',
     subtitle: 'Extra clean auto • Top rated captains',
     seats: '3 Seats',
-    eta: '1 mins',
-    defaultFare: 193,
-    baseFare: 55,
-    perKm: 13,
+    eta: '3 mins',
+    defaultFare: 95,
+    baseFare: 45,
+    perKm: 12,
   },
   {
     id: 'TROLLEY_PORTER',
     category: 'TROLLEY_PORTER',
     name: 'Porter Cargo',
     symbolSvg: (
-      <svg viewBox="0 0 48 48" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="12" cy="34" r="5" fill="#18181b" stroke="#71717a" strokeWidth="1.2" />
-        <circle cx="12" cy="34" r="2" fill="#cbd5e1" />
-        <circle cx="36" cy="34" r="5" fill="#18181b" stroke="#71717a" strokeWidth="1.2" />
-        <circle cx="36" cy="34" r="2" fill="#cbd5e1" />
-        <path d="M 6 32 L 6 22 C 6 18, 9 15, 13 15 L 18 15 L 21 22 L 21 32 Z" fill="#2563eb" stroke="#09090b" strokeWidth="1.2" />
-        <path d="M 9 22 L 13 16 L 18 16 L 18 22 Z" fill="#93c5fd" fillOpacity="0.6" stroke="#09090b" strokeWidth="0.8" />
-        <rect x="21" y="20" width="22" height="12" rx="1.5" fill="#94a3b8" stroke="#334155" strokeWidth="1.2" />
-        <rect x="23" y="13" width="9" height="9" rx="1" fill="#d97706" stroke="#78350f" strokeWidth="0.8" />
-        <rect x="32" y="15" width="8" height="7" rx="1" fill="#b45309" stroke="#78350f" strokeWidth="0.8" />
-        <line x1="21" y1="24" x2="43" y2="24" stroke="#facc15" strokeWidth="1.2" strokeDasharray="3 1" />
+      <svg viewBox="0 0 56 36" width="40" height="26" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="27" r="5.5" fill="#18181b" stroke="#52525b" strokeWidth="1.2" />
+        <circle cx="12" cy="27" r="2" fill="#cbd5e1" />
+        <circle cx="44" cy="27" r="5.5" fill="#18181b" stroke="#52525b" strokeWidth="1.2" />
+        <circle cx="44" cy="27" r="2" fill="#cbd5e1" />
+        <path d="M 5 25 L 5 16 C 5 13, 8 11, 12 11 L 18 11 L 21 17 L 21 25 Z" fill="#2563eb" stroke="#09090b" strokeWidth="1.2" />
+        <path d="M 8 16 L 12 12 L 18 12 L 18 16 Z" fill="#93c5fd" fillOpacity="0.6" stroke="#09090b" strokeWidth="0.8" />
+        <rect x="21" y="16" width="28" height="10" rx="1.5" fill="#94a3b8" stroke="#334155" strokeWidth="1.2" />
+        <rect x="23" y="9" width="11" height="8" rx="1" fill="#d97706" stroke="#78350f" strokeWidth="0.8" />
+        <rect x="35" y="11" width="10" height="6" rx="1" fill="#b45309" stroke="#78350f" strokeWidth="0.8" />
+        <line x1="21" y1="19" x2="49" y2="19" stroke="#facc15" strokeWidth="1.2" strokeDasharray="3 1" />
       </svg>
     ),
     tag: 'Logistics',
     subtitle: 'Mini-truck for boxes, goods up to 750kg',
     seats: 'Max 750 kg',
-    eta: '5 mins',
-    defaultFare: 250,
-    baseFare: 140,
-    perKm: 22,
+    eta: '6 mins',
+    defaultFare: 210,
+    baseFare: 120,
+    perKm: 20,
   },
 ];
 
@@ -172,6 +168,35 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
   const [assignedDriver, setAssignedDriver] = useState(null);
   const [otpPin, setOtpPin] = useState('5824');
 
+  // Helper to ensure dropoff is in the same city vicinity (~3.5km) as pickup
+  const autoPairVicinityDropoff = async (pickupLat, pickupLng, currentDropoff) => {
+    const rawDist = Math.sqrt(
+      Math.pow((currentDropoff.lat - pickupLat) * 111, 2) +
+      Math.pow((currentDropoff.lng - pickupLng) * 111, 2)
+    );
+    // If dropoff is in another city/state (> 25 km), auto-pair a local destination in the user's city
+    if (rawDist > 25) {
+      const localDropLat = pickupLat + 0.024;
+      const localDropLng = pickupLng + 0.020;
+      try {
+        const dropResolved = await reverseGeocode(localDropLat, localDropLng);
+        setDropoffLocation({
+          name: dropResolved.name || 'City Center Station',
+          area: dropResolved.area || 'Nearby Destination (~3.5 km)',
+          lat: localDropLat,
+          lng: localDropLng,
+        });
+      } catch {
+        setDropoffLocation({
+          name: 'City Commercial Hub',
+          area: 'Nearby Landmark (~3.5 km)',
+          lat: localDropLat,
+          lng: localDropLng,
+        });
+      }
+    }
+  };
+
   // Automatically request browser live geolocation on mount if available
   useEffect(() => {
     if (typeof window !== 'undefined' && 'geolocation' in navigator) {
@@ -182,10 +207,11 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
           try {
             const resolved = await reverseGeocode(lat, lng);
             setPickupLocation({ ...resolved, isLive: true });
+            await autoPairVicinityDropoff(lat, lng, dropoffLocation);
           } catch (e) {}
         },
         () => {},
-        { enableHighAccuracy: true, timeout: 5000 }
+        { enableHighAccuracy: true, timeout: 6000 }
       );
     }
   }, []);
@@ -193,13 +219,14 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
   const pickupCoord = useMemo(() => [pickupLocation.lat, pickupLocation.lng], [pickupLocation]);
   const dropoffCoord = useMemo(() => [dropoffLocation.lat, dropoffLocation.lng], [dropoffLocation]);
 
-  // Route distance estimation in km
+  // Route distance estimation in km (Realistic intra-city clamping: 1.5 km to 35 km)
   const estDistanceKm = useMemo(() => {
-    const d = Math.sqrt(
+    const rawDist = Math.sqrt(
       Math.pow((dropoffLocation.lat - pickupLocation.lat) * 111, 2) +
       Math.pow((dropoffLocation.lng - pickupLocation.lng) * 111, 2)
     ) * 1.28;
-    return Math.round(d * 10) / 10 || 6.2;
+    const clamped = Math.min(35, Math.max(1.8, Math.round(rawDist * 10) / 10));
+    return clamped || 5.2;
   }, [pickupLocation, dropoffLocation]);
 
   const estDurationMins = Math.round(estDistanceKm * 2.3) || 15;
@@ -222,13 +249,15 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
           const lng = position.coords.longitude;
           try {
             const resolved = await reverseGeocode(lat, lng);
-            setPickupLocation(resolved);
+            setPickupLocation({ ...resolved, isLive: true });
+            await autoPairVicinityDropoff(lat, lng, dropoffLocation);
           } catch (e) {
             setPickupLocation({
               name: '📍 My Current Location (GPS)',
               area: 'Detected via device GPS',
               lat: lat,
               lng: lng,
+              isLive: true,
             });
           } finally {
             setIsDetectingGPS(false);
@@ -450,13 +479,13 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
   };
 
   return (
-    <div className="relative w-full min-h-[calc(100vh-64px)] bg-white text-gray-900 flex flex-col overflow-hidden">
+    <div className="relative w-full h-[calc(100dvh-5.5rem)] sm:h-[calc(100dvh-4rem)] overflow-hidden flex flex-col bg-slate-100">
       
       {/* ========================================================================= */}
       {/* 1. FLOATING TOP ADDRESS SEARCH PILLS (Exactly Matching Screenshot Image 1)  */}
       {/* ========================================================================= */}
-      <div className="absolute top-3 left-3 right-3 sm:left-4 sm:right-4 max-w-xl mx-auto z-[1000] pointer-events-auto">
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200/90 p-2 sm:p-2.5 backdrop-blur-md flex flex-col space-y-2">
+      <div className="absolute top-2.5 left-2.5 right-2.5 sm:left-4 sm:right-auto sm:w-[420px] z-[1000] pointer-events-auto">
+        <div className="bg-white/95 rounded-2xl shadow-xl border border-gray-200/90 p-2 sm:p-2.5 backdrop-blur-md flex flex-col space-y-1.5">
           
           {/* Pickup Row */}
           <div
@@ -473,7 +502,7 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
                   Your Pick Up
                 </span>
                 {pickupLocation.isLive && (
-                  <span className="inline-flex items-center px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 rounded-full border border-emerald-300">
+                  <span className="inline-flex items-center px-1.5 py-0.2 text-[8px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 rounded-full border border-emerald-300">
                     Live GPS
                   </span>
                 )}
@@ -520,16 +549,16 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. REAL GOOGLE MAPS LEAFLET VIEW (With Top-Down Vector Fleet on Streets)  */}
+      {/* 2. REAL VECTOR MAP (Fills 100% Screen Under Floating Sheets - Native App)  */}
       {/* ========================================================================= */}
-      <div className="relative w-full flex-1 min-h-[50vh] sm:min-h-[55vh] z-0">
+      <div className="absolute inset-0 z-0 w-full h-full">
         <MapView
           pickup={pickupCoord}
           dropoff={dropoffCoord}
           category={selectedService.category}
           isLiveTrip={bookingState !== 'IDLE'}
           tripStatus={bookingState === 'IDLE' ? null : bookingState}
-          className="w-full h-full min-h-[380px] sm:min-h-[520px]"
+          className="w-full h-full rounded-none border-0 shadow-none"
           onLocateMe={handleDetectLiveLocation}
           onMapClick={handleMapClick}
           pickupAddress={pickupLocation.name}
@@ -543,7 +572,7 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
           type="button"
           onClick={handleDetectLiveLocation}
           disabled={isDetectingGPS}
-          className="absolute bottom-4 right-4 z-[1000] w-11 h-11 rounded-full bg-white shadow-xl border border-gray-200 flex items-center justify-center text-blue-600 hover:scale-105 active:scale-95 transition-all pointer-events-auto"
+          className="absolute bottom-[50vh] sm:bottom-6 right-3 sm:right-6 z-[1000] w-11 h-11 rounded-full bg-white shadow-xl border border-gray-200 flex items-center justify-center text-blue-600 hover:scale-105 active:scale-95 transition-all pointer-events-auto"
           title="Center My Live GPS Location"
         >
           <Crosshair className={`w-5 h-5 text-blue-600 ${isDetectingGPS ? 'animate-spin' : ''}`} />
@@ -559,16 +588,19 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
       </div>
 
       {/* ========================================================================= */}
-      {/* 3. RAPIDO BOTTOM SHEET (Matching Image 1 & 2)                             */}
+      {/* 3. PINNED BOTTOM SHEET (Matching Image 1 & 2 - No Page Scrolling)          */}
       {/* ========================================================================= */}
-      <div className="w-full max-w-xl mx-auto bg-white rounded-t-3xl shadow-2xl border-t border-gray-200 z-10 flex flex-col divide-y divide-gray-100">
+      <div className="absolute bottom-0 left-0 right-0 sm:left-4 sm:bottom-4 sm:right-auto sm:w-[430px] z-[1000] max-h-[49vh] sm:max-h-[64vh] overflow-hidden flex flex-col bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl border border-gray-200 divide-y divide-gray-100">
         
+        {/* Mobile Drag Pill */}
+        <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto my-1.5 sm:hidden flex-shrink-0" />
+
         {/* --- VIEW A: EXPLORE & SERVICE SELECTION (Image 1 & 2) --- */}
         {bookingState === 'IDLE' && (
-          <div className="p-4 sm:p-5 space-y-3">
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             
-            {/* Service Options List */}
-            <div className="space-y-2">
+            {/* Scrollable Services List (Internal list scrolls smoothly, page stays fixed!) */}
+            <div className="flex-1 overflow-y-auto px-3.5 py-1.5 space-y-1.5 min-h-0">
               {RAPIDO_SERVICES.map((s) => {
                 const isSelected = selectedServiceId === s.id;
                 const fare = calculateServiceFare(s);
@@ -577,24 +609,24 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
                   <div
                     key={s.id}
                     onClick={() => setSelectedServiceId(s.id)}
-                    className={`rounded-2xl p-3 flex items-center justify-between cursor-pointer transition-all duration-150 border ${
+                    className={`rounded-2xl p-2.5 flex items-center justify-between cursor-pointer transition-all duration-150 border ${
                       isSelected
-                        ? 'bg-[#FFF9E6] border-[#FFCC00] ring-2 ring-[#FFCC00]/40 shadow-xs'
-                        : 'bg-white border-transparent hover:bg-gray-50'
+                        ? 'bg-[#FFF9E6] border-[#FFCC00] ring-2 ring-[#FFCC00]/50 shadow-xs'
+                        : 'bg-white border-gray-100 hover:bg-gray-50'
                     }`}
                   >
-                    {/* Left: Yellow Circular Icon & Details */}
-                    <div className="flex items-center space-x-3.5 min-w-0">
-                      <div className="w-10 h-10 rounded-full bg-[#FFDE00] flex items-center justify-center text-gray-950 flex-shrink-0 shadow-xs">
+                    {/* Left: Crisp Vector Model in Clean Container */}
+                    <div className="flex items-center space-x-3 min-w-0">
+                      <div className="w-12 h-11 rounded-xl bg-slate-100 border border-slate-200/90 flex items-center justify-center flex-shrink-0 shadow-xs">
                         {s.symbolSvg}
                       </div>
 
                       <div className="min-w-0">
                         <div className="flex items-center space-x-2">
-                          <h3 className="text-sm font-extrabold text-gray-950">
+                          <h3 className="text-sm font-black text-gray-950">
                             {s.name}
                           </h3>
-                          <span className="text-xs text-gray-500 font-semibold">
+                          <span className="text-[10px] uppercase font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded-md">
                             {s.eta}
                           </span>
                         </div>
@@ -604,7 +636,7 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
                       </div>
                     </div>
 
-                    {/* Right: Price & Info */}
+                    {/* Right: Upfront Price */}
                     <div className="flex items-center space-x-1.5 pl-2 flex-shrink-0">
                       <span className="text-base font-black text-gray-950 font-mono">
                         ₹{fare}
@@ -616,59 +648,45 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
               })}
             </div>
 
-            {/* Apply Coupon Code Strip (Matching Image 1) */}
-            <div
-              onClick={() => alert("Coupon applied: 25% discount unlocked!")}
-              className="flex items-center justify-between py-2 px-1 text-xs text-gray-700 hover:text-gray-950 cursor-pointer"
-            >
+            {/* Pinned Bottom Actions Bar - ALWAYS 100% VISIBLE ON SCREEN WITHOUT SCROLLING */}
+            <div className="p-3 bg-white border-t border-gray-100 flex-shrink-0 space-y-2">
+              
+              {/* Promo & Cash Strips */}
+              <div className="flex items-center justify-between text-xs px-1">
+                <div
+                  onClick={() => alert("Coupon applied: 25% discount unlocked!")}
+                  className="flex items-center space-x-1.5 text-emerald-700 font-bold hover:underline cursor-pointer"
+                >
+                  <Tag className="w-3.5 h-3.5" />
+                  <span>Apply Coupon</span>
+                </div>
+                <div className="flex items-center space-x-1 text-gray-600 font-semibold">
+                  <span className="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[9px] font-black">₹</span>
+                  <span>Cash / UPI</span>
+                </div>
+              </div>
+
+              {/* Big Action Buttons */}
               <div className="flex items-center space-x-2.5">
-                <Tag className="w-4 h-4 text-emerald-600" />
-                <span className="font-bold">Apply Coupon Code</span>
+                <button
+                  type="button"
+                  onClick={() => alert("Scheduled ride option: select time")}
+                  className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-200 flex flex-col items-center justify-center text-gray-700 shadow-xs active:scale-95 transition-all flex-shrink-0"
+                  title="Ride Later"
+                >
+                  <Calendar className="w-4 h-4 text-gray-700" />
+                  <span className="text-[9px] font-bold mt-0.5">Later</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleBookNow}
+                  className="flex-1 py-3 px-4 rounded-xl bg-[#FFCC00] hover:bg-[#FFD633] text-gray-950 font-black text-sm sm:text-base shadow-md active:scale-98 transition-all flex items-center justify-center space-x-2"
+                >
+                  <span>Book {selectedService.name} • ₹{calculateServiceFare(selectedService)}</span>
+                </button>
               </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-            </div>
 
-            {/* Cash / Payment Strip (Matching Image 1) */}
-            <div className="flex items-center justify-between py-2 px-1 text-xs border-t border-gray-100 pt-2">
-              <div className="flex items-center space-x-2.5 min-w-0">
-                <div className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-black">
-                  ₹
-                </div>
-                <div className="min-w-0">
-                  <span className="font-extrabold text-gray-900 block leading-tight">Cash</span>
-                  <span className="text-[10px] text-gray-500 block truncate">You can pay via cash or UPI for your ride</span>
-                </div>
-              </div>
-              <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
-            </div>
-
-            {/* Pay 25% Less Gold Promo Strip (Matching Image 1) */}
-            <div className="rounded-xl bg-gradient-to-r from-amber-100 via-yellow-100 to-amber-200 p-2 px-3 flex items-center justify-between text-xs text-amber-950 font-bold border border-amber-300 shadow-xs">
-              <div className="flex items-center space-x-2">
-                <span className="text-base">🏷️</span>
-                <span>Pay <strong className="font-black text-amber-900">25% less</strong> on next ride. Know more</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-amber-800" />
-            </div>
-
-            {/* Bottom Actions: [ Later ] and [ Book Bike / Auto / Car ] */}
-            <div className="flex items-center space-x-3 pt-1">
-              <button
-                type="button"
-                onClick={() => alert("Scheduled ride option: select time")}
-                className="w-13 h-13 rounded-2xl bg-white border border-gray-300 flex flex-col items-center justify-center text-gray-800 shadow-sm active:scale-95 transition-all flex-shrink-0"
-              >
-                <Calendar className="w-5 h-5 text-gray-700" />
-                <span className="text-[10px] font-bold mt-0.5">Later</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleBookNow}
-                className="flex-1 py-3.5 px-6 rounded-2xl bg-[#FFCC00] hover:bg-[#FFD633] text-gray-950 font-black text-base shadow-md active:scale-98 transition-all flex items-center justify-center space-x-2"
-              >
-                <span>Book {selectedService.name}</span>
-              </button>
             </div>
 
           </div>
@@ -676,36 +694,36 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
 
         {/* --- VIEW B: ACTIVE TRIP & DRIVER ARRIVAL COCKPIT (Rapido Live Ride) --- */}
         {bookingState !== 'IDLE' && (
-          <div className="p-4 sm:p-5 space-y-4">
+          <div className="p-4 sm:p-5 space-y-3.5 overflow-y-auto max-h-[49vh] sm:max-h-[64vh]">
             
             {/* Status Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+            <div className="flex items-center justify-between pb-2.5 border-b border-gray-100">
               <div className="flex items-center space-x-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
-                <h3 className="text-sm font-extrabold text-gray-950">
+                <h3 className="text-xs sm:text-sm font-extrabold text-gray-950 truncate max-w-[200px] sm:max-w-none">
                   {bookingState === 'SEARCHING' && 'Connecting to nearby captains...'}
-                  {bookingState === 'ACCEPTED' && 'Captain is arriving at pickup location'}
-                  {bookingState === 'DRIVER_ARRIVING' && 'Captain has arrived at your pickup!'}
+                  {bookingState === 'ACCEPTED' && 'Captain arriving at pickup'}
+                  {bookingState === 'DRIVER_ARRIVING' && 'Captain arrived at pickup!'}
                   {bookingState === 'IN_PROGRESS' && 'Trip in progress to destination'}
                 </h3>
               </div>
 
               {/* Start PIN (OTP) */}
-              <div className="bg-amber-50 border border-amber-300 px-3 py-1 rounded-xl text-right">
-                <span className="text-[9px] uppercase font-bold text-amber-800 block">Start PIN</span>
-                <span className="text-base font-black text-amber-950 font-mono tracking-widest">{otpPin}</span>
+              <div className="bg-amber-50 border border-amber-300 px-2.5 py-1 rounded-xl text-right flex-shrink-0">
+                <span className="text-[8px] uppercase font-bold text-amber-800 block">Start PIN</span>
+                <span className="text-sm sm:text-base font-black text-amber-950 font-mono tracking-widest">{otpPin}</span>
               </div>
             </div>
 
             {/* Assigned Driver Profile Card */}
             {assignedDriver && (
-              <div className="bg-gray-50 border border-gray-200 rounded-2xl p-3.5 flex items-center justify-between">
+              <div className="bg-gray-50 border border-gray-200 rounded-2xl p-3 flex items-center justify-between">
                 <div className="flex items-center space-x-3 min-w-0">
                   <div className="relative flex-shrink-0">
                     <img
                       src={assignedDriver.avatar}
                       alt={assignedDriver.name}
-                      className="w-12 h-12 rounded-xl object-cover border border-gray-300 shadow-sm"
+                      className="w-11 h-11 rounded-xl object-cover border border-gray-300 shadow-sm"
                     />
                     <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border border-white flex items-center justify-center text-[9px] text-white font-black">
                       ✓
@@ -713,17 +731,17 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
                   </div>
 
                   <div className="min-w-0">
-                    <h4 className="text-sm font-extrabold text-gray-950 truncate">
+                    <h4 className="text-xs sm:text-sm font-extrabold text-gray-950 truncate">
                       {assignedDriver.name}
                     </h4>
-                    <p className="text-xs text-gray-500 font-medium truncate">
+                    <p className="text-[11px] text-gray-500 font-medium truncate">
                       {assignedDriver.vehicle}
                     </p>
                     <div className="flex items-center space-x-1.5 text-xs text-amber-600 font-bold mt-0.5">
                       <Star className="w-3 h-3 fill-amber-500" />
                       <span>{assignedDriver.rating}</span>
                       <span className="text-gray-300">•</span>
-                      <span className="text-gray-500 text-[11px]">{assignedDriver.trips}</span>
+                      <span className="text-gray-500 text-[10px]">{assignedDriver.trips}</span>
                     </div>
                   </div>
                 </div>
@@ -732,7 +750,7 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
                   <button
                     type="button"
                     onClick={() => alert(`Calling Captain ${assignedDriver.name} at ${assignedDriver.phone}`)}
-                    className="w-10 h-10 rounded-xl bg-gray-900 text-white flex items-center justify-center shadow-sm active:scale-95"
+                    className="w-9 h-9 rounded-xl bg-gray-900 text-white flex items-center justify-center shadow-sm active:scale-95"
                     title="Call Captain"
                   >
                     <Phone className="w-4 h-4 text-emerald-400" />
@@ -747,7 +765,7 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
                 <button
                   type="button"
                   onClick={handleDriverArrived}
-                  className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md transition-all active:scale-98"
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md transition-all active:scale-98"
                 >
                   Simulate Captain Arrived
                 </button>
@@ -757,7 +775,7 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
                 <button
                   type="button"
                   onClick={handleStartTrip}
-                  className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-amber-400 to-[#FFCC00] text-gray-950 font-black text-xs shadow-md transition-all active:scale-98"
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-400 to-[#FFCC00] text-gray-950 font-black text-xs shadow-md transition-all active:scale-98"
                 >
                   Start Trip (Verify PIN)
                 </button>
@@ -767,7 +785,7 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
                 <button
                   type="button"
                   onClick={handleCompleteTrip}
-                  className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md transition-all active:scale-98"
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md transition-all active:scale-98"
                 >
                   Complete Trip & Receipt
                 </button>
@@ -776,7 +794,7 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
               <button
                 type="button"
                 onClick={handleCancelBooking}
-                className="py-3 px-4 rounded-xl border border-gray-200 bg-white hover:bg-gray-100 text-rose-700 font-bold text-xs transition-all active:scale-98"
+                className="py-2.5 px-3 rounded-xl border border-gray-200 bg-white hover:bg-gray-100 text-rose-700 font-bold text-xs transition-all active:scale-98"
               >
                 Cancel
               </button>

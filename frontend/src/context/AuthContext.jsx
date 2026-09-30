@@ -10,7 +10,12 @@ export const AuthProvider = ({ children }) => {
     if (stored) {
       try { return JSON.parse(stored); } catch (e) {}
     }
-    return null;
+    // Default to Passenger session so users can immediately book rides without login barriers
+    const defaultRider = DEMO_USERS.customer;
+    try {
+      localStorage.setItem('drivepulse_user', JSON.stringify(defaultRider));
+    } catch (e) {}
+    return defaultRider;
   });
   const [token, setToken] = useState(() => localStorage.getItem('drivepulse_token') || null);
   const [loading, setLoading] = useState(false);

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { Layers, Crosshair, Navigation, Compass, ShieldCheck } from 'lucide-react';
 import {
   fetchRoadRoute,
@@ -376,8 +377,10 @@ const AutoFitBounds = ({ boundsPoints, triggerRecenter }) => {
   useEffect(() => {
     if (boundsPoints && boundsPoints.length >= 2) {
       const bounds = L.latLngBounds(boundsPoints);
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
       map.fitBounds(bounds, {
-        padding: [50, 50],
+        paddingTopLeft: isMobile ? [20, 110] : [50, 60],
+        paddingBottomRight: isMobile ? [20, 240] : [50, 60],
         maxZoom: 16,
         animate: true,
       });
@@ -389,14 +392,34 @@ const AutoFitBounds = ({ boundsPoints, triggerRecenter }) => {
   return null;
 };
 
-// Map Tile Providers (Google Maps Roadmap and Satellite)
+// Auto-resize component to guarantee tiles render properly without blank spaces
+const MapResizer = () => {
+  const map = useMap();
+  useEffect(() => {
+    map.invalidateSize();
+    const t1 = setTimeout(() => map.invalidateSize(), 150);
+    const t2 = setTimeout(() => map.invalidateSize(), 600);
+    const handleResize = () => map.invalidateSize();
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, [map]);
+  return null;
+};
+
+// Map Tile Providers (CartoDB Voyager - Uber/Rapido vector style, 100% reliable mobile tiles)
 const MAP_LAYERS = {
-  google_roadmap: {
-    id: 'google_roadmap',
-    name: 'Google Map',
-    url: 'https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
-    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-    attribution: '&copy; Google Maps',
+  carto_voyager: {
+    id: 'carto_voyager',
+    name: 'Map',
+    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    subdomains: ['a', 'b', 'c', 'd'],
+    attribution: '&copy; CARTO &copy; OpenStreetMap',
     maxZoom: 20,
   },
   google_satellite: {
@@ -406,6 +429,14 @@ const MAP_LAYERS = {
     subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
     attribution: '&copy; Google Maps Satellite',
     maxZoom: 20,
+  },
+  osm: {
+    id: 'osm',
+    name: 'OSM',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    subdomains: ['a', 'b', 'c'],
+    attribution: '&copy; OpenStreetMap',
+    maxZoom: 19,
   },
 };
 
@@ -453,7 +484,7 @@ const MapView = ({
   onDriverArrived = null,
   onTripCompleted = null,
 }) => {
-  const [selectedLayer, setSelectedLayer] = useState('google_roadmap');
+  const [selectedLayer, setSelectedLayer] = useState('carto_voyager');
   const [recenterCount, setRecenterCount] = useState(0);
 
   // Normalize category to vehicle type
@@ -833,7 +864,7 @@ const MapView = ({
     driverStartPos?.[1],
   ]);
 
-  const currentTileConfig = MAP_LAYERS[selectedLayer] || MAP_LAYERS.google_roadmap;
+  const currentTileConfig = MAP_LAYERS[selectedLayer] || MAP_LAYERS.carto_voyager;
 
   return (
     <div className={`relative w-full rounded-2xl overflow-hidden border border-gray-200 shadow-md ${className}`}>
@@ -843,6 +874,7 @@ const MapView = ({
         scrollWheelZoom={true}
         className="h-full w-full z-0 cursor-crosshair"
       >
+        <MapResizer />
         <TileLayer
           key={currentTileConfig.id}
           url={currentTileConfig.url}
@@ -978,9 +1010,9 @@ const MapView = ({
         <div className="bg-white/95 backdrop-blur-md rounded-xl border border-gray-200 p-1 flex items-center space-x-1 shadow-md text-[11px] font-bold text-gray-700">
           <button
             type="button"
-            onClick={() => setSelectedLayer('google_roadmap')}
+            onClick={() => setSelectedLayer('carto_voyager')}
             className={`px-2.5 py-1 rounded-lg transition-all ${
-              selectedLayer === 'google_roadmap'
+              selectedLayer === 'carto_voyager'
                 ? 'bg-amber-400 text-slate-950 font-black shadow-sm'
                 : 'hover:text-gray-950 hover:bg-gray-100'
             }`}
