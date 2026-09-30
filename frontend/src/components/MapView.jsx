@@ -275,43 +275,42 @@ const dropoffIcon = L.divIcon({
 });
 
 // Unified Rotated Vehicle Marker Generator:
-// Entire vehicle, forward volumetric headlight beams, and taillights rotate in 100% unison with heading
+// Clean top-down vehicle sprite with realistic soft ambient ground contact shadow
 export const createRotatedVehicleIcon = ({
   category = 'BIKE',
   heading = 0,
   isArrived = false,
   isLive = false,
-  showHeadlight = true,
 }) => {
   let rawSvg = '';
-  let size = [30, 48];
-  let anchor = [15, 24];
+  let size = [32, 50];
+  let anchor = [16, 25];
 
   if (category === 'AUTO') {
     rawSvg = getAutoRickshawRawSvg();
-    size = [32, 48];
-    anchor = [16, 24];
+    size = [34, 50];
+    anchor = [17, 25];
   } else if (category === 'CAB' || category === 'SEDAN' || category === 'SUV') {
     rawSvg = getCabRawSvg();
-    size = [28, 52];
-    anchor = [14, 26];
-  } else if (category === 'TROLLEY_PORTER') {
-    rawSvg = getPorterRawSvg();
     size = [30, 54];
     anchor = [15, 27];
+  } else if (category === 'TROLLEY_PORTER') {
+    rawSvg = getPorterRawSvg();
+    size = [32, 56];
+    anchor = [16, 28];
   } else {
     // BIKE
     rawSvg = getBikeRawSvg();
-    size = [26, 48];
-    anchor = [13, 24];
+    size = [28, 50];
+    anchor = [14, 25];
   }
 
   if (isArrived) {
     return L.divIcon({
       html: `
-        <div style="position: relative; width: ${size[0]}px; height: ${size[1]}px; display: flex; align-items: center; justify-content: center;">
-          <div style="position: absolute; width: 62px; height: 62px; border-radius: 50%; background: radial-gradient(circle, rgba(16, 185, 129, 0.4) 0%, rgba(16, 185, 129, 0.08) 70%, transparent 100%); animation: ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-          <div style="transform: rotate(${heading}deg); transform-origin: center center; width: ${size[0]}px; height: ${size[1]}px; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.48));">
+        <div class="rapido-vehicle-outer" style="position: relative; width: ${size[0]}px; height: ${size[1]}px; display: flex; align-items: center; justify-content: center;">
+          <div style="position: absolute; width: 56px; height: 56px; border-radius: 50%; background: radial-gradient(circle, rgba(16, 185, 129, 0.4) 0%, rgba(16, 185, 129, 0.06) 70%, transparent 100%); animation: ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+          <div class="rapido-vehicle-rotator" style="transform: rotate(${heading}deg); transform-origin: center center; width: ${size[0]}px; height: ${size[1]}px; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.48));">
             ${rawSvg}
           </div>
           <div style="position: absolute; top: -16px; left: 50%; transform: translateX(-50%); white-space: nowrap; padding: 2.5px 8px; border-radius: 9999px; background: linear-gradient(135deg, #059669, #047857); color: #ffffff; font-size: 9px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; box-shadow: 0 4px 10px rgba(0,0,0,0.35); border: 1.5px solid #ffffff; z-index: 10;">
@@ -327,33 +326,10 @@ export const createRotatedVehicleIcon = ({
 
   return L.divIcon({
     html: `
-      <div style="position: relative; width: ${size[0]}px; height: ${size[1]}px;">
-        <div style="position: absolute; inset: 0; transform: rotate(${heading}deg); transform-origin: center center; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.42));">
-          <!-- Realistic Dual Volumetric Headlight Beams (Attached to front bumper, shines in travel direction) -->
-          ${showHeadlight ? `
-            <div style="position: absolute; top: -24px; left: 50%; transform: translateX(-50%); width: 34px; height: 26px; pointer-events: none; z-index: 1;">
-              <!-- Volumetric Cone -->
-              <div style="width: 100%; height: 100%; background: radial-gradient(ellipse at bottom, rgba(254, 240, 138, 0.85) 0%, rgba(250, 204, 21, 0.35) 45%, transparent 75%); clip-path: polygon(20% 100%, 80% 100%, 100% 0%, 0% 0%); filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.5));"></div>
-              <!-- Dual Projector Hotspots -->
-              <div style="position: absolute; bottom: 0; left: 22%; width: 5px; height: 5px; border-radius: 50%; background: #ffffff; box-shadow: 0 0 8px #fef08a;"></div>
-              <div style="position: absolute; bottom: 0; right: 22%; width: 5px; height: 5px; border-radius: 50%; background: #ffffff; box-shadow: 0 0 8px #fef08a;"></div>
-            </div>
-          ` : ''}
-
-          <!-- Centered Top-Down Vector Sprite -->
-          <div style="width: ${size[0]}px; height: ${size[1]}px; position: relative; z-index: 2;">
-            ${rawSvg}
-          </div>
-
-          <!-- Rear LED Taillight Glow -->
-          <div style="position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%); width: 8px; height: 3.5px; background: #ef4444; border-radius: 1px; box-shadow: 0 0 7px #ef4444; z-index: 3;"></div>
+      <div class="rapido-vehicle-outer" style="position: relative; width: ${size[0]}px; height: ${size[1]}px; display: flex; align-items: center; justify-content: center;">
+        <div class="rapido-vehicle-rotator" style="width: ${size[0]}px; height: ${size[1]}px; transform: rotate(${heading}deg); transform-origin: center center; filter: drop-shadow(0 5px 8px rgba(0,0,0,0.38)) drop-shadow(0 1px 3px rgba(0,0,0,0.24)); will-change: transform;">
+          ${rawSvg}
         </div>
-
-        ${isLive ? `
-          <!-- Pulsing Radar Ripple beneath live tracking vehicle -->
-          <div style="position: absolute; inset: -6px; border-radius: 50%; border: 2px solid rgba(16, 185, 129, 0.45); animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite; pointer-events: none; z-index: 0;"></div>
-          <div style="position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%); width: 8px; height: 8px; border-radius: 50%; background-color: #10b981; border: 1.5px solid #ffffff; box-shadow: 0 0 6px #10b981; z-index: 4;"></div>
-        ` : ''}
       </div>
     `,
     className: isLive ? 'rapido-vehicle-live' : 'rapido-vehicle-nearby',
@@ -369,7 +345,6 @@ export const getNearbyIcon = (type = 'BIKE', heading = 0) => {
     heading,
     isArrived: false,
     isLive: false,
-    showHeadlight: false,
   });
 };
 
@@ -379,7 +354,6 @@ export const createLiveVehicleIcon = (category = 'BIKE', heading = 0, isArrived 
     heading,
     isArrived,
     isLive: true,
-    showHeadlight: !isArrived,
   });
 };
 
@@ -514,6 +488,12 @@ const MapView = ({
 
   const [approachRoadPoints, setApproachRoadPoints] = useState(() => initialApproachRoute.points);
 
+  // Refs for high-performance direct Leaflet DOM mutation (60 FPS, Zero React thrashing)
+  const liveMarkerRef = useRef(null);
+  const animFrameRef = useRef(null);
+  const lastTelemetryUpdateRef = useRef(0);
+  const headingTrackerRef = useRef(0);
+
   // Live Vehicle Animated Position & Heading (Initializes immediately)
   const [liveVehiclePos, setLiveVehiclePos] = useState(() => {
     if (tripStatus === 'ACCEPTED') return initialApproachRoute.points[0] || driverStartPos;
@@ -561,50 +541,93 @@ const MapView = ({
     };
   }, [pickup?.[0], pickup?.[1], dropoff?.[0], dropoff?.[1], isLiveTrip, tripStatus, driverStartPos]);
 
-  // High-performance 60 FPS requestAnimationFrame vehicle animation engine
+  // High-performance 60 FPS Direct Leaflet Marker Mutation Engine
   useEffect(() => {
     if (!isLiveTrip) return;
 
-    let animFrameId = null;
-    let startTime = null;
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
 
-    // Phase 1: ACCEPTED -> Smoothly driving along approach road towards Pickup
+    // Phase 1: ACCEPTED -> Driving along approach road towards Pickup
     if (tripStatus === 'ACCEPTED') {
       const route = approachRoadPoints.length > 0 ? approachRoadPoints : initialApproachRoute.points;
       if (!route || route.length < 2) return;
 
       const metrics = getPolylineMetrics(route);
       const totalDist = metrics.totalDistance || 1200;
-      // Duration scaled realistically: ~12-14 seconds
-      const durationMs = Math.max(10000, Math.min(18000, (totalDist / 1000) * 9000));
+      const durationMs = 12000; // Realistic 12-second approach drive
 
-      let headingTracker = calculateBearing(route[0][0], route[0][1], route[1][0], route[1][1]);
+      const initialH = calculateBearing(route[0][0], route[0][1], route[1][0], route[1][1]);
+      headingTrackerRef.current = initialH;
       setLiveVehiclePos(route[0]);
-      setLiveHeading(headingTracker);
+      setLiveHeading(initialH);
+
+      if (liveMarkerRef.current) {
+        liveMarkerRef.current.setLatLng(route[0]);
+        const el = liveMarkerRef.current.getElement();
+        if (el) {
+          const rotator = el.querySelector('.rapido-vehicle-rotator');
+          if (rotator) rotator.style.transform = `rotate(${initialH}deg)`;
+        }
+      }
+
+      let startTime = null;
 
       const step = (timestamp) => {
         if (!startTime) startTime = timestamp;
         const elapsed = timestamp - startTime;
-        const progress = Math.min(1.0, elapsed / durationMs);
+        const rawProgress = Math.min(1.0, elapsed / durationMs);
 
-        // Left-hand traffic lane offset for India (2.5 meters in left lane)
-        const sampled = samplePolylineWithLaneOffset(route, progress, metrics, 2.5);
+        // Sample India left lane (2.5m offset)
+        const sampled = samplePolylineWithLaneOffset(route, rawProgress, metrics, 2.5);
+        const ahead = samplePolylineWithLaneOffset(route, Math.min(1.0, rawProgress + 0.025), metrics, 2.5);
+
         if (sampled) {
-          headingTracker = lerpAngle(headingTracker, sampled.heading, 0.25);
-          setLiveVehiclePos([sampled.lat, sampled.lng]);
-          setLiveHeading(headingTracker);
+          headingTrackerRef.current = lerpAngle(headingTrackerRef.current, sampled.heading, 0.28);
 
-          const remFraction = 1.0 - progress;
-          const remKm = Math.round((totalDist / 1000) * remFraction * 10) / 10;
-          const eta = Math.max(1, Math.round(remKm * 2.2));
-          setLiveRemainingKm(remKm);
-          setLiveEtaMins(eta);
+          // Realistic motorcycle lean physics when cornering
+          let leanCss = '';
+          if (vehicleType === 'BIKE' && ahead) {
+            const turnDiff = ((ahead.heading - sampled.heading + 540) % 360) - 180;
+            const lean = Math.max(-4, Math.min(4, turnDiff * 0.12));
+            if (Math.abs(lean) > 0.5) {
+              leanCss = ` skewX(${lean.toFixed(1)}deg)`;
+            }
+          }
+
+          // DIRECT LEAFLET HARDWARE MUTATION (Zero React re-render thrashing!)
+          if (liveMarkerRef.current) {
+            liveMarkerRef.current.setLatLng([sampled.lat, sampled.lng]);
+            const el = liveMarkerRef.current.getElement();
+            if (el) {
+              const rotator = el.querySelector('.rapido-vehicle-rotator');
+              if (rotator) {
+                rotator.style.transform = `rotate(${headingTrackerRef.current}deg)${leanCss}`;
+              }
+            }
+          }
+
+          // Throttled Telemetry Update (1 Hz)
+          const now = performance.now();
+          if (now - lastTelemetryUpdateRef.current >= 900) {
+            const remFraction = 1.0 - rawProgress;
+            const remKm = Math.round((totalDist / 1000) * remFraction * 10) / 10;
+            const eta = Math.max(1, Math.round(remKm * 2.2));
+            setLiveRemainingKm(remKm);
+            setLiveEtaMins(eta);
+            lastTelemetryUpdateRef.current = now;
+          }
         }
 
-        if (progress < 1.0) {
-          animFrameId = requestAnimationFrame(step);
+        if (rawProgress < 1.0) {
+          animFrameRef.current = requestAnimationFrame(step);
         } else {
-          // Reached Pickup cleanly! Stop moving, do not loop
+          // Reached Pickup
+          if (liveMarkerRef.current) {
+            liveMarkerRef.current.setLatLng(pickup);
+          }
           setLiveVehiclePos(pickup);
           setLiveRemainingKm(0);
           setLiveEtaMins(0);
@@ -614,57 +637,101 @@ const MapView = ({
         }
       };
 
-      animFrameId = requestAnimationFrame(step);
+      animFrameRef.current = requestAnimationFrame(step);
       return () => {
-        if (animFrameId) cancelAnimationFrame(animFrameId);
+        if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       };
     }
 
     // Phase 2: DRIVER_ARRIVING -> At Pickup
     if (tripStatus === 'DRIVER_ARRIVING') {
+      if (liveMarkerRef.current) {
+        liveMarkerRef.current.setLatLng(pickup);
+      }
       setLiveVehiclePos(pickup);
       setLiveRemainingKm(0);
       setLiveEtaMins(0);
       return;
     }
 
-    // Phase 3: IN_PROGRESS -> Smoothly driving along main road towards Dropoff
+    // Phase 3: IN_PROGRESS -> Driving along main road towards Dropoff
     if (tripStatus === 'IN_PROGRESS') {
       const route = tripRoadPoints.length > 0 ? tripRoadPoints : initialTripRoute.points;
       if (!route || route.length < 2) return;
 
       const metrics = getPolylineMetrics(route);
       const totalDist = metrics.totalDistance || (tripDistanceKm * 1000);
-      // Duration scaled realistically: ~18-24 seconds
-      const durationMs = Math.max(14000, Math.min(26000, (totalDist / 1000) * 4500));
+      const durationMs = 18000; // Realistic 18-second main trip drive
 
-      let headingTracker = calculateBearing(route[0][0], route[0][1], route[1][0], route[1][1]);
+      const initialH = calculateBearing(route[0][0], route[0][1], route[1][0], route[1][1]);
+      headingTrackerRef.current = initialH;
       setLiveVehiclePos(route[0]);
-      setLiveHeading(headingTracker);
+      setLiveHeading(initialH);
+
+      if (liveMarkerRef.current) {
+        liveMarkerRef.current.setLatLng(route[0]);
+        const el = liveMarkerRef.current.getElement();
+        if (el) {
+          const rotator = el.querySelector('.rapido-vehicle-rotator');
+          if (rotator) rotator.style.transform = `rotate(${initialH}deg)`;
+        }
+      }
+
+      let startTime = null;
 
       const step = (timestamp) => {
         if (!startTime) startTime = timestamp;
         const elapsed = timestamp - startTime;
-        const progress = Math.min(1.0, elapsed / durationMs);
+        const rawProgress = Math.min(1.0, elapsed / durationMs);
 
-        // Left-hand traffic lane offset for India (2.5 meters in left lane)
-        const sampled = samplePolylineWithLaneOffset(route, progress, metrics, 2.5);
+        // Sample India left lane (2.5m offset)
+        const sampled = samplePolylineWithLaneOffset(route, rawProgress, metrics, 2.5);
+        const ahead = samplePolylineWithLaneOffset(route, Math.min(1.0, rawProgress + 0.025), metrics, 2.5);
+
         if (sampled) {
-          headingTracker = lerpAngle(headingTracker, sampled.heading, 0.25);
-          setLiveVehiclePos([sampled.lat, sampled.lng]);
-          setLiveHeading(headingTracker);
+          headingTrackerRef.current = lerpAngle(headingTrackerRef.current, sampled.heading, 0.28);
 
-          const remFraction = 1.0 - progress;
-          const remKm = Math.round(tripDistanceKm * remFraction * 10) / 10;
-          const eta = Math.max(1, Math.round(remKm * 2.1));
-          setLiveRemainingKm(remKm);
-          setLiveEtaMins(eta);
+          // Realistic motorcycle lean physics when cornering
+          let leanCss = '';
+          if (vehicleType === 'BIKE' && ahead) {
+            const turnDiff = ((ahead.heading - sampled.heading + 540) % 360) - 180;
+            const lean = Math.max(-4, Math.min(4, turnDiff * 0.12));
+            if (Math.abs(lean) > 0.5) {
+              leanCss = ` skewX(${lean.toFixed(1)}deg)`;
+            }
+          }
+
+          // DIRECT LEAFLET HARDWARE MUTATION
+          if (liveMarkerRef.current) {
+            liveMarkerRef.current.setLatLng([sampled.lat, sampled.lng]);
+            const el = liveMarkerRef.current.getElement();
+            if (el) {
+              const rotator = el.querySelector('.rapido-vehicle-rotator');
+              if (rotator) {
+                rotator.style.transform = `rotate(${headingTrackerRef.current}deg)${leanCss}`;
+              }
+            }
+          }
+
+          // Throttled Telemetry Update (1 Hz)
+          const now = performance.now();
+          if (now - lastTelemetryUpdateRef.current >= 900) {
+            const remFraction = 1.0 - rawProgress;
+            const remKm = Math.round(tripDistanceKm * remFraction * 10) / 10;
+            const eta = Math.max(1, Math.round(remKm * 2.1));
+            setLiveRemainingKm(remKm);
+            setLiveEtaMins(eta);
+            lastTelemetryUpdateRef.current = now;
+          }
         }
 
-        if (progress < 1.0) {
-          animFrameId = requestAnimationFrame(step);
+        if (rawProgress < 1.0) {
+          animFrameRef.current = requestAnimationFrame(step);
         } else {
-          // Reached Dropoff cleanly! Stop moving, do not loop
+          // Reached Dropoff
+          if (liveMarkerRef.current) {
+            liveMarkerRef.current.setLatLng(dropoff);
+          }
           setLiveVehiclePos(dropoff);
           setLiveRemainingKm(0);
           setLiveEtaMins(0);
@@ -674,14 +741,17 @@ const MapView = ({
         }
       };
 
-      animFrameId = requestAnimationFrame(step);
+      animFrameRef.current = requestAnimationFrame(step);
       return () => {
-        if (animFrameId) cancelAnimationFrame(animFrameId);
+        if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       };
     }
 
     // Phase 4: COMPLETED -> At Destination
     if (tripStatus === 'COMPLETED') {
+      if (liveMarkerRef.current) {
+        liveMarkerRef.current.setLatLng(dropoff);
+      }
       setLiveVehiclePos(dropoff);
       setLiveRemainingKm(0);
       setLiveEtaMins(0);
@@ -689,18 +759,14 @@ const MapView = ({
   }, [
     isLiveTrip,
     tripStatus,
-    approachRoadPoints,
-    tripRoadPoints,
-    initialApproachRoute.points,
-    initialTripRoute.points,
-    tripDistanceKm,
     pickup,
     dropoff,
+    vehicleType,
     onDriverArrived,
     onTripCompleted,
   ]);
 
-  // Explore Mode: Nearby active patrolling vehicles cruising around Pickup
+  // Explore Mode: Nearby active patrolling vehicles cruising around Pickup (Smooth 4 Hz update)
   const [nearbyVehicles, setNearbyVehicles] = useState(() =>
     generateNearbyDrivers(pickup, vehicleType)
   );
@@ -714,54 +780,58 @@ const MapView = ({
   useEffect(() => {
     if (isLiveTrip) return;
 
-    let animId = null;
-    let lastTime = performance.now();
-
-    const cruise = (now) => {
-      const dt = (now - lastTime) / 1000;
-      lastTime = now;
-
+    const timer = setInterval(() => {
       setNearbyVehicles((prev) =>
         prev.map((v) => {
-          const newStep = v.step + dt * 0.4;
-          const drift = Math.sin(newStep) * 0.00045;
+          const newStep = v.step + 0.12;
+          const drift = Math.sin(newStep) * 0.0004;
           const currentHeading = Math.cos(newStep) >= 0 ? v.heading : (v.heading + 180) % 360;
-
           const rad = (currentHeading * Math.PI) / 180;
-          const lat = v.baseLat + Math.cos(rad) * drift;
-          const lng = v.baseLng + Math.sin(rad) * drift;
-
           return {
             ...v,
             step: newStep,
-            lat,
-            lng,
+            lat: v.baseLat + Math.cos(rad) * drift,
+            lng: v.baseLng + Math.sin(rad) * drift,
             heading: currentHeading,
           };
         })
       );
+    }, 250);
 
-      animId = requestAnimationFrame(cruise);
-    };
-
-    animId = requestAnimationFrame(cruise);
     return () => {
-      if (animId) cancelAnimationFrame(animId);
+      clearInterval(timer);
     };
   }, [isLiveTrip]);
 
-  // Determine bounds points for map auto-center
+  // Determine bounds points for map auto-center (Stable framing - no jitter!)
   const boundsPoints = useMemo(() => {
-    if (isLiveTrip && liveVehiclePos) {
-      if (tripStatus === 'ACCEPTED' || tripStatus === 'DRIVER_ARRIVING') {
-        return [liveVehiclePos, pickup];
+    if (isLiveTrip) {
+      if (tripStatus === 'ACCEPTED') {
+        return [driverStartPos, pickup];
       }
-      return [liveVehiclePos, dropoff];
+      if (tripStatus === 'DRIVER_ARRIVING') {
+        return [pickup];
+      }
+      if (tripStatus === 'IN_PROGRESS') {
+        return [pickup, dropoff];
+      }
+      if (tripStatus === 'COMPLETED') {
+        return [dropoff];
+      }
     }
     if (pickup && dropoff) return [pickup, dropoff];
     if (pickup) return [pickup];
     return [[12.9716, 77.5946]];
-  }, [isLiveTrip, liveVehiclePos, tripStatus, pickup, dropoff]);
+  }, [
+    isLiveTrip,
+    tripStatus,
+    pickup?.[0],
+    pickup?.[1],
+    dropoff?.[0],
+    dropoff?.[1],
+    driverStartPos?.[0],
+    driverStartPos?.[1],
+  ]);
 
   const currentTileConfig = MAP_LAYERS[selectedLayer] || MAP_LAYERS.google_roadmap;
 
@@ -860,9 +930,10 @@ const MapView = ({
           </Marker>
         ))}
 
-        {/* Live Trip Mode: Auto-Moving Animated Vehicle with Heading Rotation & Motion Beam */}
+        {/* Live Trip Mode: Auto-Moving Animated Vehicle with Heading Rotation */}
         {isLiveTrip && liveVehiclePos && (
           <Marker
+            ref={liveMarkerRef}
             position={liveVehiclePos}
             icon={createLiveVehicleIcon(
               category,
