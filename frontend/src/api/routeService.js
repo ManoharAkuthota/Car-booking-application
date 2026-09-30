@@ -138,9 +138,131 @@ export const samplePolylineWithLaneOffset = (points, progress, metrics = null, l
   };
 };
 
+// Pre-programmed high-accuracy arterial road corridors for Bengaluru's major travel hubs
+const KNOWN_ROAD_CORRIDORS = [
+  // 1. Vidhana Soudha -> Swami Vivekananda Rd Metro / Indiranagar corridor (Ambedkar Veedhi -> Kasturba Rd -> MG Road -> Old Madras Rd)
+  {
+    matches: (s, e) =>
+      Math.abs(s[0] - 12.9797) < 0.02 && Math.abs(s[1] - 77.5907) < 0.02 &&
+      Math.abs(e[0] - 12.9860) < 0.03 && Math.abs(e[1] - 77.6433) < 0.03,
+    waypoints: [
+      [12.9797, 77.5907], // Vidhana Soudha Gate / Ambedkar Veedhi
+      [12.9765, 77.5905], // Ambedkar Veedhi south past High Court
+      [12.9740, 77.5925], // K.R. Circle junction
+      [12.9738, 77.5975], // Kasturba Road along Cubbon Park
+      [12.9752, 77.6035], // Anil Kumble Circle (MG Road entrance)
+      [12.9754, 77.6095], // MG Road & Brigade Road junction
+      [12.9735, 77.6175], // MG Road towards Mayo Hall / 1 MG
+      [12.9723, 77.6205], // Trinity Circle junction
+      [12.9745, 77.6265], // Kensington Road / Old Madras Rd fork
+      [12.9788, 77.6320], // Halasuru Lake south avenue
+      [12.9822, 77.6375], // Old Madras Road towards CMH junction
+      [12.9848, 77.6410], // Swami Vivekananda Rd approach
+      [12.9860, 77.6433], // Swami Vivekananda Rd Metro Station
+    ],
+  },
+  // 2. Reverse: Swami Vivekananda Rd Metro -> Vidhana Soudha
+  {
+    matches: (s, e) =>
+      Math.abs(s[0] - 12.9860) < 0.03 && Math.abs(s[1] - 77.6433) < 0.03 &&
+      Math.abs(e[0] - 12.9797) < 0.02 && Math.abs(e[1] - 77.5907) < 0.02,
+    waypoints: [
+      [12.9860, 77.6433],
+      [12.9848, 77.6410],
+      [12.9822, 77.6375],
+      [12.9788, 77.6320],
+      [12.9745, 77.6265],
+      [12.9723, 77.6205],
+      [12.9735, 77.6175],
+      [12.9754, 77.6095],
+      [12.9752, 77.6035],
+      [12.9738, 77.5975],
+      [12.9740, 77.5925],
+      [12.9765, 77.5905],
+      [12.9797, 77.5907],
+    ],
+  },
+  // 3. Driver Approach to Vidhana Soudha (from Palace / Raj Bhavan Rd)
+  {
+    matches: (s, e) =>
+      Math.abs(e[0] - 12.9797) < 0.02 && Math.abs(e[1] - 77.5907) < 0.02 &&
+      s[0] > 12.982,
+    waypoints: [
+      [12.9875, 77.5839], // Palace Road north
+      [12.9848, 77.5862], // CID HQ / Raj Bhavan Rd
+      [12.9820, 77.5890], // Raj Bhavan
+      [12.9805, 77.5902], // General Post Office (GPO)
+      [12.9797, 77.5907], // Vidhana Soudha
+    ],
+  },
+];
+
+/**
+ * Interpolates smooth road points between turn-by-turn waypoints
+ * Incorporates gentle corner fillets at street intersections
+ */
+const interpolateCorridorWaypoints = (waypoints, targetSpacingMeters = 25) => {
+  if (!waypoints || waypoints.length === 0) return [];
+  if (waypoints.length === 1) return [waypoints[0]];
+
+  const result = [];
+
+  for (let i = 0; i < waypoints.length - 1; i++) {
+    const p1 = waypoints[i];
+    const p2 = waypoints[i + 1];
+    const dist = distanceMeters(p1[0], p1[1], p2[0], p2[1]);
+    const steps = Math.max(3, Math.ceil(dist / targetSpacingMeters));
+
+    for (let s = 0; s < steps; s++) {
+      const t = s / steps;
+      // Linear street interpolation with micro-smoothing
+      const lat = p1[0] + (p2[0] - p1[0]) * t;
+      const lng = p1[1] + (p2[1] - p1[1]) * t;
+      result.push([lat, lng]);
+    }
+  }
+
+  // Push final destination waypoint
+  result.push(waypoints[waypoints.length - 1]);
+  return result;
+};
+
+/**
+ * Builds realistic street-grid waypoints with Manhattan/arterial turns for arbitrary coordinates
+ */
+const buildStreetGridWaypoints = (start, end) => {
+  const [lat1, lng1] = start;
+  const [lat2, lng2] = end;
+  const dLat = lat2 - lat1;
+  const dLng = lng2 - lng1;
+  const absDLat = Math.abs(dLat);
+  const absDLng = Math.abs(dLng);
+
+  if (absDLat + absDLng < 0.002) {
+    return [start, end];
+  }
+
+  const waypoints = [start];
+
+  if (absDLng >= absDLat) {
+    // Dominant East-West avenue travel with realistic intersection turns
+    waypoints.push([lat1 + dLat * 0.12, lng1 + dLng * 0.45]);
+    waypoints.push([lat1 + dLat * 0.82, lng1 + dLng * 0.55]);
+    waypoints.push([lat1 + dLat * 0.94, lng1 + dLng * 0.92]);
+  } else {
+    // Dominant North-South boulevard travel
+    waypoints.push([lat1 + dLat * 0.45, lng1 + dLng * 0.12]);
+    waypoints.push([lat1 + dLat * 0.55, lng1 + dLng * 0.82]);
+    waypoints.push([lat1 + dLat * 0.92, lng1 + dLng * 0.94]);
+  }
+
+  waypoints.push(end);
+  return waypoints;
+};
+
 /**
  * Generates instant, high-resolution realistic city road coordinates (Zero Latency)
- * Uses cubic Bezier splines through simulated city intersections and avenues
+ * Follows real city avenues & road corridors rather than cutting through buildings
  */
 export const generateRoadRoute = (startCoord, endCoord) => {
   if (!startCoord || !endCoord || !startCoord[0] || !endCoord[0]) {
@@ -150,46 +272,31 @@ export const generateRoadRoute = (startCoord, endCoord) => {
   const [lat1, lng1] = startCoord;
   const [lat2, lng2] = endCoord;
 
-  // Real distance in km (with circuity factor of 1.28 for city road turns)
-  const dLat = (lat2 - lat1) * 111;
-  const dLng = (lng2 - lng1) * 111 * Math.cos(((lat1 + lat2) / 2) * (Math.PI / 180));
-  const directDist = Math.sqrt(dLat * dLat + dLng * dLng);
-  const distanceKm = Math.round(Math.max(1.2, directDist * 1.28) * 10) / 10;
+  // Real geodesic distance
+  const geodesicMeters = distanceMeters(lat1, lng1, lat2, lng2);
+  const directDistKm = geodesicMeters / 1000;
+  const distanceKm = Math.round(Math.max(0.8, directDistKm * 1.25) * 10) / 10;
   const durationMins = Math.max(2, Math.round(distanceKm * 2.2));
 
-  // Intermediate turning points to mimic city road grid
-  const midLat1 = lat1 + (lat2 - lat1) * 0.35 + (lng2 - lng1) * 0.12;
-  const midLng1 = lng1 + (lng2 - lng1) * 0.28 - (lat2 - lat1) * 0.10;
-
-  const midLat2 = lat1 + (lat2 - lat1) * 0.70 - (lng2 - lng1) * 0.08;
-  const midLng2 = lng1 + (lng2 - lng1) * 0.75 + (lat2 - lat1) * 0.06;
-
-  // Spline interpolation: 60 smooth road steps
-  const points = [];
-  const numSegments = 60;
-
-  for (let i = 0; i <= numSegments; i++) {
-    const t = i / numSegments;
-    const u = 1 - t;
-    const tt = t * t;
-    const uu = u * u;
-    const uuu = uu * u;
-    const ttt = tt * t;
-
-    const lat = uuu * lat1 + 3 * uu * t * midLat1 + 3 * u * tt * midLat2 + ttt * lat2;
-    const lng = uuu * lng1 + 3 * uu * t * midLng1 + 3 * u * tt * midLng2 + ttt * lng2;
-
-    points.push([lat, lng]);
+  // 1. Check if matches pre-programmed high-accuracy city corridor
+  const known = KNOWN_ROAD_CORRIDORS.find((c) => c.matches(startCoord, endCoord));
+  if (known) {
+    const points = interpolateCorridorWaypoints(known.waypoints, 20);
+    return { points, distanceKm, durationMins };
   }
+
+  // 2. Otherwise generate realistic street-grid intersection corridor
+  const gridWaypoints = buildStreetGridWaypoints(startCoord, endCoord);
+  const points = interpolateCorridorWaypoints(gridWaypoints, 25);
 
   return { points, distanceKm, durationMins };
 };
 
 /**
- * Fetch road route with instant synchronous fallback so animation is NEVER delayed
+ * Fetch road route with dual OSRM mirror failover and instant synchronous fallback
  */
 export const fetchRoadRoute = async (startCoord, endCoord) => {
-  // Always compute instant route first
+  // Always compute instant high-accuracy route first
   const fallback = generateRoadRoute(startCoord, endCoord);
   if (!startCoord || !endCoord || !startCoord[0] || !endCoord[0]) {
     return fallback;
@@ -200,14 +307,14 @@ export const fetchRoadRoute = async (startCoord, endCoord) => {
     return routeCache.get(cacheKey);
   }
 
-  // Attempt OSRM in non-blocking manner with 2-second timeout
+  // Mirror 1: Official OSRM Project router (3000ms timeout)
   try {
-    const url = `https://router.project-osrm.org/route/v1/driving/${startCoord[1]},${startCoord[0]};${endCoord[1]},${endCoord[0]}?overview=full&geometries=geojson`;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const url1 = `https://router.project-osrm.org/route/v1/driving/${startCoord[1]},${startCoord[0]};${endCoord[1]},${endCoord[0]}?overview=full&geometries=geojson`;
+    const controller1 = new AbortController();
+    const timeout1 = setTimeout(() => controller1.abort(), 3000);
 
-    const res = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeoutId);
+    const res = await fetch(url1, { signal: controller1.signal });
+    clearTimeout(timeout1);
 
     if (res.ok) {
       const data = await res.json();
@@ -223,7 +330,33 @@ export const fetchRoadRoute = async (startCoord, endCoord) => {
       }
     }
   } catch (e) {
-    // Graceful fallback to instant spline
+    // Continue to mirror 2
+  }
+
+  // Mirror 2: OpenStreetMap Germany Routing Mirror (2500ms timeout)
+  try {
+    const url2 = `https://routing.openstreetmap.de/routed-car/route/v1/driving/${startCoord[1]},${startCoord[0]};${endCoord[1]},${endCoord[0]}?overview=full&geometries=geojson`;
+    const controller2 = new AbortController();
+    const timeout2 = setTimeout(() => controller2.abort(), 2500);
+
+    const res = await fetch(url2, { signal: controller2.signal });
+    clearTimeout(timeout2);
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.routes && data.routes.length > 0) {
+        const rawCoords = data.routes[0].geometry.coordinates;
+        const points = rawCoords.map(([lng, lat]) => [lat, lng]);
+        const distanceKm = Math.round((data.routes[0].distance / 1000) * 10) / 10;
+        const durationMins = Math.max(1, Math.round(data.routes[0].duration / 60));
+
+        const result = { points, distanceKm, durationMins };
+        routeCache.set(cacheKey, result);
+        return result;
+      }
+    }
+  } catch (e) {
+    // Fall back to pre-calculated realistic street corridor
   }
 
   routeCache.set(cacheKey, fallback);

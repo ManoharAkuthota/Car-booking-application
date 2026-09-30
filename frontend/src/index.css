@@ -41,10 +41,51 @@
   border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
-/* Leaflet map styling */
+/* Leaflet map enhancements & tile styling */
 .leaflet-container {
   height: 100%;
   width: 100%;
   border-radius: 1rem;
   z-index: 10;
+  background-color: #f8fafc !important;
+  outline: none !important;
+}
+
+/* Eliminate default Leaflet white square box & border behind custom div icons */
+.leaflet-div-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Crisp tile edges and contrast boost for sharp display */
+.leaflet-tile {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+.leaflet-tile-container img {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Modern translucent attribution pill */
+.leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-size: 10px !important;
+  color: #64748b !important;
+  border-radius: 6px 0 0 0;
+  padding: 3px 8px !important;
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.leaflet-control-attribution a {
+  color: #2563eb !important;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.leaflet-control-attribution a:hover {
+  text-decoration: underline;
 }

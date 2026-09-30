@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Layers, Crosshair, Navigation, Compass, ShieldCheck } from 'lucide-react';
@@ -378,56 +378,122 @@ const MapClickHandler = ({ onMapClick }) => {
   return null;
 };
 
-// Auto-center and fit bounds component
+// Auto-center and fit bounds component with responsive viewport framing
 const AutoFitBounds = ({ boundsPoints, triggerRecenter }) => {
   const map = useMap();
 
   useEffect(() => {
-    if (boundsPoints && boundsPoints.length >= 2) {
-      const bounds = L.latLngBounds(boundsPoints);
-      const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
-      map.fitBounds(bounds, {
-        paddingTopLeft: isMobile ? [20, 110] : [50, 60],
-        paddingBottomRight: isMobile ? [20, 240] : [50, 60],
-        maxZoom: 16,
-        animate: true,
-      });
-    } else if (boundsPoints && boundsPoints.length === 1) {
-      map.setView(boundsPoints[0], 14, { animate: true });
+    if (!boundsPoints || boundsPoints.length === 0) return;
+
+    try {
+      const size = map.getSize();
+      // Ensure container has initialized dimensions
+      if (!size || size.x < 40 || size.y < 40) return;
+
+      if (boundsPoints.length >= 2) {
+        const bounds = L.latLngBounds(boundsPoints);
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+        const isCompactCard = size.y < 420 && size.x < 700;
+
+        let padTopLeft = [40, 40];
+        let padBottomRight = [40, 40];
+
+        if (isCompactCard) {
+          // Compact embed (e.g. inside Driver Cockpit card or Booking Modal)
+          padTopLeft = [24, 24];
+          padBottomRight = [24, 24];
+        } else if (isMobile) {
+          // Mobile full screen: top search bar (~170px) and bottom ride tiers sheet (~360px)
+          padTopLeft = [24, 175];
+          padBottomRight = [24, 360];
+        } else {
+          // Desktop / Laptop: left floating side panel (~440px wide)
+          padTopLeft = [480, 80];
+          padBottomRight = [80, 80];
+        }
+
+        map.fitBounds(bounds, {
+          paddingTopLeft: padTopLeft,
+          paddingBottomRight: padBottomRight,
+          maxZoom: 16,
+          animate: true,
+        });
+      } else if (boundsPoints.length === 1) {
+        map.setView(boundsPoints[0], 15, { animate: true });
+      }
+    } catch (e) {
+      // Graceful fallback
     }
   }, [map, boundsPoints, triggerRecenter]);
 
   return null;
 };
 
-// Auto-resize component to guarantee tiles render properly without blank spaces
+// High-performance Auto-resize component powered by ResizeObserver
+// Completely prevents blank/grey tile gaps when sheets expand or screen rotates
 const MapResizer = () => {
   const map = useMap();
+
   useEffect(() => {
-    map.invalidateSize();
-    const t1 = setTimeout(() => map.invalidateSize(), 150);
-    const t2 = setTimeout(() => map.invalidateSize(), 600);
-    const handleResize = () => map.invalidateSize();
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleResize);
+    const container = map.getContainer();
+    if (!container) return;
+
+    let rafId = null;
+    const triggerInvalidate = () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        try {
+          map.invalidateSize({ pan: false });
+        } catch (e) {}
+      });
+    };
+
+    triggerInvalidate();
+    const t1 = setTimeout(triggerInvalidate, 80);
+    const t2 = setTimeout(triggerInvalidate, 250);
+    const t3 = setTimeout(triggerInvalidate, 650);
+
+    let ro = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => {
+        triggerInvalidate();
+      });
+      ro.observe(container);
+    }
+
+    window.addEventListener('resize', triggerInvalidate);
+    window.addEventListener('orientationchange', triggerInvalidate);
+
     return () => {
+      if (ro) ro.disconnect();
+      if (rafId) cancelAnimationFrame(rafId);
       clearTimeout(t1);
       clearTimeout(t2);
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleResize);
+      clearTimeout(t3);
+      window.removeEventListener('resize', triggerInvalidate);
+      window.removeEventListener('orientationchange', triggerInvalidate);
     };
   }, [map]);
+
   return null;
 };
 
-// Map Tile Providers (100% Free & Open-Access - ZERO API Keys Required)
+// Map Tile Providers (100% Free & Open-Access - Absolutely ZERO Watermarks, Zero API Keys Required)
 const MAP_LAYERS = {
+  osm_hot: {
+    id: 'osm_hot',
+    name: 'Street View',
+    url: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+    subdomains: ['a', 'b'],
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 19,
+  },
   esri_streets: {
     id: 'esri_streets',
     name: 'City Streets',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
     subdomains: ['a', 'b', 'c'],
-    attribution: '&copy; Esri & OpenStreetMap (Zero API Key Required)',
+    attribution: '&copy; Esri & OpenStreetMap contributors',
     maxZoom: 19,
   },
   osm: {
@@ -435,7 +501,7 @@ const MAP_LAYERS = {
     name: 'OpenStreetMap',
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     subdomains: ['a', 'b', 'c'],
-    attribution: '&copy; OpenStreetMap contributors',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     maxZoom: 19,
   },
   satellite: {
@@ -443,7 +509,7 @@ const MAP_LAYERS = {
     name: 'Satellite',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     subdomains: ['a', 'b', 'c'],
-    attribution: '&copy; Esri World Imagery (Zero API Key Required)',
+    attribution: '&copy; Esri World Imagery',
     maxZoom: 19,
   },
 };
@@ -492,7 +558,7 @@ const MapView = ({
   onDriverArrived = null,
   onTripCompleted = null,
 }) => {
-  const [selectedLayer, setSelectedLayer] = useState('esri_streets');
+  const [selectedLayer, setSelectedLayer] = useState('osm_hot');
   const [recenterCount, setRecenterCount] = useState(0);
 
   // Normalize category to vehicle type
@@ -860,7 +926,7 @@ const MapView = ({
     driverStartPos?.[1],
   ]);
 
-  const currentTileConfig = MAP_LAYERS[selectedLayer] || MAP_LAYERS.esri_streets;
+  const currentTileConfig = MAP_LAYERS[selectedLayer] || MAP_LAYERS.osm_hot;
 
   return (
     <div className={`relative w-full rounded-2xl overflow-hidden border border-gray-200 shadow-md ${className}`}>
@@ -881,6 +947,21 @@ const MapView = ({
 
         <MapClickHandler onMapClick={onMapClick} />
         <AutoFitBounds boundsPoints={boundsPoints} triggerRecenter={recenterCount} />
+
+        {/* Geographic GPS Walking Proximity Accuracy Ring */}
+        {pickup && (
+          <Circle
+            center={pickup}
+            radius={85}
+            pathOptions={{
+              color: '#059669',
+              fillColor: '#10b981',
+              fillOpacity: 0.12,
+              weight: 1.5,
+              dashArray: '4, 4',
+            }}
+          />
+        )}
 
         {/* Pickup Pin */}
         {pickup && (
@@ -904,18 +985,24 @@ const MapView = ({
         {/* Approach Route Polyline (Driver -> Pickup when ACCEPTED) */}
         {isLiveTrip && tripStatus === 'ACCEPTED' && approachRoadPoints.length > 0 && (
           <>
+            {/* Dark casing */}
             <Polyline
               positions={approachRoadPoints}
-              color="#0284c7"
-              weight={7}
-              opacity={0.3}
+              color="#075985"
+              weight={8}
+              opacity={0.35}
+              lineCap="round"
+              lineJoin="round"
             />
+            {/* Vibrant dash */}
             <Polyline
               positions={approachRoadPoints}
               color="#0284c7"
               weight={4.5}
-              opacity={0.95}
+              opacity={0.98}
               dashArray="6, 8"
+              lineCap="round"
+              lineJoin="round"
             />
           </>
         )}
@@ -923,18 +1010,24 @@ const MapView = ({
         {/* Main Trip Real Road Polyline (Pickup -> Dropoff) */}
         {tripRoadPoints.length > 0 && (
           <>
+            {/* Outer road edge / casing */}
             <Polyline
               positions={tripRoadPoints}
-              color="#1e293b"
-              weight={7}
-              opacity={0.25}
+              color="#0f172a"
+              weight={8}
+              opacity={0.3}
+              lineCap="round"
+              lineJoin="round"
             />
+            {/* High-visibility street route */}
             <Polyline
               positions={tripRoadPoints}
-              color="#334155"
-              weight={5.5}
-              opacity={0.95}
+              color={isLiveTrip ? "#2563eb" : "#1e293b"}
+              weight={5}
+              opacity={0.98}
               dashArray={isLiveTrip && tripStatus !== 'IN_PROGRESS' ? '8, 8' : null}
+              lineCap="round"
+              lineJoin="round"
             />
           </>
         )}
@@ -1006,9 +1099,9 @@ const MapView = ({
         <div className="bg-white/95 backdrop-blur-md rounded-xl border border-gray-200 p-1 flex items-center space-x-1 shadow-md text-[11px] font-bold text-gray-700">
           <button
             type="button"
-            onClick={() => setSelectedLayer('carto_voyager')}
+            onClick={() => setSelectedLayer('osm_hot')}
             className={`px-2.5 py-1 rounded-lg transition-all ${
-              selectedLayer === 'carto_voyager'
+              selectedLayer === 'osm_hot' || selectedLayer === 'esri_streets' || selectedLayer === 'osm'
                 ? 'bg-amber-400 text-slate-950 font-black shadow-sm'
                 : 'hover:text-gray-950 hover:bg-gray-100'
             }`}
