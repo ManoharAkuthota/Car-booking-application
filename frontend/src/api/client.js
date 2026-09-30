@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { INITIAL_VEHICLES, DEMO_USERS } from './mockData';
+import { emitDispatchEvent } from '../utils/dispatchEvents';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
@@ -145,6 +146,20 @@ export const carApi = {
       return { data: list[idx] };
     }
   },
+  updateStatus: async (id, status) => {
+    try {
+      return await api.patch(`/cars/${id}/status`, { status });
+    } catch (err) {
+      let list = getStoredCars();
+      const idx = list.findIndex((c) => c.id === Number(id));
+      if (idx !== -1) {
+        list[idx] = { ...list[idx], status };
+        localStorage.setItem('drivepulse_cars', JSON.stringify(list));
+        return { data: list[idx] };
+      }
+      return { data: { id, status } };
+    }
+  },
   delete: async (id) => {
     try {
       return await api.delete(`/cars/${id}`);
@@ -213,10 +228,10 @@ export const bookingApi = {
       const newBooking = {
         id: Date.now(),
         bookingCode: `DP-${Math.floor(100000 + Math.random() * 900000)}`,
-        status: 'ACCEPTED',
+        status: data.status || 'REQUESTED',
         otp: String(Math.floor(1000 + Math.random() * 9000)),
         customer: DEMO_USERS.customer,
-        driver: DEMO_USERS.driver,
+        driver: data.status === 'ACCEPTED' ? DEMO_USERS.driver : null,
         car,
         pickupAddress: data.pickupAddress || 'Indiranagar 100ft Rd',
         dropoffAddress: data.dropoffAddress || 'Kempegowda Airport (BLR)',
@@ -237,6 +252,9 @@ export const bookingApi = {
 
       bookings.unshift(newBooking);
       saveBookings(bookings);
+      try {
+        emitDispatchEvent({ type: 'RIDE_REQUESTED', booking: newBooking });
+      } catch (e) {}
       return { data: newBooking };
     }
   },
@@ -324,7 +342,8 @@ export const driverApi = {
     try {
       return await api.get('/driver/my-trips');
     } catch (err) {
-      return { data: getStoredBookings() };
+      const bookings = getStoredBookings();
+      return { data: bookings.filter((b) => b.status !== 'REQUESTED' && b.status !== 'CANCELLED') };
     }
   },
   acceptTrip: async (bookingId) => {
@@ -335,7 +354,11 @@ export const driverApi = {
       const idx = bookings.findIndex((b) => b.id === Number(bookingId));
       if (idx !== -1) {
         bookings[idx].status = 'ACCEPTED';
+        bookings[idx].driver = DEMO_USERS.driver;
         saveBookings(bookings);
+        try {
+          emitDispatchEvent({ type: 'RIDE_ACCEPTED', booking: bookings[idx] });
+        } catch (e) {}
         return { data: bookings[idx] };
       }
       return { data: { success: true } };

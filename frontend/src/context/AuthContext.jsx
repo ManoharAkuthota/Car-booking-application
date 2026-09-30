@@ -72,6 +72,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const switchRole = (newRole) => {
+    let targetUser = DEMO_USERS.customer;
+    if (newRole === 'ROLE_DRIVER' || newRole === 'driver') targetUser = DEMO_USERS.driver;
+    else if (newRole === 'ROLE_ADMIN' || newRole === 'admin') targetUser = DEMO_USERS.admin;
+    else targetUser = DEMO_USERS.customer;
+
+    const simToken = `sim_jwt_${btoa(JSON.stringify(targetUser))}`;
+    localStorage.setItem('drivepulse_token', simToken);
+    localStorage.setItem('drivepulse_user', JSON.stringify(targetUser));
+    setToken(simToken);
+    setUser(targetUser);
+    return targetUser;
+  };
+
   const logout = () => {
     localStorage.removeItem('drivepulse_token');
     localStorage.removeItem('drivepulse_user');
@@ -88,6 +102,7 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
+        switchRole,
         isAuthenticated: !!user,
       }}
     >

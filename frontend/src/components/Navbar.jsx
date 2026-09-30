@@ -1,34 +1,131 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Car, Shield, User, Navigation, LogOut } from 'lucide-react';
+import { Car, Shield, User, Navigation, LogOut, ChevronDown, Check, Zap, Users, Radio, IndianRupee } from 'lucide-react';
 
 const Navbar = ({ activeTab, setActiveTab }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, switchRole } = useAuth();
+  const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+
+  const handleSelectRole = (roleKey, defaultTab) => {
+    if (switchRole) switchRole(roleKey);
+    setActiveTab(defaultTab);
+    setShowRoleDropdown(false);
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-xs">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         {/* Main Header Bar */}
         <div className="flex items-center justify-between h-14 sm:h-16">
-          {/* Logo */}
-          <div
-            className="flex items-center space-x-2 cursor-pointer flex-shrink-0"
-            onClick={() => {
-              if (user?.role === 'ROLE_CUSTOMER') setActiveTab('home');
-              else if (user?.role === 'ROLE_DRIVER') setActiveTab('driver-cockpit');
-              else if (user?.role === 'ROLE_ADMIN') setActiveTab('admin-stats');
-            }}
-          >
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-brand-500 to-amber-400 flex items-center justify-center shadow-md shadow-brand-500/20 text-slate-950 font-black text-sm sm:text-base">
-              ⚡
+          {/* Logo & Interactive Role Switcher */}
+          <div className="flex items-center space-x-2 flex-shrink-0">
+            <div
+              className="flex items-center space-x-2 cursor-pointer"
+              onClick={() => {
+                if (user?.role === 'ROLE_CUSTOMER') setActiveTab('home');
+                else if (user?.role === 'ROLE_DRIVER') setActiveTab('driver-cockpit');
+                else if (user?.role === 'ROLE_ADMIN') setActiveTab('admin-overview');
+              }}
+            >
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-brand-500 to-amber-400 flex items-center justify-center shadow-md shadow-brand-500/20 text-slate-950 font-black text-sm sm:text-base">
+                ⚡
+              </div>
+              <div className="flex items-center">
+                <span className="text-lg sm:text-xl font-extrabold tracking-tight text-gray-950">
+                  Drive<span className="text-brand-600">Pulse</span>
+                </span>
+              </div>
             </div>
-            <div className="flex items-center">
-              <span className="text-lg sm:text-xl font-extrabold tracking-tight text-gray-950">
-                Drive<span className="text-brand-600">Pulse</span>
-              </span>
-              <span className="ml-1.5 text-[9px] sm:text-[10px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded-full bg-brand-50 text-brand-700 border border-brand-200">
-                {user?.role === 'ROLE_CUSTOMER' ? 'Rider' : user?.role === 'ROLE_DRIVER' ? 'Pilot' : 'Ops'}
-              </span>
+
+            {/* Interactive Role Switcher Pill */}
+            <div className="relative">
+              <button
+                type="button"
+                data-testid="role-switcher-btn"
+                onClick={() => setShowRoleDropdown(!showRoleDropdown)}
+                className={`ml-1 flex items-center space-x-1 text-[10px] sm:text-xs font-black px-2 py-0.5 sm:py-1 rounded-full border transition-all active:scale-95 shadow-xs ${
+                  user?.role === 'ROLE_DRIVER'
+                    ? 'bg-cyan-50 text-cyan-800 border-cyan-300 hover:bg-cyan-100'
+                    : user?.role === 'ROLE_ADMIN'
+                    ? 'bg-purple-50 text-purple-800 border-purple-300 hover:bg-purple-100'
+                    : 'bg-amber-100 text-amber-950 border-amber-300 hover:bg-amber-200'
+                }`}
+                title="Switch User Role (Rider / Driver / Admin)"
+              >
+                <span>
+                  {user?.role === 'ROLE_CUSTOMER' ? '👤 Rider' : user?.role === 'ROLE_DRIVER' ? '🚖 Pilot' : '🛡️ Ops Admin'}
+                </span>
+                <ChevronDown className="w-3 h-3 stroke-[2.5]" />
+              </button>
+
+              {/* Role Dropdown Menu */}
+              {showRoleDropdown && (
+                <div className="absolute left-0 mt-2 w-52 bg-white rounded-2xl border border-gray-200 shadow-2xl p-2 z-[2000] space-y-1 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <p className="px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider text-gray-400">
+                    Switch Active Persona
+                  </p>
+
+                  <button
+                    type="button"
+                    data-testid="switch-role-customer"
+                    onClick={() => handleSelectRole('ROLE_CUSTOMER', 'home')}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all text-left ${
+                      user?.role === 'ROLE_CUSTOMER'
+                        ? 'bg-amber-100 text-amber-950 font-black'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <span className="text-base">👤</span>
+                      <div>
+                        <p className="leading-tight">Rider / Passenger</p>
+                        <p className="text-[10px] text-gray-500 font-normal">Priya Sharma</p>
+                      </div>
+                    </div>
+                    {user?.role === 'ROLE_CUSTOMER' && <Check className="w-3.5 h-3.5 text-amber-900 stroke-[3]" />}
+                  </button>
+
+                  <button
+                    type="button"
+                    data-testid="switch-role-driver"
+                    onClick={() => handleSelectRole('ROLE_DRIVER', 'driver-cockpit')}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all text-left ${
+                      user?.role === 'ROLE_DRIVER'
+                        ? 'bg-cyan-100 text-cyan-950 font-black'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <span className="text-base">🚖</span>
+                      <div>
+                        <p className="leading-tight">Certified Pilot / Driver</p>
+                        <p className="text-[10px] text-gray-500 font-normal">Rajesh Kumar</p>
+                      </div>
+                    </div>
+                    {user?.role === 'ROLE_DRIVER' && <Check className="w-3.5 h-3.5 text-cyan-900 stroke-[3]" />}
+                  </button>
+
+                  <button
+                    type="button"
+                    data-testid="switch-role-admin"
+                    onClick={() => handleSelectRole('ROLE_ADMIN', 'admin-overview')}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all text-left ${
+                      user?.role === 'ROLE_ADMIN'
+                        ? 'bg-purple-100 text-purple-950 font-black'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <span className="text-base">🛡️</span>
+                      <div>
+                        <p className="leading-tight">Operations Admin</p>
+                        <p className="text-[10px] text-gray-500 font-normal">Fleet Command</p>
+                      </div>
+                    </div>
+                    {user?.role === 'ROLE_ADMIN' && <Check className="w-3.5 h-3.5 text-purple-900 stroke-[3]" />}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -72,24 +169,40 @@ const Navbar = ({ activeTab, setActiveTab }) => {
             {user?.role === 'ROLE_DRIVER' && (
               <>
                 <button
-                  onClick={() => setActiveTab('driver-cockpit')}
-                  className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                    activeTab === 'driver-cockpit'
-                      ? 'bg-cyan-50 text-cyan-700 border border-cyan-200 shadow-xs'
+                  data-testid="navbar-tab-driver-radar"
+                  onClick={() => setActiveTab('driver-radar')}
+                  className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center space-x-1.5 ${
+                    activeTab === 'driver-radar'
+                      ? 'bg-cyan-100 text-cyan-900 border border-cyan-300 shadow-xs'
                       : 'text-gray-600 hover:text-gray-950 hover:bg-gray-100'
                   }`}
                 >
-                  Driver Cockpit
+                  <Radio className="w-3.5 h-3.5 text-cyan-600" />
+                  <span>Incoming Radar</span>
                 </button>
                 <button
-                  onClick={() => setActiveTab('driver-trips')}
-                  className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                    activeTab === 'driver-trips'
-                      ? 'bg-cyan-50 text-cyan-700 border border-cyan-200 shadow-xs'
+                  data-testid="navbar-tab-driver-cockpit"
+                  onClick={() => setActiveTab('driver-cockpit')}
+                  className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center space-x-1.5 ${
+                    activeTab === 'driver-cockpit'
+                      ? 'bg-cyan-100 text-cyan-900 border border-cyan-300 shadow-xs'
                       : 'text-gray-600 hover:text-gray-950 hover:bg-gray-100'
                   }`}
                 >
-                  Trip Earnings
+                  <Navigation className="w-3.5 h-3.5 text-cyan-600" />
+                  <span>Live Cockpit</span>
+                </button>
+                <button
+                  data-testid="navbar-tab-driver-trips"
+                  onClick={() => setActiveTab('driver-trips')}
+                  className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center space-x-1.5 ${
+                    activeTab === 'driver-trips'
+                      ? 'bg-cyan-100 text-cyan-900 border border-cyan-300 shadow-xs'
+                      : 'text-gray-600 hover:text-gray-950 hover:bg-gray-100'
+                  }`}
+                >
+                  <IndianRupee className="w-3.5 h-3.5 text-cyan-600" />
+                  <span>Earnings & Ledger</span>
                 </button>
               </>
             )}
@@ -97,34 +210,48 @@ const Navbar = ({ activeTab, setActiveTab }) => {
             {user?.role === 'ROLE_ADMIN' && (
               <>
                 <button
-                  onClick={() => setActiveTab('admin-stats')}
+                  data-testid="navbar-tab-admin-overview"
+                  onClick={() => setActiveTab('admin-overview')}
                   className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                    activeTab === 'admin-stats'
-                      ? 'bg-purple-50 text-purple-700 border border-purple-200 shadow-xs'
+                    activeTab === 'admin-overview' || activeTab === 'admin-stats'
+                      ? 'bg-purple-100 text-purple-950 border border-purple-300 shadow-xs'
                       : 'text-gray-600 hover:text-gray-950 hover:bg-gray-100'
                   }`}
                 >
                   Command Center
                 </button>
                 <button
+                  data-testid="navbar-tab-admin-fleet"
                   onClick={() => setActiveTab('admin-fleet')}
                   className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                     activeTab === 'admin-fleet'
-                      ? 'bg-purple-50 text-purple-700 border border-purple-200 shadow-xs'
+                      ? 'bg-purple-100 text-purple-950 border border-purple-300 shadow-xs'
                       : 'text-gray-600 hover:text-gray-950 hover:bg-gray-100'
                   }`}
                 >
-                  Fleet
+                  Fleet Management
                 </button>
                 <button
+                  data-testid="navbar-tab-admin-drivers"
+                  onClick={() => setActiveTab('admin-drivers')}
+                  className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                    activeTab === 'admin-drivers'
+                      ? 'bg-purple-100 text-purple-950 border border-purple-300 shadow-xs'
+                      : 'text-gray-600 hover:text-gray-950 hover:bg-gray-100'
+                  }`}
+                >
+                  Driver Verifications
+                </button>
+                <button
+                  data-testid="navbar-tab-admin-trips"
                   onClick={() => setActiveTab('admin-trips')}
                   className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                     activeTab === 'admin-trips'
-                      ? 'bg-purple-50 text-purple-700 border border-purple-200 shadow-xs'
+                      ? 'bg-purple-100 text-purple-950 border border-purple-300 shadow-xs'
                       : 'text-gray-600 hover:text-gray-950 hover:bg-gray-100'
                   }`}
                 >
-                  All Trips
+                  Platform Trips
                 </button>
               </>
             )}

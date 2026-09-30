@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import BottomTaskbar from './components/BottomTaskbar';
@@ -14,6 +14,23 @@ import { Loader2, Car, Shield } from 'lucide-react';
 const MainLayout = () => {
   const { user, loading, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('home');
+
+  // Automatically select role-appropriate default tab on role switch
+  useEffect(() => {
+    if (user?.role === 'ROLE_DRIVER') {
+      if (!activeTab.startsWith('driver-')) {
+        setActiveTab('driver-cockpit');
+      }
+    } else if (user?.role === 'ROLE_ADMIN') {
+      if (!activeTab.startsWith('admin-')) {
+        setActiveTab('admin-overview');
+      }
+    } else if (user?.role === 'ROLE_CUSTOMER') {
+      if (activeTab.startsWith('driver-') || activeTab.startsWith('admin-')) {
+        setActiveTab('home');
+      }
+    }
+  }, [user?.role]);
 
   if (loading) {
     return (
@@ -78,16 +95,16 @@ const MainLayout = () => {
         )}
 
         {user?.role === 'ROLE_DRIVER' && (
-          <DriverDashboard />
+          <DriverDashboard activeTab={activeTab} onSelectTab={(t) => setActiveTab(t)} />
         )}
 
         {user?.role === 'ROLE_ADMIN' && (
-          <AdminDashboard />
+          <AdminDashboard activeTab={activeTab} onSelectTab={(t) => setActiveTab(t)} />
         )}
       </main>
 
       {/* Professional Commercial White Footer */}
-      <footer className={`${isExploreMode ? 'hidden' : 'block'} border-t border-gray-200 bg-white py-5 text-xs text-gray-500`}>
+      <footer className={`${isExploreMode ? 'hidden' : 'block'} border-t border-gray-200 bg-white py-5 text-xs text-gray-500 mb-16 sm:mb-0`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center space-x-2">
             <span className="font-extrabold text-gray-900 text-sm tracking-tight">Drive<span className="text-brand-600">Pulse</span></span>
@@ -112,15 +129,13 @@ const MainLayout = () => {
         </div>
       </footer>
 
-      {/* Mobile Persistent Taskbar (Native app feel) */}
-      {user?.role === 'ROLE_CUSTOMER' && (
-        <BottomTaskbar
-          currentTab={activeTab === 'explore' ? 'rides' : activeTab}
-          onSelectTab={(tabId) => {
-            setActiveTab(tabId);
-          }}
-        />
-      )}
+      {/* Mobile Persistent Taskbar (Native app feel for all roles) */}
+      <BottomTaskbar
+        currentTab={activeTab === 'explore' ? 'rides' : activeTab}
+        onSelectTab={(tabId) => {
+          setActiveTab(tabId);
+        }}
+      />
     </div>
   );
 };

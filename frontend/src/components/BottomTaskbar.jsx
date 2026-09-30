@@ -1,38 +1,97 @@
 import React from 'react';
-import { Home, Navigation, Zap, Clock, User, LogOut } from 'lucide-react';
+import {
+  Home, Navigation, Zap, Clock, User, Radio,
+  IndianRupee, Shield, Car, UserCheck, BarChart3, Wallet
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const BottomTaskbar = ({ currentTab, onSelectTab, onOpenAccountModal }) => {
+const BottomTaskbar = ({ currentTab, onSelectTab }) => {
   const { user } = useAuth();
 
-  const tabs = [
-    {
-      id: 'home',
-      label: 'Home',
-      icon: Home,
-    },
-    {
-      id: 'rides',
-      label: 'Rides',
-      icon: Navigation,
-    },
-    {
-      id: 'arrival-sim',
-      label: 'Animation',
-      icon: Zap,
-      badge: '60 FPS',
-    },
-    {
-      id: 'my-trips',
-      label: 'Activity',
-      icon: Clock,
-    },
-    {
-      id: 'account',
-      label: 'Account',
-      icon: User,
-    },
-  ];
+  let tabs = [];
+  let activeThemeClass = 'bg-amber-400 text-slate-950 shadow-xs';
+
+  if (user?.role === 'ROLE_DRIVER') {
+    activeThemeClass = 'bg-cyan-400 text-slate-950 shadow-xs';
+    tabs = [
+      {
+        id: 'driver-radar',
+        label: 'Radar',
+        icon: Radio,
+        badge: 'LIVE',
+      },
+      {
+        id: 'driver-cockpit',
+        label: 'Cockpit',
+        icon: Navigation,
+      },
+      {
+        id: 'driver-trips',
+        label: 'Earnings',
+        icon: IndianRupee,
+      },
+      {
+        id: 'driver-profile',
+        label: 'Profile',
+        icon: User,
+      },
+    ];
+  } else if (user?.role === 'ROLE_ADMIN') {
+    activeThemeClass = 'bg-purple-600 text-white shadow-xs';
+    tabs = [
+      {
+        id: 'admin-overview',
+        label: 'Telemetry',
+        icon: BarChart3,
+      },
+      {
+        id: 'admin-fleet',
+        label: 'Fleet',
+        icon: Car,
+      },
+      {
+        id: 'admin-drivers',
+        label: 'Drivers',
+        icon: UserCheck,
+      },
+      {
+        id: 'admin-trips',
+        label: 'Trips',
+        icon: Clock,
+      },
+    ];
+  } else {
+    // Default Rider / Customer
+    activeThemeClass = 'bg-amber-400 text-slate-950 shadow-xs';
+    tabs = [
+      {
+        id: 'home',
+        label: 'Home',
+        icon: Home,
+      },
+      {
+        id: 'rides',
+        label: 'Rides',
+        icon: Navigation,
+      },
+      {
+        id: 'arrival-sim',
+        label: 'Animation',
+        icon: Zap,
+        badge: '60 FPS',
+      },
+      {
+        id: 'my-trips',
+        label: 'Activity',
+        icon: Clock,
+      },
+      {
+        id: 'account',
+        label: 'Account',
+        icon: User,
+      },
+    ];
+  }
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-[1200] bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-2xl sm:hidden">
@@ -57,7 +116,7 @@ const BottomTaskbar = ({ currentTab, onSelectTab, onOpenAccountModal }) => {
                 <div
                   className={`w-9 h-7 rounded-xl flex items-center justify-center transition-all ${
                     isActive
-                      ? 'bg-amber-400 text-slate-950 shadow-xs'
+                      ? activeThemeClass
                       : 'text-gray-500'
                   }`}
                 >

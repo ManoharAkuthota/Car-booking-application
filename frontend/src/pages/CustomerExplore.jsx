@@ -11,9 +11,11 @@ import {
   AlertCircle, PhoneCall, Check, Info, ShieldAlert, Sparkles,
   RefreshCw, X, Crosshair, Users, Zap, ArrowUpDown, Calendar,
   CreditCard, Tag, FileText, ChevronDown, CheckCircle2, ArrowRight,
-  Shield, Phone, KeyRound, Loader2, Award, ArrowLeft
+  Shield, Phone, KeyRound, Loader2, Award, ArrowLeft, Radio
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { subscribeToDispatchEvents, emitDispatchEvent } from '../utils/dispatchEvents';
+import { dispatchSound } from '../utils/audioAlert';
 
 // 5 Dedicated Rapido Services Enhanced from Reference Images
 // 5 Dedicated Rapido Services Enhanced from Reference Images (Crisp High-Contrast Vector Models)
@@ -146,6 +148,49 @@ const RAPIDO_SERVICES = [
   },
 ];
 
+const DRIVER_PROFILES = {
+  BIKE: {
+    name: 'Rajesh Kumar',
+    rating: '4.92',
+    trips: '1,420 trips',
+    vehicle: 'Honda Activa 6G • KA 01 EK 4921',
+    phone: '+91 98450 12345',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120',
+  },
+  AUTO: {
+    name: 'Suresh Gowda',
+    rating: '4.88',
+    trips: '2,890 trips',
+    vehicle: 'Bajaj RE Compact • KA 04 B 8820',
+    phone: '+91 98860 99881',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120',
+  },
+  SEDAN: {
+    name: 'Vikramaditya Rao',
+    rating: '4.95',
+    trips: '980 trips',
+    vehicle: 'Maruti Suzuki Dzire • KA 05 MN 3012',
+    phone: '+91 99001 54321',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120',
+  },
+  SUV: {
+    name: 'Anand Murthy',
+    rating: '4.91',
+    trips: '1,120 trips',
+    vehicle: 'Auto Plus CNG • KA 03 AB 4455',
+    phone: '+91 98455 77889',
+    avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=120',
+  },
+  TROLLEY_PORTER: {
+    name: 'Manjunath Swamy',
+    rating: '4.82',
+    trips: '640 trips',
+    vehicle: 'Tata Ace Gold 750kg • KA 01 TR 7500',
+    phone: '+91 97400 88210',
+    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=120',
+  },
+};
+
 const CustomerExplore = ({
   initialStep = 'HOME',
   onNavigateToTrips,
@@ -190,6 +235,60 @@ const CustomerExplore = ({
   const [bookingState, setBookingState] = useState('IDLE'); // 'IDLE' | 'SEARCHING' | 'ACCEPTED' | 'DRIVER_ARRIVING' | 'IN_PROGRESS'
   const [assignedDriver, setAssignedDriver] = useState(null);
   const [otpPin, setOtpPin] = useState('5824');
+  const [searchSeconds, setSearchSeconds] = useState(0);
+
+  const handleAcceptByDriver = async (driverData = null) => {
+    dispatchSound.playSuccessChime();
+    const assigned = driverData || DRIVER_PROFILES[selectedServiceId] || DRIVER_PROFILES.BIKE;
+    setAssignedDriver(assigned);
+    setBookingState('ACCEPTED');
+    if (activeBooking?.id) {
+      try {
+        await bookingApi.updateStatus(activeBooking.id, { status: 'ACCEPTED' });
+      } catch (e) {}
+    }
+  };
+
+  // Realtime subscription: When driver accepts anywhere on the platform
+  useEffect(() => {
+    const unsubscribe = subscribeToDispatchEvents((event) => {
+      if (event.type === 'RIDE_ACCEPTED' && event.booking) {
+        if (!activeBooking || event.booking.id === activeBooking.id || event.booking.bookingCode === activeBooking.bookingCode) {
+          handleAcceptByDriver({
+            name: event.booking.driver?.fullName || 'Rajesh Kumar',
+            rating: '4.92',
+            trips: '520 trips',
+            vehicle: event.booking.car
+              ? `${event.booking.car.make} ${event.booking.car.model} • ${event.booking.car.licensePlate}`
+              : 'Bajaj RE • KA 05 BK 3344',
+            phone: event.booking.driver?.phone || '+91 98765 43210',
+            avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120',
+          });
+          if (event.booking.otp) setOtpPin(event.booking.otp);
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, [activeBooking, selectedServiceId]);
+
+  // Dynamic Searching countdown and auto-dispatch fallback
+  useEffect(() => {
+    let timer = null;
+    let secInterval = null;
+    if (bookingState === 'SEARCHING') {
+      setSearchSeconds(0);
+      secInterval = setInterval(() => setSearchSeconds((s) => s + 1), 1000);
+
+      // Auto-dispatch fallback after 6s of searching so user is never stranded
+      timer = setTimeout(() => {
+        handleAcceptByDriver();
+      }, 6000);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+      if (secInterval) clearInterval(secInterval);
+    };
+  }, [bookingState, selectedServiceId]);
 
   // Helper to ensure dropoff is in the same city vicinity (~3.5km) as pickup
   const autoPairVicinityDropoff = async (pickupLat, pickupLng, currentDropoff) => {
@@ -435,9 +534,7 @@ const CustomerExplore = ({
     };
 
     const assigned = driverProfiles[selectedService.category] || driverProfiles.BIKE;
-    setAssignedDriver(assigned);
-
-    // 1. SEARCHING Animation (1.5 seconds)
+    // 1. Enter SEARCHING state and wait dynamically for pilot acceptance
     setBookingState('SEARCHING');
 
     try {
@@ -453,15 +550,16 @@ const CustomerExplore = ({
         totalFare: fare,
         paymentMethod: 'CASH',
         specialInstructions: 'Rapido Live Ride',
+        status: 'REQUESTED',
       });
       setActiveBooking(res.data);
       if (res.data.otp) setOtpPin(res.data.otp);
     } catch (err) {
       // Local fallback in case backend is offline
-      setActiveBooking({
+      const fallback = {
         id: Date.now(),
-        bookingCode: `RAP-${Math.floor(1000 + Math.random() * 9000)}`,
-        status: 'ACCEPTED',
+        bookingCode: `DP-${Math.floor(100000 + Math.random() * 900000)}`,
+        status: 'REQUESTED',
         pickupAddress: pickupLocation.name,
         dropoffAddress: dropoffLocation.name,
         pickupLat: pickupCoord[0],
@@ -472,13 +570,10 @@ const CustomerExplore = ({
         totalFare: fare,
         car: matchedCar,
         otp: '5824',
-      });
+      };
+      setActiveBooking(fallback);
+      emitDispatchEvent({ type: 'RIDE_REQUESTED', booking: fallback });
     }
-
-    // 2. Transition to ACCEPTED (Captain en route to pickup)
-    setTimeout(() => {
-      setBookingState('ACCEPTED');
-    }, 1500);
   };
 
   // Driver Arrived
@@ -508,15 +603,14 @@ const CustomerExplore = ({
 
   // Cancel Booking
   const handleCancelBooking = async () => {
-    if (!window.confirm("Are you sure you want to cancel this ride?")) return;
     try {
       if (activeBooking?.id) {
         await bookingApi.cancelBooking(activeBooking.id);
+        emitDispatchEvent({ type: 'RIDE_CANCELLED', bookingId: activeBooking.id });
       }
     } catch (e) {}
     setActiveBooking(null);
     setBookingState('IDLE');
-    updateFlowStep('HOME');
     setAssignedDriver(null);
   };
 
@@ -664,7 +758,7 @@ const CustomerExplore = ({
           pickup={pickupCoord}
           dropoff={dropoffCoord}
           category={selectedService.category}
-          isLiveTrip={bookingState !== 'IDLE'}
+          isLiveTrip={bookingState === 'ACCEPTED' || bookingState === 'DRIVER_ARRIVING' || bookingState === 'IN_PROGRESS'}
           tripStatus={bookingState === 'IDLE' ? null : bookingState}
           className="w-full h-full rounded-none border-0 shadow-none"
           onLocateMe={handleDetectLiveLocation}
@@ -801,8 +895,93 @@ const CustomerExplore = ({
           </div>
         )}
 
-        {/* --- VIEW B: ACTIVE TRIP & DRIVER ARRIVAL COCKPIT (Rapido Live Ride) --- */}
-        {bookingState !== 'IDLE' && (
+        {/* --- VIEW B: SEARCHING & WAITING FOR DRIVER ACCEPTANCE --- */}
+        {bookingState === 'SEARCHING' && (
+          <div data-testid="searching-for-driver-card" className="p-4 sm:p-5 space-y-3.5 overflow-y-auto max-h-[49vh] sm:max-h-[64vh]">
+            {/* Header with live pulsing radar ring and dynamic timer */}
+            <div className="flex items-center justify-between pb-2.5 border-b border-gray-100">
+              <div className="flex items-center space-x-2.5 min-w-0">
+                <span className="relative flex h-3.5 w-3.5 flex-shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-amber-500"></span>
+                </span>
+                <div className="min-w-0">
+                  <h3 className="text-xs sm:text-sm font-black text-gray-950 truncate">
+                    Searching for Captains nearby...
+                  </h3>
+                  <p className="text-[10px] text-gray-500 font-medium truncate">
+                    Connecting with verified pilots in your area
+                  </p>
+                </div>
+              </div>
+
+              <div className="px-2.5 py-1 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 font-mono font-black text-xs flex-shrink-0">
+                00:{(searchSeconds % 60).toString().padStart(2, '0')}s
+              </div>
+            </div>
+
+            {/* Route & Upfront Locked Fare Summary */}
+            <div className="bg-gray-50 rounded-2xl p-3.5 border border-gray-200 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="w-9 h-8 rounded-xl bg-white border border-gray-200 flex items-center justify-center shadow-xs">
+                    {selectedService.symbolSvg}
+                  </div>
+                  <div>
+                    <p className="font-extrabold text-gray-950">{selectedService.name}</p>
+                    <p className="text-[10px] text-gray-500">Route ~{estDistanceKm} km</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-base font-black text-gray-950 font-mono">₹{calculateServiceFare(selectedService)}</p>
+                  <p className="text-[9px] text-emerald-600 font-bold uppercase">Locked Fare</p>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-gray-200/70 space-y-1">
+                <p className="text-gray-700 truncate">
+                  <strong className="text-gray-900">Pickup:</strong> {pickupLocation.name}
+                </p>
+                <p className="text-gray-700 truncate">
+                  <strong className="text-gray-900">Dropoff:</strong> {dropoffLocation.name}
+                </p>
+              </div>
+            </div>
+
+            {/* Realtime Announcement Banner */}
+            <div className="p-3 rounded-2xl bg-amber-50/80 border border-amber-200 text-xs flex items-center space-x-2 text-amber-950">
+              <Radio className="w-4 h-4 text-amber-600 animate-pulse flex-shrink-0" />
+              <span className="text-[11px] font-semibold leading-tight">
+                Request sent to nearby pilots with audio dispatch alert. Waiting for captain to accept...
+              </span>
+            </div>
+
+            {/* Interactive Actions */}
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                data-testid="cancel-searching-btn"
+                onClick={handleCancelBooking}
+                className="py-2.5 px-3 rounded-xl border border-gray-200 bg-white hover:bg-gray-100 text-rose-700 font-bold text-xs transition-all active:scale-98 text-center"
+              >
+                Cancel Request
+              </button>
+
+              <button
+                type="button"
+                data-testid="fast-forward-accept-btn"
+                onClick={() => handleAcceptByDriver()}
+                className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md transition-all active:scale-98 flex items-center justify-center space-x-1"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Simulate Pilot Accept</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* --- VIEW C: ACTIVE TRIP & DRIVER ARRIVAL COCKPIT (Rapido Live Ride) --- */}
+        {(bookingState === 'ACCEPTED' || bookingState === 'DRIVER_ARRIVING' || bookingState === 'IN_PROGRESS') && (
           <div className="p-4 sm:p-5 space-y-3.5 overflow-y-auto max-h-[49vh] sm:max-h-[64vh]">
             
             {/* Status Header */}

@@ -580,9 +580,32 @@ const MapView = ({
     };
   }, [pickup?.[0], pickup?.[1], dropoff?.[0], dropoff?.[1], isLiveTrip, tripStatus, driverStartPos]);
 
+  // Safe Leaflet Direct DOM Mutator: Guards against unmount & detached marker errors
+  const safelyMutateMarker = (pos, heading = null, leanCss = '') => {
+    try {
+      const marker = liveMarkerRef.current;
+      if (marker && marker._map) {
+        marker.setLatLng(pos);
+        if (heading !== null) {
+          const el = marker.getElement();
+          if (el) {
+            const rotator = el.querySelector('.rapido-vehicle-rotator');
+            if (rotator) {
+              rotator.style.transform = `rotate(${heading}deg)${leanCss}`;
+            }
+          }
+        }
+      }
+    } catch {
+      // Graceful error suppression during map pan/unmount transitions
+    }
+  };
+
   // High-performance 60 FPS Direct Leaflet Marker Mutation Engine
   useEffect(() => {
     if (!isLiveTrip) return;
+
+    let isMounted = true;
 
     if (animFrameRef.current) {
       cancelAnimationFrame(animFrameRef.current);
@@ -603,18 +626,12 @@ const MapView = ({
       setLiveVehiclePos(route[0]);
       setLiveHeading(initialH);
 
-      if (liveMarkerRef.current) {
-        liveMarkerRef.current.setLatLng(route[0]);
-        const el = liveMarkerRef.current.getElement();
-        if (el) {
-          const rotator = el.querySelector('.rapido-vehicle-rotator');
-          if (rotator) rotator.style.transform = `rotate(${initialH}deg)`;
-        }
-      }
+      safelyMutateMarker(route[0], initialH);
 
       let startTime = null;
 
       const step = (timestamp) => {
+        if (!isMounted) return;
         if (!startTime) startTime = timestamp;
         const elapsed = timestamp - startTime;
         const rawProgress = Math.min(1.0, elapsed / durationMs);
@@ -637,16 +654,7 @@ const MapView = ({
           }
 
           // DIRECT LEAFLET HARDWARE MUTATION (Zero React re-render thrashing!)
-          if (liveMarkerRef.current) {
-            liveMarkerRef.current.setLatLng([sampled.lat, sampled.lng]);
-            const el = liveMarkerRef.current.getElement();
-            if (el) {
-              const rotator = el.querySelector('.rapido-vehicle-rotator');
-              if (rotator) {
-                rotator.style.transform = `rotate(${headingTrackerRef.current}deg)${leanCss}`;
-              }
-            }
-          }
+          safelyMutateMarker([sampled.lat, sampled.lng], headingTrackerRef.current, leanCss);
 
           // Throttled Telemetry Update (1 Hz)
           const now = performance.now();
@@ -664,9 +672,7 @@ const MapView = ({
           animFrameRef.current = requestAnimationFrame(step);
         } else {
           // Reached Pickup
-          if (liveMarkerRef.current) {
-            liveMarkerRef.current.setLatLng(pickup);
-          }
+          safelyMutateMarker(pickup);
           setLiveVehiclePos(pickup);
           setLiveRemainingKm(0);
           setLiveEtaMins(0);
@@ -678,15 +684,14 @@ const MapView = ({
 
       animFrameRef.current = requestAnimationFrame(step);
       return () => {
+        isMounted = false;
         if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       };
     }
 
     // Phase 2: DRIVER_ARRIVING -> At Pickup
     if (tripStatus === 'DRIVER_ARRIVING') {
-      if (liveMarkerRef.current) {
-        liveMarkerRef.current.setLatLng(pickup);
-      }
+      safelyMutateMarker(pickup);
       setLiveVehiclePos(pickup);
       setLiveRemainingKm(0);
       setLiveEtaMins(0);
@@ -707,18 +712,12 @@ const MapView = ({
       setLiveVehiclePos(route[0]);
       setLiveHeading(initialH);
 
-      if (liveMarkerRef.current) {
-        liveMarkerRef.current.setLatLng(route[0]);
-        const el = liveMarkerRef.current.getElement();
-        if (el) {
-          const rotator = el.querySelector('.rapido-vehicle-rotator');
-          if (rotator) rotator.style.transform = `rotate(${initialH}deg)`;
-        }
-      }
+      safelyMutateMarker(route[0], initialH);
 
       let startTime = null;
 
       const step = (timestamp) => {
+        if (!isMounted) return;
         if (!startTime) startTime = timestamp;
         const elapsed = timestamp - startTime;
         const rawProgress = Math.min(1.0, elapsed / durationMs);
@@ -741,16 +740,7 @@ const MapView = ({
           }
 
           // DIRECT LEAFLET HARDWARE MUTATION
-          if (liveMarkerRef.current) {
-            liveMarkerRef.current.setLatLng([sampled.lat, sampled.lng]);
-            const el = liveMarkerRef.current.getElement();
-            if (el) {
-              const rotator = el.querySelector('.rapido-vehicle-rotator');
-              if (rotator) {
-                rotator.style.transform = `rotate(${headingTrackerRef.current}deg)${leanCss}`;
-              }
-            }
-          }
+          safelyMutateMarker([sampled.lat, sampled.lng], headingTrackerRef.current, leanCss);
 
           // Throttled Telemetry Update (1 Hz)
           const now = performance.now();
@@ -768,9 +758,7 @@ const MapView = ({
           animFrameRef.current = requestAnimationFrame(step);
         } else {
           // Reached Dropoff
-          if (liveMarkerRef.current) {
-            liveMarkerRef.current.setLatLng(dropoff);
-          }
+          safelyMutateMarker(dropoff);
           setLiveVehiclePos(dropoff);
           setLiveRemainingKm(0);
           setLiveEtaMins(0);
@@ -782,15 +770,14 @@ const MapView = ({
 
       animFrameRef.current = requestAnimationFrame(step);
       return () => {
+        isMounted = false;
         if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       };
     }
 
     // Phase 4: COMPLETED -> At Destination
     if (tripStatus === 'COMPLETED') {
-      if (liveMarkerRef.current) {
-        liveMarkerRef.current.setLatLng(dropoff);
-      }
+      safelyMutateMarker(dropoff);
       setLiveVehiclePos(dropoff);
       setLiveRemainingKm(0);
       setLiveEtaMins(0);
