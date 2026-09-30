@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { INITIAL_VEHICLES, DEMO_USERS } from './mockData';
+import { INITIAL_VEHICLES, DEMO_USERS, DEMO_DRIVERS } from './mockData';
 import { emitDispatchEvent } from '../utils/dispatchEvents';
 
 const api = axios.create({
@@ -404,36 +404,56 @@ export const adminApi = {
   },
   getDrivers: async () => {
     try {
-      return await api.get('/admin/drivers');
+      const res = await api.get('/admin/drivers');
+      if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+        return {
+          data: res.data.map((d, index) => {
+            const fallback = DEMO_DRIVERS.find((m) => m.id === d.id) || DEMO_DRIVERS[index % DEMO_DRIVERS.length];
+            return {
+              ...fallback,
+              ...d,
+              reviews: d.reviews || fallback.reviews,
+              tripHistory: d.tripHistory || fallback.tripHistory,
+            };
+          })
+        };
+      }
+      return { data: DEMO_DRIVERS };
     } catch (err) {
-      return {
-        data: [
-          {
-            id: 1,
-            user: DEMO_USERS.driver,
-            licenseNumber: 'KA-05-2019-0038472',
-            vehicleAssigned: 'Royal Enfield Hunter 350',
-            experienceYears: 5,
-            verificationStatus: 'APPROVED',
-          },
-          {
-            id: 2,
-            user: { fullName: 'Suresh Gowda', email: 'suresh@drivepulse.com' },
-            licenseNumber: 'KA-01-2018-0091823',
-            vehicleAssigned: 'Tata Ace Gold Porter',
-            experienceYears: 7,
-            verificationStatus: 'APPROVED',
-          },
-          {
-            id: 3,
-            user: { fullName: 'Amit Verma', email: 'amit@drivepulse.com' },
-            licenseNumber: 'KA-03-2022-0045129',
-            vehicleAssigned: 'Bajaj RE CNG Auto',
-            experienceYears: 4,
-            verificationStatus: 'APPROVED',
-          }
-        ]
-      };
+      return { data: DEMO_DRIVERS };
+    }
+  },
+  getDriverById: async (id) => {
+    try {
+      const res = await api.get(`/admin/drivers/${id}`);
+      return res;
+    } catch (err) {
+      const driver = DEMO_DRIVERS.find((d) => d.id === Number(id)) || DEMO_DRIVERS[0];
+      return { data: driver };
+    }
+  },
+  getDriverTrips: async (driverId) => {
+    try {
+      const res = await api.get(`/admin/drivers/${driverId}/trips`);
+      return res;
+    } catch (err) {
+      const driver = DEMO_DRIVERS.find((d) => d.id === Number(driverId)) || DEMO_DRIVERS[0];
+      return { data: driver.tripHistory || [] };
+    }
+  },
+  getTripDetails: async (tripId) => {
+    try {
+      const res = await api.get(`/bookings/${tripId}`);
+      return res;
+    } catch (err) {
+      for (const d of DEMO_DRIVERS) {
+        const trip = (d.tripHistory || []).find((t) => t.id === Number(tripId) || t.bookingCode === tripId);
+        if (trip) return { data: trip };
+      }
+      const stored = getStoredBookings();
+      const b = stored.find((t) => t.id === Number(tripId) || t.bookingCode === tripId);
+      if (b) return { data: b };
+      return { data: DEMO_DRIVERS[0].tripHistory[0] };
     }
   },
   verifyDriver: async (id, status) => {

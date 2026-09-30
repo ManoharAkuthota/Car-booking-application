@@ -643,6 +643,84 @@ async function runEndToEndTests() {
       { timeout: 6000 }
     );
 
+    // Test Mobile Driver Drill-Down (History & Reviews)
+    console.log('Testing Mobile Admin Step 3A: Open Driver History & Reviews Modal...');
+    await mobilePage.evaluate(() => {
+      const historyBtn = document.querySelector('[data-testid^="mobile-view-driver-"]');
+      if (historyBtn) historyBtn.click();
+    });
+    await mobilePage.waitForSelector('[data-testid="driver-details-modal"]', { timeout: 6000 });
+    await mobilePage.waitForFunction(
+      () => document.body.innerText.includes('Ride History') && document.body.innerText.includes('DP-519672'),
+      { timeout: 6000 }
+    );
+    console.log('✓ Mobile Admin: Driver Details modal opened with Ride History');
+    passedTests.push('Mobile Admin: Driver History Drill-Down');
+
+    const mobileDriverHistoryShot = path.join(SCREENSHOT_DIR, 'mobile_admin_03a_driver_history.png');
+    await mobilePage.screenshot({ path: mobileDriverHistoryShot });
+    console.log('📸 Screenshot captured:', mobileDriverHistoryShot);
+
+    // Switch to Reviews Tab on Mobile
+    console.log('Testing Mobile Admin Step 3B: Switch to Driver Reviews Tab...');
+    await mobilePage.evaluate(() => {
+      const reviewsTab = document.querySelector('[data-testid="driver-modal-tab-reviews"]');
+      if (reviewsTab) reviewsTab.click();
+    });
+    await mobilePage.waitForFunction(
+      () =>
+        document.body.innerText.includes('Passenger Reviews') &&
+        (document.body.innerText.includes('Outstanding pilot') || document.body.innerText.includes('Clean Helmet')),
+      { timeout: 6000 }
+    );
+    console.log('✓ Mobile Admin: Driver Reviews displayed with verified passenger feedback');
+    passedTests.push('Mobile Admin: Driver Reviews & Ratings Inspection');
+
+    const mobileDriverReviewsShot = path.join(SCREENSHOT_DIR, 'mobile_admin_03b_driver_reviews.png');
+    await mobilePage.screenshot({ path: mobileDriverReviewsShot });
+    console.log('📸 Screenshot captured:', mobileDriverReviewsShot);
+
+    // Switch back to History Tab and click first ride
+    console.log('Testing Mobile Admin Step 3C: Click Ride to Inspect Full Ride Details...');
+    await mobilePage.evaluate(() => {
+      const historyTab = document.querySelector('[data-testid="driver-modal-tab-history"]');
+      if (historyTab) historyTab.click();
+    });
+    await new Promise((r) => setTimeout(r, 400));
+    await mobilePage.evaluate(() => {
+      const tripCard = document.querySelector('[data-testid^="driver-trip-card-"]');
+      if (tripCard) tripCard.click();
+    });
+    await mobilePage.waitForSelector('[data-testid="ride-details-modal"]', { timeout: 6000 });
+    await mobilePage.waitForFunction(
+      () =>
+        document.body.innerText.includes('DP-519672') &&
+        document.body.innerText.includes('Vidhana Soudha') &&
+        document.body.innerText.includes('Base Upfront Fare') &&
+        document.body.innerText.includes('Total Settled Amount'),
+      { timeout: 6000 }
+    );
+    console.log('✓ Mobile Admin: Ride Details Modal verified with route, passenger, vehicle & itemized fare breakdown');
+    passedTests.push('Mobile Admin: Deep Ride Details & Financial Breakdown');
+
+    const mobileRideDetailsShot = path.join(SCREENSHOT_DIR, 'mobile_admin_03c_ride_details.png');
+    await mobilePage.screenshot({ path: mobileRideDetailsShot });
+    console.log('📸 Screenshot captured:', mobileRideDetailsShot);
+
+    // Close Ride Details Modal
+    await mobilePage.evaluate(() => {
+      const closeRideBtn = document.querySelector('[data-testid="close-ride-details-modal"]');
+      if (closeRideBtn) closeRideBtn.click();
+    });
+    await new Promise((r) => setTimeout(r, 400));
+
+    // Close Driver Details Modal if still open
+    await mobilePage.evaluate(() => {
+      const closeDriverBtn = document.querySelector('[data-testid="close-driver-details-modal"]');
+      if (closeDriverBtn) closeDriverBtn.click();
+    });
+    await new Promise((r) => setTimeout(r, 400));
+
     // Click Approve on first driver
     await mobilePage.evaluate(() => {
       const approveBtn = Array.from(document.querySelectorAll('button')).find(
@@ -988,6 +1066,84 @@ async function runEndToEndTests() {
     const laptopAdminDriversShot = path.join(SCREENSHOT_DIR, 'laptop_admin_03_drivers.png');
     await laptopPage.screenshot({ path: laptopAdminDriversShot });
     console.log('📸 Screenshot captured:', laptopAdminDriversShot);
+
+    // Test Desktop Driver Drill-Down (History & Reviews)
+    console.log('Testing Laptop Admin Step 3A: Open Driver History & Reviews Modal...');
+    await laptopPage.evaluate(() => {
+      const historyBtn = document.querySelector('[data-testid^="view-driver-"]');
+      if (historyBtn) historyBtn.click();
+    });
+    await laptopPage.waitForSelector('[data-testid="driver-details-modal"]', { timeout: 6000 });
+    await laptopPage.waitForFunction(
+      () => document.body.innerText.includes('Ride History') && document.body.innerText.includes('DP-519672'),
+      { timeout: 6000 }
+    );
+    console.log('✓ Laptop Admin: Desktop Driver Details modal opened with Ride History');
+    passedTests.push('Laptop Admin: Driver History Drill-Down');
+
+    const laptopDriverHistoryShot = path.join(SCREENSHOT_DIR, 'laptop_admin_03a_driver_history.png');
+    await laptopPage.screenshot({ path: laptopDriverHistoryShot });
+    console.log('📸 Screenshot captured:', laptopDriverHistoryShot);
+
+    // Switch to Reviews Tab on Laptop
+    console.log('Testing Laptop Admin Step 3B: Switch to Driver Reviews Tab...');
+    await laptopPage.evaluate(() => {
+      const reviewsTab = document.querySelector('[data-testid="driver-modal-tab-reviews"]');
+      if (reviewsTab) reviewsTab.click();
+    });
+    await laptopPage.waitForFunction(
+      () =>
+        document.body.innerText.includes('Passenger Reviews') &&
+        (document.body.innerText.includes('Outstanding pilot') || document.body.innerText.includes('Clean Helmet')),
+      { timeout: 6000 }
+    );
+    console.log('✓ Laptop Admin: Driver Reviews displayed with verified passenger feedback');
+    passedTests.push('Laptop Admin: Driver Reviews & Ratings Inspection');
+
+    const laptopDriverReviewsShot = path.join(SCREENSHOT_DIR, 'laptop_admin_03b_driver_reviews.png');
+    await laptopPage.screenshot({ path: laptopDriverReviewsShot });
+    console.log('📸 Screenshot captured:', laptopDriverReviewsShot);
+
+    // Switch back to History Tab and click first ride
+    console.log('Testing Laptop Admin Step 3C: Click Ride to Inspect Full Ride Details...');
+    await laptopPage.evaluate(() => {
+      const historyTab = document.querySelector('[data-testid="driver-modal-tab-history"]');
+      if (historyTab) historyTab.click();
+    });
+    await new Promise((r) => setTimeout(r, 400));
+    await laptopPage.evaluate(() => {
+      const tripCard = document.querySelector('[data-testid^="driver-trip-card-"]');
+      if (tripCard) tripCard.click();
+    });
+    await laptopPage.waitForSelector('[data-testid="ride-details-modal"]', { timeout: 6000 });
+    await laptopPage.waitForFunction(
+      () =>
+        document.body.innerText.includes('DP-519672') &&
+        document.body.innerText.includes('Vidhana Soudha') &&
+        document.body.innerText.includes('Base Upfront Fare') &&
+        document.body.innerText.includes('Total Settled Amount'),
+      { timeout: 6000 }
+    );
+    console.log('✓ Laptop Admin: Ride Details Modal verified with route, passenger, vehicle & itemized fare breakdown');
+    passedTests.push('Laptop Admin: Deep Ride Details & Financial Breakdown');
+
+    const laptopRideDetailsShot = path.join(SCREENSHOT_DIR, 'laptop_admin_03c_ride_details.png');
+    await laptopPage.screenshot({ path: laptopRideDetailsShot });
+    console.log('📸 Screenshot captured:', laptopRideDetailsShot);
+
+    // Close Ride Details Modal
+    await laptopPage.evaluate(() => {
+      const closeRideBtn = document.querySelector('[data-testid="close-ride-details-modal"]');
+      if (closeRideBtn) closeRideBtn.click();
+    });
+    await new Promise((r) => setTimeout(r, 400));
+
+    // Close Driver Details Modal if still open
+    await laptopPage.evaluate(() => {
+      const closeDriverBtn = document.querySelector('[data-testid="close-driver-details-modal"]');
+      if (closeDriverBtn) closeDriverBtn.click();
+    });
+    await new Promise((r) => setTimeout(r, 400));
 
     // Step LA4: Desktop Platform Trips Monitor
     console.log('Testing Laptop Admin Step 4: Navbar Tab -> Platform Trips Monitor...');

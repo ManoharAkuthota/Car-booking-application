@@ -3,8 +3,10 @@ import { adminApi, carApi } from '../api/client';
 import {
   Shield, DollarSign, Car, Users, Plus, Check, X, Trash2,
   Edit3, Navigation, Loader2, Sparkles, Filter, CheckCircle2,
-  Clock, MapPin, IndianRupee, ArrowRight, UserCheck
+  Clock, MapPin, IndianRupee, ArrowRight, UserCheck, MessageSquare, Star
 } from 'lucide-react';
+import DriverDetailsModal from '../components/admin/DriverDetailsModal';
+import RideDetailsModal from '../components/admin/RideDetailsModal';
 
 const AdminDashboard = ({ activeTab = 'admin-overview', onSelectTab }) => {
   const [stats, setStats] = useState(null);
@@ -17,6 +19,8 @@ const AdminDashboard = ({ activeTab = 'admin-overview', onSelectTab }) => {
   const [carError, setCarError] = useState(null);
   const [fleetCategoryFilter, setFleetCategoryFilter] = useState('ALL');
   const [successToast, setSuccessToast] = useState(null);
+  const [selectedDriver, setSelectedDriver] = useState(null);
+  const [selectedTrip, setSelectedTrip] = useState(null);
 
   // Normalize external activeTab
   const getSubTab = (tab) => {
@@ -455,23 +459,35 @@ const AdminDashboard = ({ activeTab = 'admin-overview', onSelectTab }) => {
                   <p>Assigned: <strong>{d.vehicleAssigned}</strong> ({d.experienceYears} Years Exp)</p>
                 </div>
 
-                <div className="flex items-center justify-end space-x-2 pt-2 border-t border-gray-100 text-xs">
+                <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-xs">
                   <button
                     type="button"
-                    data-testid={`approve-driver-${d.id}`}
-                    onClick={() => handleVerifyDriver(d.id, 'APPROVED')}
-                    className="px-3 py-1 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold border border-emerald-200 transition-all"
+                    data-testid={`mobile-view-driver-${d.id}`}
+                    onClick={() => setSelectedDriver(d)}
+                    className="px-3 py-1.5 rounded-xl bg-purple-50 text-purple-700 hover:bg-purple-100 font-bold border border-purple-200 transition-all flex items-center space-x-1 shadow-2xs active:scale-95"
                   >
-                    Approve
+                    <Clock className="w-3.5 h-3.5 mr-0.5" />
+                    <span>History & Reviews</span>
                   </button>
-                  <button
-                    type="button"
-                    data-testid={`reject-driver-${d.id}`}
-                    onClick={() => handleVerifyDriver(d.id, 'REJECTED')}
-                    className="px-3 py-1 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold border border-rose-200 transition-all"
-                  >
-                    Reject
-                  </button>
+
+                  <div className="flex items-center space-x-1.5">
+                    <button
+                      type="button"
+                      data-testid={`approve-driver-${d.id}`}
+                      onClick={() => handleVerifyDriver(d.id, 'APPROVED')}
+                      className="px-3 py-1 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold border border-emerald-200 transition-all"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      type="button"
+                      data-testid={`reject-driver-${d.id}`}
+                      onClick={() => handleVerifyDriver(d.id, 'REJECTED')}
+                      className="px-3 py-1 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold border border-rose-200 transition-all"
+                    >
+                      Reject
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -487,13 +503,21 @@ const AdminDashboard = ({ activeTab = 'admin-overview', onSelectTab }) => {
                   <th className="px-5 py-3">Vehicle Assigned</th>
                   <th className="px-5 py-3">Experience</th>
                   <th className="px-5 py-3">Status</th>
-                  <th className="px-5 py-3 text-right">Verification Action</th>
+                  <th className="px-5 py-3 text-right">Actions & Audit</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {drivers.map((d) => (
                   <tr key={d.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-5 py-3.5 font-bold text-gray-950">{d.user?.fullName}</td>
+                    <td className="px-5 py-3.5 font-bold text-gray-950">
+                      <span
+                        className="cursor-pointer hover:text-purple-700 hover:underline transition-colors"
+                        onClick={() => setSelectedDriver(d)}
+                        title="Click to view Driver History & Reviews"
+                      >
+                        {d.user?.fullName}
+                      </span>
+                    </td>
                     <td className="px-5 py-3.5 font-mono text-gray-500">{d.licenseNumber}</td>
                     <td className="px-5 py-3.5">{d.vehicleAssigned}</td>
                     <td className="px-5 py-3.5">{d.experienceYears} Years</td>
@@ -509,6 +533,15 @@ const AdminDashboard = ({ activeTab = 'admin-overview', onSelectTab }) => {
                       </span>
                     </td>
                     <td className="px-5 py-3.5 text-right space-x-2">
+                      <button
+                        type="button"
+                        data-testid={`view-driver-${d.id}`}
+                        onClick={() => setSelectedDriver(d)}
+                        className="px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 font-bold text-[10px] border border-purple-200 transition-all inline-flex items-center space-x-1 shadow-2xs"
+                      >
+                        <Clock className="w-3 h-3 mr-0.5" />
+                        <span>History & Reviews</span>
+                      </button>
                       <button
                         type="button"
                         data-testid={`desktop-approve-driver-${d.id}`}
@@ -726,6 +759,28 @@ const AdminDashboard = ({ activeTab = 'admin-overview', onSelectTab }) => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Driver Partner History & Reviews Modal */}
+      {selectedDriver && !selectedTrip && (
+        <DriverDetailsModal
+          driver={selectedDriver}
+          onClose={() => setSelectedDriver(null)}
+          onSelectTrip={(trip) => setSelectedTrip(trip)}
+        />
+      )}
+
+      {/* Specific Ride Information & Telemetry Audit Modal */}
+      {selectedTrip && (
+        <RideDetailsModal
+          trip={selectedTrip}
+          driver={selectedDriver}
+          onClose={() => {
+            setSelectedTrip(null);
+            setSelectedDriver(null);
+          }}
+          onBack={() => setSelectedTrip(null)}
+        />
       )}
     </div>
   );
