@@ -412,7 +412,7 @@ const MapResizer = () => {
   return null;
 };
 
-// Map Tile Providers (CartoDB Voyager - Uber/Rapido vector style, 100% reliable mobile tiles)
+// Map Tile Providers (100% Free & Open-Access - ZERO API Keys Required)
 const MAP_LAYERS = {
   carto_voyager: {
     id: 'carto_voyager',
@@ -422,13 +422,12 @@ const MAP_LAYERS = {
     attribution: '&copy; CARTO &copy; OpenStreetMap',
     maxZoom: 20,
   },
-  google_satellite: {
-    id: 'google_satellite',
+  satellite: {
+    id: 'satellite',
     name: 'Satellite',
-    url: 'https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
-    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-    attribution: '&copy; Google Maps Satellite',
-    maxZoom: 20,
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution: '&copy; Esri World Imagery (No API key required)',
+    maxZoom: 19,
   },
   osm: {
     id: 'osm',
@@ -1021,9 +1020,9 @@ const MapView = ({
           </button>
           <button
             type="button"
-            onClick={() => setSelectedLayer('google_satellite')}
+            onClick={() => setSelectedLayer('satellite')}
             className={`px-2.5 py-1 rounded-lg transition-all ${
-              selectedLayer === 'google_satellite'
+              selectedLayer === 'satellite'
                 ? 'bg-amber-400 text-slate-950 font-black shadow-sm'
                 : 'hover:text-gray-950 hover:bg-gray-100'
             }`}
