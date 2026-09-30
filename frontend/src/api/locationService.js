@@ -109,9 +109,13 @@ export async function searchLocations(query, userLat = 12.9716, userLng = 77.594
   );
 
   try {
-    // 2. Query Photon API (Free, fast autocomplete backed by OpenStreetMap)
+    // 2. Query Photon API (Free, fast autocomplete backed by OpenStreetMap with 2.5s timeout)
     const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(cleanQuery)}&lat=${userLat}&lon=${userLng}&limit=6`;
-    const res = await fetch(photonUrl);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
+
+    const res = await fetch(photonUrl, { signal: controller.signal });
+    clearTimeout(timeoutId);
 
     if (res.ok) {
       const data = await res.json();
@@ -146,7 +150,7 @@ export async function searchLocations(query, userLat = 12.9716, userLng = 77.594
       }
     }
   } catch (err) {
-    console.warn("Photon autocomplete fallback:", err.message);
+    // Graceful fallback to local presets on timeout or network error
   }
 
   // 3. Fallback to Nominatim if Photon returned no items
@@ -154,9 +158,14 @@ export async function searchLocations(query, userLat = 12.9716, userLng = 77.594
     const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
       cleanQuery
     )}&format=json&limit=5&addressdetails=1`;
+    const nomController = new AbortController();
+    const nomTimeout = setTimeout(() => nomController.abort(), 2000);
+
     const nomRes = await fetch(nomUrl, {
       headers: { 'User-Agent': 'DrivePulse-Mobility-App/1.0' },
+      signal: nomController.signal,
     });
+    clearTimeout(nomTimeout);
 
     if (nomRes.ok) {
       const nomData = await nomRes.json();
@@ -180,7 +189,7 @@ export async function searchLocations(query, userLat = 12.9716, userLng = 77.594
       }
     }
   } catch (e) {
-    console.warn("Nominatim fallback warning:", e.message);
+    // Graceful fallback
   }
 
   return localMatches.length > 0 ? localMatches : DEFAULT_PRESET_LOCATIONS.slice(0, 4);
@@ -200,9 +209,14 @@ export async function reverseGeocode(lat, lng) {
 
   try {
     const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
+
     const res = await fetch(url, {
       headers: { 'User-Agent': 'DrivePulse-Mobility-App/1.0' },
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
 
     if (res.ok) {
       const data = await res.json();
@@ -233,7 +247,7 @@ export async function reverseGeocode(lat, lng) {
       }
     }
   } catch (err) {
-    console.warn("Reverse geocode failed:", err.message);
+    // Fallback on timeout
   }
 
   // Graceful fallback based on coordinates

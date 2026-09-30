@@ -159,42 +159,6 @@ const Navbar = ({ activeTab, setActiveTab }) => {
             ) : null}
           </div>
         </div>
-
-        {/* Mobile Navigation Sub-Bar (Clean Pill Switcher, Zero Horizontal Overflow) */}
-        {user?.role === 'ROLE_CUSTOMER' && (
-          <div className="sm:hidden flex items-center justify-between pb-2 pt-1 border-t border-gray-100 text-[11px] font-bold">
-            <button
-              onClick={() => setActiveTab('explore')}
-              className={`flex-1 py-1.5 mx-0.5 rounded-lg text-center transition-all ${
-                activeTab === 'explore'
-                  ? 'bg-amber-400 text-slate-950 font-black shadow-xs'
-                  : 'text-gray-600 bg-gray-100'
-              }`}
-            >
-              Book Rides
-            </button>
-            <button
-              onClick={() => setActiveTab('arrival-sim')}
-              className={`flex-1 py-1.5 mx-0.5 rounded-lg text-center transition-all ${
-                activeTab === 'arrival-sim'
-                  ? 'bg-amber-400 text-slate-950 font-black shadow-xs'
-                  : 'text-gray-600 bg-gray-100'
-              }`}
-            >
-              ⚡ Animation
-            </button>
-            <button
-              onClick={() => setActiveTab('my-trips')}
-              className={`flex-1 py-1.5 mx-0.5 rounded-lg text-center transition-all ${
-                activeTab === 'my-trips'
-                  ? 'bg-amber-400 text-slate-950 font-black shadow-xs'
-                  : 'text-gray-600 bg-gray-100'
-              }`}
-            >
-              My Rides
-            </button>
-          </div>
-        )}
       </div>
     </header>
   );

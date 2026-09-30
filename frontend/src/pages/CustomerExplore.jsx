@@ -4,12 +4,14 @@ import { DEFAULT_PRESET_LOCATIONS, reverseGeocode } from '../api/locationService
 import LocationSearchInput from '../components/LocationSearchInput';
 import MapView from '../components/MapView';
 import DigitalReceiptModal from '../components/DigitalReceiptModal';
+import HomeScreen from '../components/home/HomeScreen';
+import LocationSearchScreen from '../components/ride/LocationSearchScreen';
 import {
   MapPin, Navigation, Clock, ShieldCheck, ChevronRight, Star,
   AlertCircle, PhoneCall, Check, Info, ShieldAlert, Sparkles,
   RefreshCw, X, Crosshair, Users, Zap, ArrowUpDown, Calendar,
   CreditCard, Tag, FileText, ChevronDown, CheckCircle2, ArrowRight,
-  Shield, Phone, KeyRound, Loader2, Award
+  Shield, Phone, KeyRound, Loader2, Award, ArrowLeft
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -163,6 +165,9 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
   const [showAddressPicker, setShowAddressPicker] = useState(false);
   const [addressPickerMode, setAddressPickerMode] = useState('pickup'); // 'pickup' | 'dropoff'
 
+  // Multi-step navigation flow: 'HOME' | 'SEARCH' | 'MAP_TIERS'
+  const [flowStep, setFlowStep] = useState('HOME');
+
   // Booking lifecycle state for animation
   const [bookingState, setBookingState] = useState('IDLE'); // 'IDLE' | 'SEARCHING' | 'ACCEPTED' | 'DRIVER_ARRIVING' | 'IN_PROGRESS'
   const [assignedDriver, setAssignedDriver] = useState(null);
@@ -312,6 +317,7 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
       if (ongoing) {
         setActiveBooking(ongoing);
         setBookingState(ongoing.status);
+        setFlowStep('MAP_TIERS');
       }
     } catch (err) {
       console.error("Failed to load fleet data:", err);
@@ -475,24 +481,84 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
     } catch (e) {}
     setActiveBooking(null);
     setBookingState('IDLE');
+    setFlowStep('HOME');
     setAssignedDriver(null);
   };
 
+  // Step 1: NATIVE HOME SCREEN (Ride, Auto, Cab, Parcel, Porter Services Launcher)
+  if (flowStep === 'HOME' && bookingState === 'IDLE') {
+    return (
+      <HomeScreen
+        pickupLocation={pickupLocation}
+        onOpenSearch={() => setFlowStep('SEARCH')}
+        onSelectService={(serviceId) => {
+          setSelectedServiceId(serviceId);
+          setFlowStep('SEARCH');
+        }}
+        onSelectQuickDestination={(dest) => {
+          setDropoffLocation(dest);
+          setFlowStep('MAP_TIERS');
+        }}
+        onRefreshGPS={handleDetectLiveLocation}
+        isDetectingGPS={isDetectingGPS}
+      />
+    );
+  }
+
+  // Step 2: DEDICATED LOCATION SEARCH SCREEN (Pickup & Drop-off selection with popular destinations)
+  if (flowStep === 'SEARCH' && bookingState === 'IDLE') {
+    return (
+      <LocationSearchScreen
+        pickupLocation={pickupLocation}
+        dropoffLocation={dropoffLocation}
+        onUpdatePickup={setPickupLocation}
+        onUpdateDropoff={setDropoffLocation}
+        onSwapLocations={handleSwapLocations}
+        onDetectLiveGPS={handleDetectLiveLocation}
+        isDetectingGPS={isDetectingGPS}
+        selectedServiceName={selectedService.name}
+        onBack={() => setFlowStep('HOME')}
+        onProceedToRides={() => setFlowStep('MAP_TIERS')}
+      />
+    );
+  }
+
+  // Step 3 & 4: MAP & RIDE TIERS / ACTIVE TRIP VIEW (Nearest cruising vehicles, upfront fares, arrival animation)
   return (
     <div className="relative w-full h-[calc(100dvh-5.5rem)] sm:h-[calc(100dvh-4rem)] overflow-hidden flex flex-col bg-slate-100">
       
       {/* ========================================================================= */}
-      {/* 1. FLOATING TOP ADDRESS SEARCH PILLS (Exactly Matching Screenshot Image 1)  */}
+      {/* 1. FLOATING TOP ADDRESS SEARCH PILLS (With Back Button to Return to Search) */}
       {/* ========================================================================= */}
       <div className="absolute top-2.5 left-2.5 right-2.5 sm:left-4 sm:right-auto sm:w-[420px] z-[1000] pointer-events-auto">
         <div className="bg-white/95 rounded-2xl shadow-xl border border-gray-200/90 p-2 sm:p-2.5 backdrop-blur-md flex flex-col space-y-1.5">
           
+          {/* Top navigation row with Back button */}
+          <div className="flex items-center justify-between pb-1 border-b border-gray-100">
+            <button
+              type="button"
+              onClick={() => {
+                if (bookingState === 'IDLE') {
+                  setFlowStep('SEARCH');
+                } else {
+                  handleCancelBooking();
+                }
+              }}
+              className="flex items-center space-x-1 px-2.5 py-1 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-black active:scale-95 transition-all shadow-xs"
+              title="Edit Route / Back"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>{bookingState === 'IDLE' ? 'Edit Route' : 'Back'}</span>
+            </button>
+
+            <span className="text-[10px] font-black uppercase tracking-wider text-amber-900 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300">
+              {selectedService.name} • ~{estDistanceKm} km
+            </span>
+          </div>
+
           {/* Pickup Row */}
           <div
-            onClick={() => {
-              setAddressPickerMode('pickup');
-              setShowAddressPicker(true);
-            }}
+            onClick={() => setFlowStep('SEARCH')}
             className="flex items-center space-x-2.5 px-2 py-1.5 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors"
           >
             <div className="w-3 h-3 rounded-full bg-emerald-500 border-2 border-white shadow-xs flex-shrink-0" />
@@ -527,10 +593,7 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
 
           {/* Dropoff Row */}
           <div
-            onClick={() => {
-              setAddressPickerMode('dropoff');
-              setShowAddressPicker(true);
-            }}
+            onClick={() => setFlowStep('SEARCH')}
             className="flex items-center space-x-2.5 px-2 py-1.5 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors"
           >
             <div className="w-3 h-3 rounded-full bg-rose-500 border-2 border-white shadow-xs flex-shrink-0" />
@@ -892,6 +955,7 @@ const CustomerExplore = ({ onNavigateToTrips, onNavigateToArrivalSim }) => {
             setReceiptBooking(null);
             setBookingState('IDLE');
             setActiveBooking(null);
+            setFlowStep('HOME');
           }}
         />
       )}

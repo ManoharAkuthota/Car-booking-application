@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
+import BottomTaskbar from './components/BottomTaskbar';
 import LoginPage from './pages/LoginPage';
 import CustomerExplore from './pages/CustomerExplore';
 import CustomerRides from './pages/CustomerRides';
@@ -10,7 +11,7 @@ import RideBooking from './pages/RideBooking';
 import { Loader2, Car, Shield } from 'lucide-react';
 
 const MainLayout = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('explore');
 
   if (loading) {
@@ -95,6 +96,24 @@ const MainLayout = () => {
           </div>
         </div>
       </footer>
+
+      {/* Mobile Persistent Taskbar (Native app feel) */}
+      {user?.role === 'ROLE_CUSTOMER' && (
+        <BottomTaskbar
+          currentTab={activeTab === 'explore' ? 'home' : activeTab}
+          onSelectTab={(tabId) => {
+            if (tabId === 'home') setActiveTab('explore');
+            else if (tabId === 'explore') setActiveTab('explore');
+            else if (tabId === 'arrival-sim') setActiveTab('arrival-sim');
+            else if (tabId === 'my-trips') setActiveTab('my-trips');
+          }}
+          onOpenAccountModal={() => {
+            if (window.confirm(`Logged in as ${user.fullName} (${user.email}). Do you want to sign out?`)) {
+              logout();
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

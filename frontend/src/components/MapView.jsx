@@ -339,14 +339,22 @@ export const createRotatedVehicleIcon = ({
   });
 };
 
+// In-memory icon cache to eliminate repeated DOM destruction & garbage collection pauses
+const nearbyIconCache = new Map();
+
 // Convenient wrappers for Explore & Live Trip markers
 export const getNearbyIcon = (type = 'BIKE', heading = 0) => {
-  return createRotatedVehicleIcon({
-    category: type,
-    heading,
-    isArrived: false,
-    isLive: false,
-  });
+  const quantizedHeading = Math.round((heading % 360) / 15) * 15;
+  const key = `${type}_${quantizedHeading}`;
+  if (!nearbyIconCache.has(key)) {
+    nearbyIconCache.set(key, createRotatedVehicleIcon({
+      category: type,
+      heading: quantizedHeading,
+      isArrived: false,
+      isLive: false,
+    }));
+  }
+  return nearbyIconCache.get(key);
 };
 
 export const createLiveVehicleIcon = (category = 'BIKE', heading = 0, isArrived = false) => {
@@ -810,11 +818,12 @@ const MapView = ({
   useEffect(() => {
     if (isLiveTrip) return;
 
+    // Gentle 3-second update cadence eliminates 240x/min React re-renders & UI lockups
     const timer = setInterval(() => {
       setNearbyVehicles((prev) =>
         prev.map((v) => {
-          const newStep = v.step + 0.12;
-          const drift = Math.sin(newStep) * 0.0004;
+          const newStep = v.step + 0.35;
+          const drift = Math.sin(newStep) * 0.0006;
           const currentHeading = Math.cos(newStep) >= 0 ? v.heading : (v.heading + 180) % 360;
           const rad = (currentHeading * Math.PI) / 180;
           return {
@@ -826,7 +835,7 @@ const MapView = ({
           };
         })
       );
-    }, 250);
+    }, 3000);
 
     return () => {
       clearInterval(timer);
